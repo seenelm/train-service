@@ -10,6 +10,7 @@ import { join } from 'path';
  */
 export const setupSwaggerUI = async (app: express.Application, basePath: string) => {
   try {
+    // Look for the swagger file directly in the dist directory
     const swaggerFile = join(basePath, 'swagger-output.json');
     const swaggerData = await readFile(swaggerFile, 'utf8');
     const swaggerDocument = JSON.parse(swaggerData);

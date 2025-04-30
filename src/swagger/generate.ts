@@ -1,4 +1,49 @@
-import { runSwaggerGeneration } from './index.js';
+import swaggerAutogen from 'swagger-autogen';
+import { join, dirname } from 'path';
+import { fileURLToPath } from 'url';
 
-// Run the Swagger generation when this file is executed directly
-runSwaggerGeneration();
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
+
+const doc = {
+  info: {
+    title: 'Train Service API',
+    description: 'API documentation for the Train Service',
+    version: '0.0.1',
+  },
+  servers: [
+    {
+      url: 'http://localhost:3000',
+      description: 'Local development server',
+    },
+  ],
+  tags: [
+    {
+      name: 'Train Routes',
+      description: 'API endpoints for train routes',
+    },
+  ],
+  components: {
+    schemas: {
+      // Define your schemas here
+    },
+  },
+};
+
+// Output file will be in the dist directory
+const outputFile = join(__dirname, '../../dist/swagger-output.json');
+// Use the TypeScript file for generating documentation
+const endpointsFiles = [join(__dirname, '../../app.ts')];
+
+// Generate swagger.json
+async function generateSwagger() {
+  try {
+    await swaggerAutogen()(outputFile, endpointsFiles, doc);
+    console.log('Swagger documentation generated successfully');
+  } catch (error) {
+    console.error('Error generating Swagger documentation:', error);
+  }
+}
+
+// Run the function
+generateSwagger();

@@ -30,8 +30,10 @@ const doc = {
   },
 };
 
+// Output file will be in the root directory
 const outputFile = join(__dirname, '../../swagger-output.json');
-const endpointsFiles = [join(__dirname, '../../app.js')];
+// Use the TypeScript file for generating documentation
+const endpointsFiles = [join(__dirname, '../../app.ts')];
 
 // Generate swagger.json
 const generateSwagger = async () => {
