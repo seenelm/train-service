@@ -292,6 +292,9 @@ export default class UserService {
       userId,
     };
     try {
+      if (!process.env.SECRET_CODE) {
+        throw new Error('SECRET_CODE environment variable is not defined');
+      }
       return await JWTUtil.sign(payload, process.env.SECRET_CODE);
     } catch (error) {
       // TODO: throw internal server error if not JWT error
@@ -305,24 +308,4 @@ export default class UserService {
     return `${username}_${uniqueId}`;
   }
 
-  // public async findUserById(userId: Types.ObjectId): Promise<IUser | null> {
-  //     const user = await this.userRepository.findUserById(
-  //         userId,
-  //         "username isActive",
-  //     );
-
-  //     if (!user) {
-  //         throw new Errors.ResourceNotFoundError("User not found", {
-  //             userId,
-  //         });
-  //     }
-
-  //     this.logger.logInfo("Find User By Id", { user });
-
-  //     return user;
-  // }
-
-  // public async deleteUserAccount(userId: Types.ObjectId): Promise<void> {
-  //     await this.userRepository.deleteUserAccount(userId);
-  // }
 }

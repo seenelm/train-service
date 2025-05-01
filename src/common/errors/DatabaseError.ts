@@ -1,8 +1,8 @@
-import { ServerError } from "./ServerError";
+import { ServerError } from "./ServerError.js";
 import { StatusCodes as HttpStatusCode } from "http-status-codes";
 import { Error as MongooseError } from "mongoose";
 import { MongoServerError } from "mongodb";
-import { MongoServerErrorType } from "../enums";
+import { MongoServerErrorType } from "../enums.js";
 
 export class DatabaseError extends ServerError {
     constructor(
