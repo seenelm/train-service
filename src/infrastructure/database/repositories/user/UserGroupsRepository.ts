@@ -4,7 +4,7 @@ import BaseRepository from "../BaseRepository.js";
 import { Model, Types } from "mongoose";
 import UserGroups from "../../entity/user/UserGroups.js";
 
-interface IUserGroupsRepository
+export interface IUserGroupsRepository
   extends IBaseRepository<UserGroups, UserGroupsDocument> {}
 
 export default class UserGroupsRepository

@@ -1,10 +1,6 @@
-import UserRepository from "../../infrastructure/database/repositories/user/UserRepository.js";
 import JWTUtil from "../../common/utils/JWTUtil.js";
 import BcryptUtil from "../../common/utils/BcryptUtil.js";
 import { UserDocument } from "../../infrastructure/database/models/user/userModel.js";
-import UserProfileRepository from "../../infrastructure/database/repositories/user/UserProfileRepository.js";
-import UserGroupsRepository from "../../infrastructure/database/repositories/user/UserGroupsRepository.js";
-import FollowRepository from "../../infrastructure/database/repositories/user/FollowRepository.js";
 import { MongooseError, Types } from "mongoose";
 import User from "../../infrastructure/database/entity/user/User.js";
 
@@ -20,6 +16,10 @@ import { DatabaseError } from "../../common/errors/DatabaseError.js";
 import { AuthError } from "../../common/errors/AuthError.js";
 import { v4 as uuidv4 } from "uuid";
 import UserRequest from "./dto/UserRequest.js";
+import { IUserRepository } from "../../infrastructure/database/repositories/user/UserRepository.js";
+import { IUserProfileRepository } from "../../infrastructure/database/repositories/user/UserProfileRepository.js";
+import { IUserGroupsRepository } from "../../infrastructure/database/repositories/user/UserGroupsRepository.js";
+import { IFollowRepository } from "../../infrastructure/database/repositories/user/FollowRepository.js";
 
 export interface TokenPayload {
   name: string;
@@ -27,17 +27,17 @@ export interface TokenPayload {
 }
 
 export default class UserService {
-  private userRepository: UserRepository;
-  private userProfileRepository: UserProfileRepository;
-  private userGroupsRepository: UserGroupsRepository;
-  private followRepository: FollowRepository;
+  private userRepository: IUserRepository;
+  private userProfileRepository: IUserProfileRepository;
+  private userGroupsRepository: IUserGroupsRepository;
+  private followRepository: IFollowRepository;
   private logger: Logger;
 
   constructor(
-    userRepository: UserRepository,
-    userProfileRepository: UserProfileRepository,
-    userGroupsRepository: UserGroupsRepository,
-    followRepository: FollowRepository
+    userRepository: IUserRepository,
+    userProfileRepository: IUserProfileRepository,
+    userGroupsRepository: IUserGroupsRepository,
+    followRepository: IFollowRepository
   ) {
     this.userRepository = userRepository;
     this.userProfileRepository = userProfileRepository;

@@ -6,7 +6,15 @@ import { Model, Types } from "mongoose";
 import { UserResponse } from "../../../../app/user/dto/userDto.js";
 import UserRequest from "../../../../app/user/dto/UserRequest.js";
 
-interface IUserRepository extends IBaseRepository<User, UserDocument> {}
+export interface IUserRepository extends IBaseRepository<User, UserDocument> {
+  toDocument(
+    request: UserRequest,
+    googleId?: string,
+    deviceToken?: string
+  ): Partial<UserDocument>;
+
+  toResponse(user: User, token: string, name: string): UserResponse;
+}
 
 export default class UserRepository
   extends BaseRepository<User, UserDocument>

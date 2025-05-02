@@ -4,7 +4,8 @@ import { IBaseRepository } from "../BaseRepository.js";
 import BaseRepository from "../BaseRepository.js";
 import { Model, Types } from "mongoose";
 
-interface IFollowRepository extends IBaseRepository<Follow, FollowDocument> {}
+export interface IFollowRepository
+  extends IBaseRepository<Follow, FollowDocument> {}
 
 export default class FollowRepository
   extends BaseRepository<Follow, FollowDocument>

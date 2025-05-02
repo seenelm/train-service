@@ -4,7 +4,7 @@ import { IBaseRepository } from "../BaseRepository.js";
 import BaseRepository from "../BaseRepository.js";
 import { Model, Types } from "mongoose";
 
-interface IUserProfileRepository
+export interface IUserProfileRepository
   extends IBaseRepository<UserProfile, UserProfileDocument> {}
 
 export default class UserProfileRepository
