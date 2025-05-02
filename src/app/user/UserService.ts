@@ -4,7 +4,12 @@ import { UserDocument } from "../../infrastructure/database/models/user/userMode
 import { MongooseError, Types } from "mongoose";
 import User from "../../infrastructure/database/entity/user/User.js";
 
-import { UserLoginRequest, UserResponse } from "./dto/userDto.js";
+import {
+  UserLoginRequest,
+  UserResponse,
+  UserRequest,
+  updateUserRequest,
+} from "./userDto.js";
 
 import mongoose from "mongoose";
 import { APIError } from "../../common/errors/APIError.js";
@@ -15,7 +20,6 @@ import { MongoServerError } from "mongodb";
 import { DatabaseError } from "../../common/errors/DatabaseError.js";
 import { AuthError } from "../../common/errors/AuthError.js";
 import { v4 as uuidv4 } from "uuid";
-import UserRequest from "./dto/UserRequest.js";
 import { IUserRepository } from "../../infrastructure/database/repositories/user/UserRepository.js";
 import { IUserProfileRepository } from "../../infrastructure/database/repositories/user/UserProfileRepository.js";
 import { IUserGroupsRepository } from "../../infrastructure/database/repositories/user/UserGroupsRepository.js";
@@ -48,9 +52,9 @@ export default class UserService {
 
   public async registerUser(userRequest: UserRequest): Promise<UserResponse> {
     try {
-      const email = userRequest.getEmail();
+      const { email, password, name } = userRequest;
 
-      const username = this.generateUniqueUsername(userRequest.getEmail());
+      const username = this.generateUniqueUsername(email);
 
       const user = await this.userRepository.findOne({
         $or: [{ email }, { username }],
@@ -63,15 +67,17 @@ export default class UserService {
         );
       }
 
-      const hash = await BcryptUtil.hashPassword(userRequest.getPassword());
+      const hash = await BcryptUtil.hashPassword(password);
 
-      userRequest.setUsername(username);
-      userRequest.setIsActive(true);
-      userRequest.setPassword(hash);
+      const updatedUserRequest: UserRequest = updateUserRequest(userRequest, {
+        username,
+        password: hash,
+        isActive: true,
+      });
 
-      const userDocument = this.userRepository.toDocument(userRequest);
+      const userDocument = this.userRepository.toDocument(updatedUserRequest);
 
-      return this.createUser(userDocument, userRequest.getName());
+      return this.createUser(userDocument, name);
     } catch (error) {
       throw error;
     }
@@ -165,12 +171,12 @@ export default class UserService {
         );
       }
 
-      const userRequest = UserRequest.builder()
-        .setUsername(username)
-        .setIsActive(true)
-        .setEmail(email)
-        .setAuthProvider("google")
-        .build();
+      const userRequest = {
+        username,
+        isActive: true,
+        email,
+        authProvider: "google",
+      } as UserRequest;
 
       const userDocument = this.userRepository.toDocument(
         userRequest,

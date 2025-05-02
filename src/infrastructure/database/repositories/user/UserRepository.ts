@@ -3,8 +3,7 @@ import User from "../../entity/user/User.js";
 import { IBaseRepository } from "../BaseRepository.js";
 import BaseRepository from "../BaseRepository.js";
 import { Model, Types } from "mongoose";
-import { UserResponse } from "../../../../app/user/dto/userDto.js";
-import UserRequest from "../../../../app/user/dto/UserRequest.js";
+import { UserResponse, UserRequest } from "../../../../app/user/userDto.js";
 
 export interface IUserRepository extends IBaseRepository<User, UserDocument> {
   toDocument(
@@ -33,13 +32,13 @@ export default class UserRepository
     deviceToken?: string
   ): Partial<UserDocument> {
     return {
-      username: request.getUsername(),
-      password: request.getPassword(),
-      isActive: request.getIsActive(),
+      username: request.username,
+      password: request.password,
+      isActive: request.isActive,
       deviceToken,
       googleId,
-      email: request.getEmail(),
-      authProvider: request.getAuthProvider(),
+      email: request.email,
+      authProvider: request.authProvider,
     };
   }
 

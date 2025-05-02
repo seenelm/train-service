@@ -1,10 +1,17 @@
-export interface UserRegisterRequest {
+export interface UserRequest {
   username?: string;
   name: string;
   password: string;
   isActive?: boolean;
   email: string;
   authProvider?: string;
+}
+
+export function updateUserRequest(
+  userRequest: UserRequest,
+  updatedData: Partial<UserRequest>
+): UserRequest {
+  return { ...userRequest, ...updatedData };
 }
 
 export interface UserLoginRequest {

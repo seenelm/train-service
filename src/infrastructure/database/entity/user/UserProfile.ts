@@ -57,6 +57,30 @@ export default class UserProfile {
   public getUpdatedAt(): Date | undefined {
     return this.updatedAt;
   }
+
+  public setId(id: Types.ObjectId): void {
+    this.id = id;
+  }
+
+  public setUserId(userId: Types.ObjectId): void {
+    this.userId = userId;
+  }
+
+  public setUsername(username: string): void {
+    this.username = username;
+  }
+
+  public setName(name: string): void {
+    this.name = name;
+  }
+
+  public setBio(bio: string): void {
+    this.bio = bio;
+  }
+
+  public setAccountType(accountType: number): void {
+    this.accountType = accountType;
+  }
 }
 
 class UserProfileBuilder {

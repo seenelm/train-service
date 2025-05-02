@@ -4,8 +4,8 @@ import {
   UserLoginRequest,
   UserResponse,
   GoogleAuthRequest,
-} from "./dto/userDto.js";
-import UserRequest from "./dto/UserRequest.js";
+  UserRequest,
+} from "./userDto.js";
 
 export default class UserController {
   private userService: UserService;
@@ -16,10 +16,10 @@ export default class UserController {
 
   public register = async (req: Request, res: Response, next: NextFunction) => {
     try {
-      const userRequest: UserRequest = req.body;
+      const userRegisterRequest: UserRequest = req.body;
 
       const userResponse: UserResponse = await this.userService.registerUser(
-        userRequest
+        userRegisterRequest
       );
 
       return res.status(201).json(userResponse);

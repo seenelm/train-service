@@ -1,10 +1,15 @@
 import { Types } from "mongoose";
 import { UserDocument } from "../../src/infrastructure/database/models/user/userModel";
 import User from "../../src/infrastructure/database/entity/user/User";
-import UserRequest from "../../src/app/user/dto/UserRequest";
-import { UserResponse, UserLoginRequest } from "../../src/app/user/dto/userDto";
+import {
+  UserResponse,
+  UserLoginRequest,
+  UserRequest,
+} from "../../src/app/user/userDto";
 import { UserProfileDocument } from "../../src/infrastructure/database/models/user/userProfileModel";
 import { DecodedIdToken } from "firebase-admin/auth";
+import UserProfile from "../../src/infrastructure/database/entity/user/UserProfile";
+import { ProfileAccess } from "../../src/common/enums";
 
 export default class UserTestFixture {
   public static ID: Types.ObjectId = new Types.ObjectId();
@@ -20,9 +25,12 @@ export default class UserTestFixture {
   public static UPDATED_AT: Date = new Date();
 
   public static USER_ID: string = new Types.ObjectId().toString();
+  public static ACCOUNT_TYPE: number = ProfileAccess.Public;
   public static TOKEN: string = "token";
 
-  public static createUserDocument(): Partial<UserDocument> {
+  public static createUserDocument(
+    updatedData?: Partial<UserDocument>
+  ): Partial<UserDocument> {
     return {
       username: this.USERNAME,
       password: this.PASSWORD,
@@ -31,15 +39,10 @@ export default class UserTestFixture {
       googleId: this.GOOGLE_ID,
       email: this.EMAIL,
       authProvider: this.AUTH_PROVIDER,
+      createdAt: this.CREATED_AT,
+      updatedAt: this.UPDATED_AT,
+      ...updatedData,
     };
-  }
-
-  public static updateUserDocument(
-    updatedData: Partial<UserDocument>
-  ): UserDocument {
-    const userDocument = this.createUserDocument();
-    const updatedUserDocument = { ...userDocument, ...updatedData };
-    return updatedUserDocument as UserDocument;
   }
 
   public static createUserEntity(): User {
@@ -63,15 +66,18 @@ export default class UserTestFixture {
     return updatedUserEntity;
   }
 
-  public static createUserRequest(): UserRequest {
-    return UserRequest.builder()
-      .setUsername(this.USERNAME)
-      .setName(this.NAME)
-      .setPassword(this.PASSWORD)
-      .setIsActive(this.IS_ACTIVE)
-      .setEmail(this.EMAIL)
-      .setAuthProvider(this.AUTH_PROVIDER)
-      .build();
+  public static createUserRequest(
+    updatedData?: Partial<UserRequest>
+  ): UserRequest {
+    return {
+      username: this.USERNAME,
+      name: this.NAME,
+      password: this.PASSWORD,
+      isActive: this.IS_ACTIVE,
+      email: this.EMAIL,
+      authProvider: this.AUTH_PROVIDER,
+      ...updatedData,
+    };
   }
 
   public static createUserLoginRequest(
@@ -84,36 +90,29 @@ export default class UserTestFixture {
     };
   }
 
-  public static createUserResponse(): UserResponse {
+  public static createUserResponse(
+    updatedData?: Partial<UserResponse>
+  ): UserResponse {
     return {
       userId: this.USER_ID,
       token: this.TOKEN,
       username: this.USERNAME,
       name: this.NAME,
+      ...updatedData,
     };
   }
 
-  public static updateUserResponse(
-    updatedData: Partial<UserResponse>
-  ): UserResponse {
-    const userResponse = this.createUserResponse();
-    const updatedUserResponse = { ...userResponse, ...updatedData };
-    return updatedUserResponse;
-  }
-
-  public static createUserProfile(
-    updatedData?: Partial<IUserProfile>
-  ): IUserProfile {
-    return {
-      userId: this.ID,
-      username: this.USERNAME,
-      name: this.NAME,
-      bio: "",
-      accountType: 0,
-      createdAt: this.CREATED_AT,
-      updatedAt: this.UPDATED_AT,
-      ...updatedData,
-    } as IUserProfile;
+  public static createUserProfile(): UserProfile {
+    return UserProfile.builder()
+      .setId(this.ID)
+      .setUserId(this.ID)
+      .setUsername(this.USERNAME)
+      .setName(this.NAME)
+      .setBio("")
+      .setAccountType(this.ACCOUNT_TYPE)
+      .setCreatedAt(this.CREATED_AT)
+      .setUpdatedAt(this.UPDATED_AT)
+      .build();
   }
 
   public static createDecodedIdToken(

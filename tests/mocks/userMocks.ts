@@ -4,7 +4,7 @@ import { IUserGroupsRepository } from "../../src/infrastructure/database/reposit
 import { IFollowRepository } from "../../src/infrastructure/database/repositories/user/FollowRepository.js";
 import { vi } from "vitest";
 
-const mockUserRepository: IUserRepository = {
+export const mockUserRepository: IUserRepository = {
   toDocument: vi.fn(),
   toResponse: vi.fn(),
   findById: vi.fn(),
@@ -20,7 +20,7 @@ const mockUserRepository: IUserRepository = {
   deleteMany: vi.fn(),
 };
 
-const mockUserProfileRepository: IUserProfileRepository = {
+export const mockUserProfileRepository: IUserProfileRepository = {
   findById: vi.fn(),
   findOne: vi.fn(),
   find: vi.fn(),
@@ -34,7 +34,21 @@ const mockUserProfileRepository: IUserProfileRepository = {
   deleteMany: vi.fn(),
 };
 
-const mockUserGroupsRepository: IUserGroupsRepository = {
+export const mockUserGroupsRepository: IUserGroupsRepository = {
+  findById: vi.fn(),
+  findOne: vi.fn(),
+  find: vi.fn(),
+  create: vi.fn(),
+  insertMany: vi.fn(),
+  findOneAndUpdate: vi.fn(),
+  findByIdAndUpdate: vi.fn(),
+  updateOne: vi.fn(),
+  updateMany: vi.fn(),
+  findByIdAndDelete: vi.fn(),
+  deleteMany: vi.fn(),
+};
+
+export const mockFollowRepository: IFollowRepository = {
   findById: vi.fn(),
   findOne: vi.fn(),
   find: vi.fn(),
