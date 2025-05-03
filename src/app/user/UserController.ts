@@ -1,16 +1,17 @@
 import { NextFunction, Request, Response } from "express";
-import UserService from "./UserService.js";
+import { IUserService } from "./UserService.js";
 import {
   UserLoginRequest,
   UserResponse,
   GoogleAuthRequest,
   UserRequest,
 } from "./userDto.js";
+import { StatusCodes as HttpStatusCode } from "http-status-codes";
 
 export default class UserController {
-  private userService: UserService;
+  private userService: IUserService;
 
-  constructor(userService: UserService) {
+  constructor(userService: IUserService) {
     this.userService = userService;
   }
 
@@ -22,7 +23,7 @@ export default class UserController {
         userRegisterRequest
       );
 
-      return res.status(201).json(userResponse);
+      return res.status(HttpStatusCode.CREATED).json(userResponse);
     } catch (error) {
       next(error);
     }
@@ -35,7 +36,7 @@ export default class UserController {
       const userResponse: UserResponse = await this.userService.loginUser(
         userLoginRequest
       );
-      return res.status(201).json(userResponse);
+      return res.status(HttpStatusCode.OK).json(userResponse);
     } catch (error) {
       next(error);
     }
@@ -50,7 +51,7 @@ export default class UserController {
         decodedToken,
         name
       );
-      return res.status(200).json(userResponse);
+      return res.status(HttpStatusCode.OK).json(userResponse);
     } catch (error) {
       next(error);
     }

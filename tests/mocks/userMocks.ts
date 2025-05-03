@@ -3,6 +3,7 @@ import { IUserProfileRepository } from "../../src/infrastructure/database/reposi
 import { IUserGroupsRepository } from "../../src/infrastructure/database/repositories/user/UserGroupsRepository.js";
 import { IFollowRepository } from "../../src/infrastructure/database/repositories/user/FollowRepository.js";
 import { vi } from "vitest";
+import { IUserService } from "../../src/app/user/UserService.js";
 
 export const mockUserRepository: IUserRepository = {
   toDocument: vi.fn(),
@@ -60,4 +61,10 @@ export const mockFollowRepository: IFollowRepository = {
   updateMany: vi.fn(),
   findByIdAndDelete: vi.fn(),
   deleteMany: vi.fn(),
+};
+
+export const mockUserService: IUserService = {
+  registerUser: vi.fn(),
+  loginUser: vi.fn(),
+  authenticateWithGoogle: vi.fn(),
 };

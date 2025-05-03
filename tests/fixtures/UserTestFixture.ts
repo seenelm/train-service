@@ -1,15 +1,15 @@
 import { Types } from "mongoose";
-import { UserDocument } from "../../src/infrastructure/database/models/user/userModel";
-import User from "../../src/infrastructure/database/entity/user/User";
+import { UserDocument } from "../../src/infrastructure/database/models/user/userModel.js";
+import User from "../../src/infrastructure/database/entity/user/User.js";
 import {
   UserResponse,
   UserLoginRequest,
   UserRequest,
-} from "../../src/app/user/userDto";
-import { UserProfileDocument } from "../../src/infrastructure/database/models/user/userProfileModel";
+} from "../../src/app/user/userDto.js";
+import { UserProfileDocument } from "../../src/infrastructure/database/models/user/userProfileModel.js";
 import { DecodedIdToken } from "firebase-admin/auth";
-import UserProfile from "../../src/infrastructure/database/entity/user/UserProfile";
-import { ProfileAccess } from "../../src/common/enums";
+import UserProfile from "../../src/infrastructure/database/entity/user/UserProfile.js";
+import { ProfileAccess } from "../../src/common/enums.js";
 
 export default class UserTestFixture {
   public static ID: Types.ObjectId = new Types.ObjectId();

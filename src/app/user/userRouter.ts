@@ -11,7 +11,10 @@ import { UserProfileModel } from "../../infrastructure/database/models/user/user
 import { UserGroupsModel } from "../../infrastructure/database/models/user/userGroupsModel.js";
 import { FollowModel } from "../../infrastructure/database/models/user/followModel.js";
 import UserController from "./UserController.js";
-import { verifyFirebaseToken } from "../../common/middleware/verifyFirebaseToken";
+import { verifyFirebaseToken } from "../../common/middleware/verifyFirebaseToken.js";
+import UserMiddleware from "./UserMiddleware.js";
+
+const userMiddleware = new UserMiddleware();
 
 const userService = new UserService(
   new UserRepository(UserModel),
@@ -22,16 +25,18 @@ const userService = new UserService(
 
 const userController = new UserController(userService);
 
-userRouter.post("/register", validateRegistration, userController.register);
+userRouter.post(
+  "/register",
+  userMiddleware.validateRegisterUser,
+  userController.register
+);
 
-userRouter.post("/login", validateLogin, userController.login);
+userRouter.post(
+  "/login",
+  userMiddleware.validateLoginUser,
+  userController.login
+);
 
 userRouter.post("/google-auth", verifyFirebaseToken, userController.googleAuth);
-
-// userRouter.get("/:userId", authenticate, userController.findUserById);
-
-// userRouter.get("/:userId/profile-data", authenticate, userController.fetchUserData);
-
-// userRouter.delete("/:userId", authenticate, userController.deleteUserAccount);
 
 export default userRouter;

@@ -30,7 +30,16 @@ export interface TokenPayload {
   userId: Types.ObjectId;
 }
 
-export default class UserService {
+export interface IUserService {
+  registerUser(userRequest: UserRequest): Promise<UserResponse>;
+  loginUser(userLoginRequest: UserLoginRequest): Promise<UserResponse>;
+  authenticateWithGoogle(
+    decodedToken: DecodedIdToken,
+    providedName?: string
+  ): Promise<UserResponse>;
+}
+
+export default class UserService implements IUserService {
   private userRepository: IUserRepository;
   private userProfileRepository: IUserProfileRepository;
   private userGroupsRepository: IUserGroupsRepository;
@@ -79,7 +88,17 @@ export default class UserService {
 
       return this.createUser(userDocument, name);
     } catch (error) {
-      throw error;
+      if (error instanceof MongooseError || error instanceof MongoServerError) {
+        throw DatabaseError.handleMongoDBError(error);
+      } else if (error instanceof AuthError) {
+        throw error;
+      } else if (error instanceof APIError) {
+        throw error;
+      }
+
+      throw APIError.InternalServerError("An error occurred while logging in", {
+        error,
+      });
     }
   }
 
@@ -185,7 +204,6 @@ export default class UserService {
 
       return this.createUser(userDocument, name);
     } catch (error) {
-      this.logger.error("Error logging in with Google", error);
       if (error instanceof MongooseError || error instanceof MongoServerError) {
         throw DatabaseError.handleMongoDBError(error);
       } else if (error instanceof AuthError) {
@@ -289,7 +307,7 @@ export default class UserService {
     }
   }
 
-  public async generateAuthToken(
+  private async generateAuthToken(
     name: string,
     userId: Types.ObjectId
   ): Promise<string> {

@@ -29,3 +29,8 @@ export enum ValidateRegisterUser {
   NameRequired = "Name is required",
   EmailAndPasswordRequired = "Email and password are required",
 }
+
+export enum ValidateLoginUser {
+  PasswordRequired = "Password is required",
+  EmailRequired = "Email is required",
+}
