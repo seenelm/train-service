@@ -315,8 +315,15 @@ export default class UserService implements IUserService {
       name,
       userId,
     };
+    const secretKey = process.env.SECRET_CODE;
+    if (!secretKey) {
+      this.logger.error("SECRET_CODE environment variable is not defined");
+      throw APIError.InternalServerError(
+        "Authentication service configuration error"
+      );
+    }
     try {
-      return await JWTUtil.sign(payload, process.env.SECRET_CODE);
+      return await JWTUtil.sign(payload, secretKey);
     } catch (error) {
       // TODO: throw internal server error if not JWT error
       throw AuthError.handleJWTError(error);
@@ -328,25 +335,4 @@ export default class UserService implements IUserService {
     const uniqueId = uuidv4().split("-")[0]; // Generate a short unique ID
     return `${username}_${uniqueId}`;
   }
-
-  // public async findUserById(userId: Types.ObjectId): Promise<IUser | null> {
-  //     const user = await this.userRepository.findUserById(
-  //         userId,
-  //         "username isActive",
-  //     );
-
-  //     if (!user) {
-  //         throw new Errors.ResourceNotFoundError("User not found", {
-  //             userId,
-  //         });
-  //     }
-
-  //     this.logger.logInfo("Find User By Id", { user });
-
-  //     return user;
-  // }
-
-  // public async deleteUserAccount(userId: Types.ObjectId): Promise<void> {
-  //     await this.userRepository.deleteUserAccount(userId);
-  // }
 }

@@ -1,10 +1,7 @@
 import { ServerError } from "./ServerError.js";
 import { StatusCodes as HttpStatusCode } from "http-status-codes";
-import {
-  JsonWebTokenError,
-  TokenExpiredError,
-  NotBeforeError,
-} from "jsonwebtoken";
+import pkg from "jsonwebtoken";
+const { JsonWebTokenError, TokenExpiredError, NotBeforeError } = pkg;
 
 export class AuthError extends ServerError {
   static Unauthorized(
