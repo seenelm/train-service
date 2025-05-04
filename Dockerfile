@@ -32,6 +32,7 @@ COPY package*.json ./
 RUN npm install
 
 COPY . .
+COPY config ./config
 
 RUN npm run build
 
@@ -58,10 +59,11 @@ CMD ["node", "./dist/src/server.js"]
 FROM node:23-alpine AS test
 WORKDIR /app
 
-COPY --from=builder /app /app
+RUN apk add --no-cache curl
 
-ENV NODE_ENV=$NODE_ENV
-ENV MONGO_URI=$MONGO_URI
-ENV SECRET_CODE=$SECRET_CODE
-CMD ["npm", "run", "test:integration"]
+COPY --from=builder /app /app
+COPY test-entrypoint.sh /app/test-entrypoint.sh
+
+RUN chmod +x /app/test-entrypoint.sh
+CMD ["/app/test-entrypoint.sh"]
 

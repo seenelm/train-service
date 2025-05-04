@@ -16,6 +16,7 @@ export default class TrainService {
     this.app = express();
     this.db = new MongoDB(envConfig.database.uri);
     this.logger = Logger.getInstance();
+    this.logger.info("Database uri: ", envConfig.database.uri);
 
     this.configureMiddleware();
     this.configureRoutes();
@@ -36,7 +37,6 @@ export default class TrainService {
   public async initializeDB(): Promise<void> {
     try {
       await this.db.connect();
-      this.logger.info("Database connected successfully");
     } catch (error) {
       this.logger.error("Failed to connect to the database", error);
       throw error;
@@ -49,6 +49,7 @@ export default class TrainService {
   }
 
   private configureRoutes(): void {
+    this.app.get("/health", (req, res) => res.send("OK"));
     this.app.use("/api", routes);
   }
 

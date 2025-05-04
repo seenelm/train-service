@@ -16,30 +16,61 @@ services:
             - 3000:3000
 
     train-test:
+        container_name: train-test
         build:
             context: .
             dockerfile: Dockerfile
             target: test
         environment:
-            - MONGO_URI=mongodb://root:example@mongodb-test:27017/
+            - MONGO_URI=mongodb://root:example@mongodb-test:27017/?directConnection=true
             - NODE_ENV=test
             - SECRET_CODE=test-secret-key
         ports:
             - 3000:3000
         depends_on:
-            - mongodb-test
+            mongodb-test:
+                condition: service_healthy
 
 
     mongodb-test:
-        image: mongodb/mongodb-atlas-local:7.0.7
+        container_name: mongodb-test
+        build:
+            context: .
+            dockerfile: mongo.Dockerfile
         ports:
             - "27017:27017"
         environment:
-            - MONGODB_INITDB_DATABASE=train_test
             - MONGODB_INITDB_ROOT_USERNAME=root
             - MONGODB_INITDB_ROOT_PASSWORD=example
         volumes:
             - mongodb_test_data:/data/db
+            - mongodb_test_config:/data/configdb
+
+    
+    # mongodb-test:
+    #     image: mongo:8.0.9
+    #     container_name: mongodb-test
+    #     ports:
+    #         - "27017:27017"
+    #     environment:
+    #         - MONGO_INITDB_ROOT_USERNAME=root
+    #         - MONGO_INITDB_ROOT_PASSWORD=example
+    #     command: >
+    #         bash -c '
+    #             mongod --replSet rs0 --bind_ip_all &
+    #             until mongosh --quiet --eval "rs.initiate()" || sleep 2; do echo "Waiting for replica set..."; done;
+    #             fg
+    #         '
+    #     healthcheck:
+    #         test: |
+    #             mongosh --quiet --eval "db.runCommand('ping').ok" --username root --password example --authenticationDatabase admin
+    #         interval: 10s
+    #         timeout: 5s
+    #         retries: 5
+    #     volumes:
+    #         - mongodb_test_data:/data/db
 
 volumes:
-    mongodb_test_data
+   mongodb_test_data:
+   mongodb_test_config:
+        

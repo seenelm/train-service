@@ -7,17 +7,21 @@ import {
   UserRequest,
 } from "./userDto.js";
 import { StatusCodes as HttpStatusCode } from "http-status-codes";
+import { Logger } from "../../common/logger.js";
 
 export default class UserController {
   private userService: IUserService;
+  private logger: Logger;
 
   constructor(userService: IUserService) {
     this.userService = userService;
+    this.logger = Logger.getInstance();
   }
 
   public register = async (req: Request, res: Response, next: NextFunction) => {
     try {
       const userRegisterRequest: UserRequest = req.body;
+      this.logger.info("User registration request: ", userRegisterRequest);
 
       const userResponse: UserResponse = await this.userService.registerUser(
         userRegisterRequest

@@ -61,6 +61,10 @@ export default class UserService implements IUserService {
 
   public async registerUser(userRequest: UserRequest): Promise<UserResponse> {
     try {
+      this.logger.info(
+        "User registration request in UserService: ",
+        userRequest
+      );
       const { email, password, name } = userRequest;
 
       const username = this.generateUniqueUsername(email);
@@ -88,6 +92,7 @@ export default class UserService implements IUserService {
 
       return this.createUser(userDocument, name);
     } catch (error) {
+      this.logger.error("Error registering user", error);
       if (error instanceof MongooseError || error instanceof MongoServerError) {
         throw DatabaseError.handleMongoDBError(error);
       } else if (error instanceof AuthError) {
@@ -255,6 +260,7 @@ export default class UserService implements IUserService {
 
     try {
       session.startTransaction();
+      this.logger.info("Creating new user", { name });
 
       const newUser = await this.userRepository.create(userDocument, {
         session,
@@ -296,6 +302,7 @@ export default class UserService implements IUserService {
 
       return this.userRepository.toResponse(newUser, token, name);
     } catch (error) {
+      this.logger.error("Error creating user", error);
       if (session) {
         await session.abortTransaction();
       }

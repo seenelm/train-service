@@ -4,7 +4,9 @@ import * as YAML from "yaml";
 import path from "path";
 import { fileURLToPath } from "url";
 import { dirname } from "path";
+import { Logger } from "../logger.js";
 
+const logger = Logger.getInstance();
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 
@@ -19,10 +21,13 @@ let envConfig: any;
 
 try {
   const file = fs.readFileSync(configPath, "utf8");
+  logger.info("Environment: ", NODE_ENV);
 
   // Replace ${VAR} with process.env.VAR
   const interpolated = file.replace(/\$\{(.*?)\}/g, (_, name) => {
     const value = process.env[name];
+    logger.info("Interpolating env name: ", name);
+    logger.info("Interpolating env variable: ", value);
     if (!value) {
       console.warn(`⚠️ Environment variable ${name} is not defined`);
     }
