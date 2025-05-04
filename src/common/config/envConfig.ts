@@ -2,11 +2,16 @@ import "dotenv/config";
 import fs from "fs";
 import * as YAML from "yaml";
 import path from "path";
+import { fileURLToPath } from "url";
+import { dirname } from "path";
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
 
 const NODE_ENV = process.env.NODE_ENV || "dev";
 const configPath = path.resolve(
   __dirname,
-  "../../../config",
+  "../../../../config",
   `${NODE_ENV}.yaml`
 );
 
