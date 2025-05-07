@@ -1,4 +1,4 @@
-import * as jwt from "jsonwebtoken";
+import jwt from "jsonwebtoken";
 
 class JWTUtil {
   public static sign(payload: object, secret: string): Promise<string> {
