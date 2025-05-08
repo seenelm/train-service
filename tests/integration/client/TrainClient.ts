@@ -8,7 +8,9 @@ import {
 export default class TrainClient {
   private baseUrl: string;
   constructor() {
-    this.baseUrl = "http://train-test:3000/api";
+    // Use localhost when running tests locally, or container name in Docker
+    const host = process.env.TEST_ENV === 'docker' ? 'train-test' : 'localhost';
+    this.baseUrl = `http://${host}:3000/api`;
   }
 
   public async register(request: UserRequest): Promise<UserResponse> {
