@@ -1,21 +1,34 @@
 import TrainClient from "./client/TrainClient.js";
 
-import {
-  describe,
-  it,
-  expect,
-  beforeEach,
-  vi,
-  MockedObject,
-  afterEach,
-} from "vitest";
+import { describe, it, expect, beforeAll, afterAll } from "vitest";
 import UserTestFixture from "../fixtures/UserTestFixture.js";
+import mongoose from "mongoose";
+import TestUtil from "./util/TestUtil.js";
+import { UserResponse, UserRequest } from "../../src/app/user/userDto.js";
+import AuthDataProvider from "./dataProviders/AuthDataProvider.js";
+import axios, { AxiosError } from "axios";
 
 describe("Train Service Integration Tests", () => {
   let trainClient: TrainClient;
+  let userResponse: UserResponse = UserTestFixture.createUserResponse();
 
-  beforeEach(() => {
+  beforeAll(async () => {
     trainClient = new TrainClient();
+    const mongoUri =
+      process.env.MONGO_URI ||
+      "mongodb://localhost:27017/?replicaSet=rs0&directConnection=true";
+    console.log(`Connecting to MongoDB at: ${mongoUri}`);
+    await mongoose.connect(mongoUri);
+    console.log("Connected to MongoDB");
+
+    // Initial cleanup to ensure a clean state
+    await TestUtil.cleanupCollections();
+  });
+
+  afterAll(async () => {
+    await TestUtil.cleanupCollections();
+    await mongoose.connection.close();
+    console.log("MongoDB connection closed");
   });
 
   it("should register a user successfully", async () => {
@@ -30,10 +43,51 @@ describe("Train Service Integration Tests", () => {
 
     const response = await trainClient.register(userRequest);
     console.log("Response from register: ", response);
+    userResponse = { ...response };
 
     expect(response.username).toBeDefined();
     expect(response.name).toBe(userRequest.name);
     expect(response.userId).toBeDefined();
     expect(response.token).toBeDefined();
+  });
+
+  it("should login a user successfully", async () => {
+    // Arrange
+    const userLoginRequest = UserTestFixture.createUserLoginRequest({
+      email: "ryanReynolds1@gmail.com",
+      password: "Password98!",
+    });
+
+    // Act
+    const response = await trainClient.login(userLoginRequest);
+    console.log("Response from login: ", response);
+
+    // Assert
+    expect(response.username).toBe(userResponse.username);
+    expect(response.name).toBe(userResponse.name);
+    expect(response.userId).toBe(userResponse.userId);
+    expect(response.token).toBeDefined();
+  });
+
+  describe("User Registration Error Cases", () => {
+    it.each(AuthDataProvider.registerUserErrorCases())(
+      "$description",
+      async ({ request, expectedErrors }) => {
+        try {
+          await trainClient.register(request as UserRequest);
+        } catch (error) {
+          console.error("Registration error: ", error);
+          if (error instanceof AxiosError) {
+            const axiosError = error as AxiosError;
+            expect(axiosError.response?.status).toBe(400);
+
+            const errorResponse = axiosError.response?.data;
+            expectedErrors.forEach((expectedError) => {
+              expect(errorResponse).toContain(expectedError);
+            });
+          }
+        }
+      }
+    );
   });
 });
