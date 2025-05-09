@@ -38,4 +38,17 @@ export default class TrainClient {
       throw error;
     }
   }
+  
+  public async deleteUser(userId: string): Promise<{ success: boolean; message: string }> {
+    try {
+      const response = await axios.post(
+        `${this.baseUrl}/user/delete-user`,
+        { userId }
+      );
+      return response.data;
+    } catch (error) {
+      console.error("Error deleting a user: ", error);
+      throw error;
+    }
+  }
 }

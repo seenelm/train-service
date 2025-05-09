@@ -37,6 +37,7 @@ export interface IUserService {
     decodedToken: DecodedIdToken,
     providedName?: string
   ): Promise<UserResponse>;
+  deleteUser(userId: string): Promise<void>;
 }
 
 export default class UserService implements IUserService {
@@ -221,6 +222,52 @@ export default class UserService implements IUserService {
         "An error occurred while logging in with google",
         { error }
       );
+    }
+  }
+
+  public async deleteUser(userId: string): Promise<void> {
+    try {
+      const user = await this.userRepository.findById(new Types.ObjectId(userId));
+
+      if (!user) {
+        throw APIError.NotFound("User not found", { userId });
+      }
+
+      const session = await mongoose.startSession();
+
+      try {
+        session.startTransaction();
+
+        // Use deleteMany instead of deleteOne
+        await Promise.all([
+          this.userRepository.deleteMany({ _id: user.getId() }, { session }),
+          this.userProfileRepository.deleteMany({ userId: user.getId() }, { session }),
+          this.userGroupsRepository.deleteMany({ userId: user.getId() }, { session }),
+          this.followRepository.deleteMany({ userId: user.getId() }, { session }),
+        ]);
+
+        await session.commitTransaction();
+        this.logger.info("User deleted successfully", { userId: user.getId() });
+      } catch (error) {
+        if (session) {
+          await session.abortTransaction();
+        }
+        throw error;
+      } finally {
+        if (session) {
+          session.endSession();
+        }
+      }
+    } catch (error) {
+      if (error instanceof MongooseError || error instanceof MongoServerError) {
+        throw DatabaseError.handleMongoDBError(error);
+      } else if (error instanceof APIError) {
+        throw error;
+      }
+
+      throw APIError.InternalServerError("An error occurred while deleting user", {
+        error,
+      });
     }
   }
 

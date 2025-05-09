@@ -34,4 +34,8 @@ router.post("/login", userMiddleware.validateLoginUser, userController.login);
 
 router.post("/google-auth", verifyFirebaseToken, userController.googleAuth);
 
+router.post("/delete-user", userController.deleteUser);
+
+
+
 export default router;

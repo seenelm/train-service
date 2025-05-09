@@ -61,6 +61,30 @@ export default class UserController {
     }
   };
 
+  deleteUser = async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const { userId } = req.body;
+      
+      if (!userId) {
+        return res.status(HttpStatusCode.BAD_REQUEST).json({ 
+          message: "User ID is required" 
+        });
+      }
+      
+      this.logger.info("User deletion request for userId:", userId);
+      
+      await this.userService.deleteUser(userId);
+      
+      return res.status(HttpStatusCode.OK).json({ 
+        success: true,
+        message: "User deleted successfully" 
+      });
+    } catch (error) {
+      this.logger.error("Error deleting user:", error);
+      next(error);
+    }
+  };
+
   // findUserById = async (req: Request, res: Response, next: NextFunction) => {
   //     try {
   //         const { userId } = req.params;
