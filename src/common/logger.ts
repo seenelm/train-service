@@ -1,4 +1,4 @@
-import winston, { format } from "winston";
+import winston, { format, transport } from "winston";
 import { Request, Response, NextFunction } from "express";
 import morgan from "morgan";
 import { LoggingWinston } from "@google-cloud/logging-winston";
@@ -59,30 +59,41 @@ const googleCloudLoggingFormat = format.combine(
 export class Logger {
   private static instance: Logger;
   private logger: winston.Logger;
-  // private loggingWinston: LoggingWinston;
 
   private constructor() {
-    // this.loggingWinston = new LoggingWinston();
+    const transports: transport[] = [
+      new winston.transports.Console({
+        format: consoleFormat,
+        level: "debug",
+      }),
+      new winston.transports.File({
+        filename: "logs/error.log",
+        level: "error",
+        format: fileFormat,
+      }),
+      new winston.transports.File({
+        filename: "logs/combined.log",
+        format: fileFormat,
+      }),
+    ];
+
+    const nodeEnv = process.env.NODE_ENV;
+    if (nodeEnv === "stage" || nodeEnv === "production") {
+      const loggingWinston = new LoggingWinston({
+        serviceContext: { service: "train-service", version: "0.0.1" },
+        level: "error",
+        format: googleCloudLoggingFormat,
+      });
+      transports.push(loggingWinston);
+      console.log("Google Cloud Logging enabled for environment:", nodeEnv);
+    } else {
+      console.log("Google Cloud Logging disabled for environment:", nodeEnv);
+    }
 
     this.logger = winston.createLogger({
       levels: logLevels,
-      defaultMeta: { service: "train-api" },
-      transports: [
-        new winston.transports.Console({
-          format: consoleFormat,
-          level: "debug",
-        }),
-        new winston.transports.File({
-          filename: "logs/error.log",
-          level: "error",
-          format: fileFormat,
-        }),
-        new winston.transports.File({
-          filename: "logs/combined.log",
-          format: fileFormat,
-        }),
-        // this.loggingWinston,
-      ],
+      defaultMeta: { service: "train-service" },
+      transports: transports,
     });
   }
 
