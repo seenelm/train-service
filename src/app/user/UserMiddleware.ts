@@ -3,6 +3,7 @@ import { UserRequest, UserLoginRequest } from "./userDto.js";
 import { StatusCodes as HttpStatusCode } from "http-status-codes";
 import { CreateValidator } from "../../common/utils/requestValidation.js";
 import UserRequestRules from "./UserRequestRules.js";
+import { APIError } from "../../common/errors/APIError.js";
 
 export default class UserMiddleware {
   constructor() {}
@@ -20,7 +21,7 @@ export default class UserMiddleware {
     );
 
     if (errors && errors.length > 0) {
-      return res.status(HttpStatusCode.BAD_REQUEST).json(errors);
+      return next(APIError.BadRequest("Validation failed", errors));
     }
     next();
   };
@@ -38,7 +39,7 @@ export default class UserMiddleware {
     );
 
     if (errors && errors.length > 0) {
-      return res.status(HttpStatusCode.BAD_REQUEST).json(errors);
+      return next(APIError.BadRequest("Validation failed", errors));
     }
     next();
   };

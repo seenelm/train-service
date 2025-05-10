@@ -4,7 +4,11 @@ import { describe, it, expect, beforeAll, afterAll } from "vitest";
 import UserTestFixture from "../fixtures/UserTestFixture.js";
 import mongoose from "mongoose";
 import TestUtil from "./util/TestUtil.js";
-import { UserResponse, UserRequest } from "../../src/app/user/userDto.js";
+import {
+  UserResponse,
+  UserRequest,
+  UserLoginRequest,
+} from "../../src/app/user/userDto.js";
 import AuthDataProvider from "./dataProviders/AuthDataProvider.js";
 import axios, { AxiosError } from "axios";
 
@@ -72,19 +76,37 @@ describe("Train Service Integration Tests", () => {
   describe("User Registration Error Cases", () => {
     it.each(AuthDataProvider.registerUserErrorCases())(
       "$description",
-      async ({ request, expectedErrors }) => {
+      async ({ request, status, expectedErrorResponse }) => {
         try {
           await trainClient.register(request as UserRequest);
         } catch (error) {
-          console.error("Registration error: ", error);
           if (error instanceof AxiosError) {
             const axiosError = error as AxiosError;
-            expect(axiosError.response?.status).toBe(400);
+            expect(axiosError.response?.status).toBe(status);
 
             const errorResponse = axiosError.response?.data;
-            expectedErrors.forEach((expectedError) => {
-              expect(errorResponse).toContain(expectedError);
-            });
+            console.log("Register Error response: ", errorResponse);
+            expect(errorResponse).toMatchObject(expectedErrorResponse);
+          }
+        }
+      }
+    );
+  });
+
+  describe("User Login Error Cases", () => {
+    it.each(AuthDataProvider.loginUserErrorCases())(
+      "$description",
+      async ({ request, status, expectedErrorResponse }) => {
+        try {
+          await trainClient.login(request as UserLoginRequest);
+        } catch (error) {
+          if (error instanceof AxiosError) {
+            const axiosError = error as AxiosError;
+            expect(axiosError.response?.status).toBe(status);
+
+            const errorResponse = axiosError.response?.data;
+            console.log("Login Error response: ", errorResponse);
+            expect(errorResponse).toMatchObject(expectedErrorResponse);
           }
         }
       }

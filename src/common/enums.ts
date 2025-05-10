@@ -30,7 +30,16 @@ export enum ValidateRegisterUser {
   EmailAndPasswordRequired = "Email and password are required",
 }
 
+export enum RegisterUserAPIError {
+  UserAlreadyExists = "User already exists",
+}
+
 export enum ValidateLoginUser {
   PasswordRequired = "Password is required",
   EmailRequired = "Email is required",
+}
+export enum LoginUserAPIError {
+  UserNotFound = "User not found",
+  UserProfileNotFound = "User Profile not found",
+  InvalidPassword = "Invalid password",
 }

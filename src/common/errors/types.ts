@@ -1,18 +1,18 @@
 export interface ErrorDetail {
-    [key: string]: any;
+  [key: string]: any;
 }
 
 export interface ErrorResponse {
-    message: string;
-    errorCode: string;
-    details?: unknown;
-    path?: string;
+  message: string;
+  errorCode: string;
+  details?: unknown;
+  requestId?: string;
 }
 
 export interface ServerResponse {
-    statusCode: number;
-    error: ErrorResponse;
-    requestId: string;
-    userId?: string;
-    message?: string;
+  statusCode: number;
+  error: ErrorResponse;
+  requestId: string;
+  userId?: string;
+  message?: string;
 }

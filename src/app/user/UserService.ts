@@ -14,6 +14,7 @@ import {
 import mongoose from "mongoose";
 import { APIError } from "../../common/errors/APIError.js";
 import { Logger } from "../../common/logger.js";
+import { RegisterUserAPIError, LoginUserAPIError } from "../../common/enums.js";
 
 import { DecodedIdToken } from "firebase-admin/auth";
 import { MongoServerError } from "mongodb";
@@ -61,10 +62,6 @@ export default class UserService implements IUserService {
 
   public async registerUser(userRequest: UserRequest): Promise<UserResponse> {
     try {
-      this.logger.info(
-        "User registration request in UserService: ",
-        userRequest
-      );
       const { email, password, name } = userRequest;
 
       const username = this.generateUniqueUsername(email);
@@ -74,10 +71,13 @@ export default class UserService implements IUserService {
       });
 
       if (user) {
-        throw APIError.Conflict(
-          "Account with this email/username already exists",
-          { email, username }
-        );
+        this.logger.warn("User registration conflict", {
+          email,
+          username,
+          userId: user.getId(),
+          message: RegisterUserAPIError.UserAlreadyExists,
+        });
+        throw APIError.Conflict(RegisterUserAPIError.UserAlreadyExists);
       }
 
       const hash = await BcryptUtil.hashPassword(password);
@@ -116,7 +116,11 @@ export default class UserService implements IUserService {
       const user = await this.userRepository.findOne({ email });
 
       if (!user) {
-        throw APIError.NotFound("User not found", { email });
+        this.logger.warn("Login: User not found", {
+          email,
+          message: LoginUserAPIError.UserNotFound,
+        });
+        throw APIError.NotFound(LoginUserAPIError.UserNotFound);
       }
 
       const isValidPassword = await BcryptUtil.comparePassword(
@@ -136,9 +140,11 @@ export default class UserService implements IUserService {
       });
 
       if (!userProfile) {
-        throw APIError.NotFound("User profile not found", {
+        this.logger.warn("Login: User profile not found", {
           userId: user.getId(),
+          message: LoginUserAPIError.UserProfileNotFound,
         });
+        throw APIError.NotFound(LoginUserAPIError.UserProfileNotFound);
       }
 
       const token = await this.generateAuthToken(
