@@ -336,11 +336,15 @@ export default class UserService implements IUserService {
       );
     }
     try {
-      return await JWTUtil.sign(payload, secretKey);
+      return await JWTUtil.sign(payload, secretKey, "15m");
     } catch (error) {
       // TODO: throw internal server error if not JWT error
       throw AuthError.handleJWTError(error);
     }
+  }
+
+  private generateRefreshToken() {
+    return uuidv4();
   }
 
   public generateUniqueUsername(email: string): string {
