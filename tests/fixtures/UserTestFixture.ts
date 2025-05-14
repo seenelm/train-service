@@ -78,7 +78,7 @@ export default class UserTestFixture {
       isActive: this.IS_ACTIVE,
       email: this.EMAIL,
       authProvider: this.AUTH_PROVIDER,
-      deviceId: this.DEVICE_ID,
+      deviceId: this.DEVICE_TOKEN,
       ...updatedData,
     };
   }
@@ -89,7 +89,7 @@ export default class UserTestFixture {
     return {
       email: this.EMAIL,
       password: this.PASSWORD,
-      deviceId: this.DEVICE_ID,
+      deviceId: this.DEVICE_TOKEN,
       ...request,
     };
   }
@@ -100,7 +100,7 @@ export default class UserTestFixture {
     return {
       userId: this.USER_ID,
       token: this.TOKEN,
-      refreshToken: this.REFRESH_TOKEN,
+      refreshToken: this.TOKEN,
       username: this.USERNAME,
       name: this.NAME,
       ...updatedData,
