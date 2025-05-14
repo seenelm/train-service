@@ -4,6 +4,7 @@ import MongoDB from "./infrastructure/database/db.js";
 import routes from "./routes/index.js";
 import { Logger } from "./common/logger.js";
 import { errorHandler } from "./common/middleware/errorHandler.js";
+import cors from "cors";
 import "dotenv/config";
 
 export default class TrainService {
@@ -44,6 +45,7 @@ export default class TrainService {
   }
 
   private configureMiddleware(): void {
+    this.app.use(cors());
     this.app.use(express.json());
     this.app.use(express.urlencoded({ extended: true }));
   }
@@ -57,14 +59,3 @@ export default class TrainService {
     this.app.use(errorHandler);
   }
 }
-
-// const app = express();
-// const PORT = process.env.PORT || 3000;
-
-// app.get("/", (req, res) => res.send("Hello, world!"));
-
-// app.listen(PORT, () =>
-//   console.log(`Server running on http://localhost:${PORT}`)
-// );
-
-// export default app;

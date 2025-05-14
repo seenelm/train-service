@@ -7,6 +7,7 @@ import { IUserService } from "../../src/app/user/UserService.js";
 
 export const mockUserRepository: IUserRepository = {
   toDocument: vi.fn(),
+  toDocumentFromEntity: vi.fn(),
   toResponse: vi.fn(),
   findById: vi.fn(),
   findOne: vi.fn(),
@@ -67,4 +68,6 @@ export const mockUserService: IUserService = {
   registerUser: vi.fn(),
   loginUser: vi.fn(),
   authenticateWithGoogle: vi.fn(),
+  refreshToken: vi.fn(),
+  logoutUser: vi.fn(),
 };

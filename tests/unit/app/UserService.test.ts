@@ -387,7 +387,11 @@ describe("UserService", () => {
       // Act
       const result = await userService.authenticateWithGoogle(
         decodedToken,
-        UserTestFixture.NAME
+        {
+          name: UserTestFixture.NAME,
+          deviceId: UserTestFixture.DEVICE_TOKEN,
+          idToken: "mock-id-token",
+        }
       );
 
       // Assert
@@ -430,7 +434,10 @@ describe("UserService", () => {
       );
 
       // Act
-      const result = await userService.authenticateWithGoogle(decodedToken);
+      const result = await userService.authenticateWithGoogle(decodedToken, {
+        deviceId: UserTestFixture.DEVICE_TOKEN,
+        idToken: "mock-id-token",
+      });
 
       // Assert
       expect(result).toEqual(expectedUserResponse);
@@ -463,7 +470,10 @@ describe("UserService", () => {
 
       // Act & Assert
       await expect(
-        userService.authenticateWithGoogle(decodedToken)
+        userService.authenticateWithGoogle(decodedToken, {
+          deviceId: UserTestFixture.DEVICE_TOKEN,
+          idToken: "mock-id-token",
+        })
       ).rejects.toThrowError(
         APIError.Conflict(
           "Account with this email/username already exists but not linked to this authentication provider",
@@ -481,7 +491,10 @@ describe("UserService", () => {
 
       // Act & Assert
       await expect(
-        userService.authenticateWithGoogle(decodedToken)
+        userService.authenticateWithGoogle(decodedToken, {
+          deviceId: UserTestFixture.DEVICE_TOKEN,
+          idToken: "mock-id-token",
+        })
       ).rejects.toThrowError(DatabaseError.handleMongoDBError(dbError));
     });
   });
