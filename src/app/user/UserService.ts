@@ -30,11 +30,7 @@ import { IUserRepository } from "../../infrastructure/database/repositories/user
 import { IUserProfileRepository } from "../../infrastructure/database/repositories/user/UserProfileRepository.js";
 import { IUserGroupsRepository } from "../../infrastructure/database/repositories/user/UserGroupsRepository.js";
 import { IFollowRepository } from "../../infrastructure/database/repositories/user/FollowRepository.js";
-
-export interface TokenPayload {
-  username: string;
-  userId: Types.ObjectId;
-}
+import { TokenPayload } from "../../common/middleware/AuthMiddleware.js";
 
 export interface IUserService {
   registerUser(userRequest: UserRequest): Promise<UserResponse>;

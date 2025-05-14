@@ -6,10 +6,10 @@ import {
   UserLoginRequest,
   UserRequest,
 } from "../../src/app/user/userDto.js";
-import { UserProfileDocument } from "../../src/infrastructure/database/models/user/userProfileModel.js";
 import { DecodedIdToken } from "firebase-admin/auth";
 import UserProfile from "../../src/infrastructure/database/entity/user/UserProfile.js";
 import { ProfileAccess } from "../../src/common/enums.js";
+import { v4 as uuidv4 } from "uuid";
 
 export default class UserTestFixture {
   public static ID: Types.ObjectId = new Types.ObjectId();
@@ -27,6 +27,8 @@ export default class UserTestFixture {
   public static USER_ID: string = new Types.ObjectId().toString();
   public static ACCOUNT_TYPE: number = ProfileAccess.Public;
   public static TOKEN: string = "token";
+  public static REFRESH_TOKEN: string = "refreshToken";
+  public static DEVICE_ID: string = uuidv4();
 
   public static createUserDocument(
     updatedData?: Partial<UserDocument>
