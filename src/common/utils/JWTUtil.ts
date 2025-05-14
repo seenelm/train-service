@@ -9,7 +9,7 @@ class JWTUtil {
     return new Promise((resolve, reject) => {
       const options: SignOptions = {};
       if (expiresIn) {
-        options.expiresIn = expiresIn;
+        options.expiresIn = expiresIn as SignOptions["expiresIn"];
       }
 
       jwt.sign(payload, secret, options, (error, token) => {

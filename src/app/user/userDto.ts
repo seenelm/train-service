@@ -5,6 +5,7 @@ export interface UserRequest {
   isActive?: boolean;
   email: string;
   authProvider?: string;
+  deviceId: string;
 }
 
 export function updateUserRequest(
@@ -17,11 +18,13 @@ export function updateUserRequest(
 export interface UserLoginRequest {
   email: string;
   password: string;
+  deviceId: string;
 }
 
 export interface UserResponse {
   userId: string;
   token: string;
+  refreshToken: string;
   username: string;
   name: string;
 }
@@ -29,4 +32,10 @@ export interface UserResponse {
 export interface GoogleAuthRequest {
   idToken: string;
   name?: string;
+  deviceId: string;
+}
+
+export interface RefreshTokenResponse {
+  accessToken: string;
+  refreshToken: string;
 }

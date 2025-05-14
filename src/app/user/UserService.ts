@@ -1,6 +1,9 @@
 import JWTUtil from "../../common/utils/JWTUtil.js";
 import BcryptUtil from "../../common/utils/BcryptUtil.js";
-import { UserDocument } from "../../infrastructure/database/models/user/userModel.js";
+import {
+  UserDocument,
+  IRefreshToken,
+} from "../../infrastructure/database/models/user/userModel.js";
 import { MongooseError, Types } from "mongoose";
 import User from "../../infrastructure/database/entity/user/User.js";
 
@@ -9,9 +12,11 @@ import {
   UserResponse,
   UserRequest,
   updateUserRequest,
+  GoogleAuthRequest,
+  RefreshTokenResponse,
 } from "./userDto.js";
 
-import mongoose from "mongoose";
+import mongoose, { ClientSession } from "mongoose";
 import { APIError } from "../../common/errors/APIError.js";
 import { Logger } from "../../common/logger.js";
 import { RegisterUserAPIError, LoginUserAPIError } from "../../common/enums.js";
@@ -27,7 +32,7 @@ import { IUserGroupsRepository } from "../../infrastructure/database/repositorie
 import { IFollowRepository } from "../../infrastructure/database/repositories/user/FollowRepository.js";
 
 export interface TokenPayload {
-  name: string;
+  username: string;
   userId: Types.ObjectId;
 }
 
@@ -36,8 +41,13 @@ export interface IUserService {
   loginUser(userLoginRequest: UserLoginRequest): Promise<UserResponse>;
   authenticateWithGoogle(
     decodedToken: DecodedIdToken,
-    providedName?: string
+    googleAuthRequest: GoogleAuthRequest
   ): Promise<UserResponse>;
+  refreshToken(
+    refreshToken: string,
+    deviceId: string
+  ): Promise<RefreshTokenResponse>;
+  logoutUser(refreshToken: string, deviceId: string): Promise<void>;
 }
 
 export default class UserService implements IUserService {
@@ -62,7 +72,7 @@ export default class UserService implements IUserService {
 
   public async registerUser(userRequest: UserRequest): Promise<UserResponse> {
     try {
-      const { email, password, name } = userRequest;
+      const { email, password, name, deviceId } = userRequest;
 
       const username = this.generateUniqueUsername(email);
 
@@ -88,7 +98,12 @@ export default class UserService implements IUserService {
         isActive: true,
       });
 
-      const userDocument = this.userRepository.toDocument(updatedUserRequest);
+      const refreshToken = this.createRefreshToken(deviceId);
+
+      const userDocument = this.userRepository.toDocument(
+        updatedUserRequest,
+        refreshToken
+      );
 
       return this.createUser(userDocument, name);
     } catch (error) {
@@ -110,7 +125,7 @@ export default class UserService implements IUserService {
   public async loginUser(
     userLoginRequest: UserLoginRequest
   ): Promise<UserResponse> {
-    const { email, password } = userLoginRequest;
+    const { email, password, deviceId } = userLoginRequest;
 
     try {
       const user = await this.userRepository.findOne({ email });
@@ -135,6 +150,8 @@ export default class UserService implements IUserService {
         });
       }
 
+      const refreshToken = await this.generateRefreshToken(user, deviceId);
+
       const userProfile = await this.userProfileRepository.findOne({
         userId: user.getId(),
       });
@@ -148,11 +165,16 @@ export default class UserService implements IUserService {
       }
 
       const token = await this.generateAuthToken(
-        userProfile.getName(),
+        user.getUsername(),
         user.getId()
       );
 
-      return this.userRepository.toResponse(user, token, userProfile.getName());
+      return this.userRepository.toResponse(
+        user,
+        token,
+        userProfile.getName(),
+        refreshToken
+      );
     } catch (error) {
       if (error instanceof MongooseError || error instanceof MongoServerError) {
         throw DatabaseError.handleMongoDBError(error);
@@ -170,10 +192,11 @@ export default class UserService implements IUserService {
 
   public async authenticateWithGoogle(
     decodedToken: DecodedIdToken,
-    providedName?: string
+    googleAuthRequest: GoogleAuthRequest
   ): Promise<UserResponse> {
     try {
       const { uid: googleId, email, name: googleName } = decodedToken;
+      const { name: providedName, deviceId } = googleAuthRequest;
 
       if (!email) {
         throw APIError.BadRequest("Email is required");
@@ -184,7 +207,7 @@ export default class UserService implements IUserService {
       let user = await this.userRepository.findOne({ googleId });
 
       if (user) {
-        return this.loginExistingGoogleUser(user);
+        return this.loginExistingGoogleUser(user, deviceId);
       }
 
       // TODO pass name in instead of email
@@ -208,8 +231,11 @@ export default class UserService implements IUserService {
         authProvider: "google",
       } as UserRequest;
 
+      const refreshToken = this.createRefreshToken(deviceId);
+
       const userDocument = this.userRepository.toDocument(
         userRequest,
+        refreshToken,
         googleId
       );
 
@@ -230,7 +256,134 @@ export default class UserService implements IUserService {
     }
   }
 
-  private async loginExistingGoogleUser(user: User): Promise<UserResponse> {
+  public async refreshToken(
+    refreshToken: string,
+    deviceId: string
+  ): Promise<RefreshTokenResponse> {
+    try {
+      const user = await this.userRepository.findOne({
+        "refreshTokens.token": refreshToken,
+        "refreshTokens.deviceId": deviceId,
+      });
+
+      if (!user) {
+        // Add logging
+        throw AuthError.Forbidden("Invalid refresh token");
+      }
+
+      const refreshTokenDocument = user
+        .getRefreshTokens()
+        .find(
+          (token) => token.token === refreshToken && token.deviceId === deviceId
+        );
+
+      if (
+        !refreshTokenDocument ||
+        refreshTokenDocument.expiresAt < new Date()
+      ) {
+        await this.userRepository.findByIdAndUpdate(user.getId(), {
+          $pull: {
+            refreshTokens: { token: refreshToken, deviceId: deviceId },
+          },
+        });
+        throw AuthError.Forbidden("Refresh token expired");
+      }
+
+      // Generate new refresh token
+      const newRefreshToken = this.createRefreshToken(deviceId);
+      const updatedUser = await this.userRepository.findOneAndUpdate(
+        {
+          _id: user.getId(),
+          "refreshTokens.token": refreshToken,
+          "refreshTokens.deviceId": deviceId,
+        },
+        {
+          $pull: { refreshTokens: { token: refreshToken, deviceId: deviceId } },
+          $push: { refreshTokens: newRefreshToken },
+        },
+        { new: true } // Return the modified document
+      );
+
+      const newAccessToken = await this.generateAuthToken(
+        user.getUsername(),
+        user.getId()
+      );
+
+      return {
+        accessToken: newAccessToken,
+        refreshToken: newRefreshToken.token,
+      };
+    } catch (error) {
+      if (error instanceof MongooseError || error instanceof MongoServerError) {
+        throw DatabaseError.handleMongoDBError(error);
+      } else if (error instanceof AuthError) {
+        throw error;
+      } else if (error instanceof APIError) {
+        throw error;
+      }
+
+      throw APIError.InternalServerError(
+        "An error occurred while refreshing token",
+        { error }
+      );
+    }
+  }
+
+  public async logoutUser(
+    refreshToken: string,
+    deviceId: string
+  ): Promise<void> {
+    try {
+      const user = await this.userRepository.findOneAndUpdate(
+        {
+          "refreshTokens.token": refreshToken,
+          "refreshTokens.deviceId": deviceId,
+        },
+        {
+          $pull: {
+            refreshTokens: { token: refreshToken, deviceId: deviceId },
+          },
+        }
+      );
+
+      if (!user) {
+        this.logger.warn(
+          "Logout: Refresh token/device ID not found or already removed.",
+          {
+            deviceId,
+            message: LoginUserAPIError.UserNotFound, // Or a more specific error message
+          }
+        );
+        // If the token is not found, it might mean it was already removed or never existed.
+        // Depending on desired behavior, you might not throw an error or throw a specific one.
+        // Throwing NotFound to indicate the specific token/device combo wasn't active.
+        throw APIError.NotFound(
+          "Invalid refresh token or device ID. Session may have already been terminated."
+        );
+      }
+
+      this.logger.info(
+        "User logged out successfully by removing refresh token",
+        {
+          userId: user.getId().toString(),
+          deviceId,
+        }
+      );
+    } catch (error) {
+      this.logger.error("Error during user logout", error);
+      if (error instanceof MongooseError || error instanceof MongoServerError) {
+        throw DatabaseError.handleMongoDBError(error);
+      } else if (error instanceof APIError || error instanceof AuthError) {
+        throw error;
+      }
+      throw APIError.InternalServerError("An error occurred during logout.");
+    }
+  }
+
+  private async loginExistingGoogleUser(
+    user: User,
+    deviceId: string
+  ): Promise<UserResponse> {
     try {
       const userProfile = await this.userProfileRepository.findOne({
         userId: user.getId(),
@@ -242,6 +395,8 @@ export default class UserService implements IUserService {
         });
       }
 
+      const refreshToken = await this.generateRefreshToken(user, deviceId);
+
       const token = await this.generateAuthToken(
         userProfile.getName(),
         user.getId()
@@ -252,7 +407,12 @@ export default class UserService implements IUserService {
         userId: user.getId(),
       });
 
-      return this.userRepository.toResponse(user, token, userProfile.getName());
+      return this.userRepository.toResponse(
+        user,
+        token,
+        userProfile.getName(),
+        refreshToken
+      );
     } catch (error) {
       throw error;
     }
@@ -299,6 +459,7 @@ export default class UserService implements IUserService {
 
       // Generate JWT token
       const token = await this.generateAuthToken(name, newUser.getId());
+      const refreshToken = newUser.getRefreshTokens()[0].token;
 
       this.logger.info("New user created", {
         username: newUser.getUsername(),
@@ -306,7 +467,7 @@ export default class UserService implements IUserService {
         authProvider: newUser.getAuthProvider(),
       });
 
-      return this.userRepository.toResponse(newUser, token, name);
+      return this.userRepository.toResponse(newUser, token, name, refreshToken);
     } catch (error) {
       this.logger.error("Error creating user", error);
       if (session) {
@@ -321,11 +482,11 @@ export default class UserService implements IUserService {
   }
 
   private async generateAuthToken(
-    name: string,
+    username: string,
     userId: Types.ObjectId
   ): Promise<string> {
     const payload: TokenPayload = {
-      name,
+      username,
       userId,
     };
     const secretKey = process.env.SECRET_CODE;
@@ -343,8 +504,46 @@ export default class UserService implements IUserService {
     }
   }
 
-  private generateRefreshToken() {
-    return uuidv4();
+  private async generateRefreshToken(
+    user: User,
+    deviceId: string
+  ): Promise<string> {
+    const refreshToken: string = uuidv4();
+    const expiresAt = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000); // 30 days
+
+    const refreshTokenDocument: IRefreshToken = {
+      token: refreshToken,
+      deviceId,
+      expiresAt,
+    };
+
+    const updatedUserDocument = this.userRepository.toDocumentFromEntity(
+      user,
+      refreshTokenDocument
+    );
+
+    try {
+      await this.userRepository.findByIdAndUpdate(
+        user.getId(),
+        updatedUserDocument
+      );
+      return refreshToken;
+    } catch (error) {
+      throw error;
+    }
+  }
+
+  private createRefreshToken(deviceId: string): IRefreshToken {
+    const refreshToken: string = uuidv4();
+    const expiresAt = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000); // 30 days
+
+    const refreshTokenDocument: IRefreshToken = {
+      token: refreshToken,
+      deviceId,
+      expiresAt,
+    };
+
+    return refreshTokenDocument;
   }
 
   public generateUniqueUsername(email: string): string {

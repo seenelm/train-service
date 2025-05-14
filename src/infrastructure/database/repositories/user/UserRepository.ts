@@ -1,4 +1,4 @@
-import { UserDocument } from "../../models/user/userModel.js";
+import { UserDocument, IRefreshToken } from "../../models/user/userModel.js";
 import User from "../../entity/user/User.js";
 import { IBaseRepository } from "../BaseRepository.js";
 import BaseRepository from "../BaseRepository.js";
@@ -8,11 +8,22 @@ import { UserResponse, UserRequest } from "../../../../app/user/userDto.js";
 export interface IUserRepository extends IBaseRepository<User, UserDocument> {
   toDocument(
     request: UserRequest,
+    refreshToken?: IRefreshToken,
     googleId?: string,
     deviceToken?: string
   ): Partial<UserDocument>;
 
-  toResponse(user: User, token: string, name: string): UserResponse;
+  toDocumentFromEntity(
+    user: User,
+    refreshToken: IRefreshToken
+  ): Partial<UserDocument>;
+
+  toResponse(
+    user: User,
+    token: string,
+    name: string,
+    refreshToken: string
+  ): UserResponse;
 }
 
 export default class UserRepository
@@ -28,6 +39,7 @@ export default class UserRepository
 
   toDocument(
     request: UserRequest,
+    refreshToken?: IRefreshToken,
     googleId?: string,
     deviceToken?: string
   ): Partial<UserDocument> {
@@ -39,6 +51,23 @@ export default class UserRepository
       googleId,
       email: request.email,
       authProvider: request.authProvider,
+      refreshTokens: refreshToken ? [refreshToken] : [],
+    };
+  }
+
+  toDocumentFromEntity(
+    user: User,
+    refreshToken: IRefreshToken
+  ): Partial<UserDocument> {
+    return {
+      username: user.getUsername(),
+      password: user.getPassword(),
+      isActive: user.getIsActive(),
+      deviceToken: user.getDeviceToken(),
+      googleId: user.getGoogleId(),
+      email: user.getEmail(),
+      authProvider: user.getAuthProvider(),
+      refreshTokens: [refreshToken],
     };
   }
 
@@ -52,15 +81,22 @@ export default class UserRepository
       .setIsActive(doc.isActive)
       .setEmail(doc.email)
       .setAuthProvider(doc.authProvider)
+      .setRefreshTokens(doc.refreshTokens)
       .setCreatedAt(doc.createdAt)
       .setUpdatedAt(doc.updatedAt)
       .build();
   }
 
-  toResponse(user: User, token: string, name: string): UserResponse {
+  toResponse(
+    user: User,
+    token: string,
+    name: string,
+    refreshToken: string
+  ): UserResponse {
     return {
       userId: user.getId().toString(),
       token,
+      refreshToken,
       username: user.getUsername(),
       name,
     };

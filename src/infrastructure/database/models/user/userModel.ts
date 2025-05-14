@@ -1,6 +1,6 @@
 import { Schema, model, Document } from "mongoose";
 
-interface IRefreshToken {
+export interface IRefreshToken {
   token: string;
   deviceId: string;
   expiresAt: Date;
