@@ -1,15 +1,20 @@
 import { Types } from "mongoose";
-import { UserDocument } from "../../src/infrastructure/database/models/user/userModel.js";
+import {
+  UserDocument,
+  IRefreshToken,
+} from "../../src/infrastructure/database/models/user/userModel.js";
 import User from "../../src/infrastructure/database/entity/user/User.js";
 import {
   UserResponse,
   UserLoginRequest,
   UserRequest,
+  GoogleAuthRequest,
+  RefreshTokenResponse,
 } from "../../src/app/user/userDto.js";
-import { UserProfileDocument } from "../../src/infrastructure/database/models/user/userProfileModel.js";
 import { DecodedIdToken } from "firebase-admin/auth";
 import UserProfile from "../../src/infrastructure/database/entity/user/UserProfile.js";
 import { ProfileAccess } from "../../src/common/enums.js";
+import { v4 as uuidv4 } from "uuid";
 
 export default class UserTestFixture {
   public static ID: Types.ObjectId = new Types.ObjectId();
@@ -26,7 +31,9 @@ export default class UserTestFixture {
 
   public static USER_ID: string = new Types.ObjectId().toString();
   public static ACCOUNT_TYPE: number = ProfileAccess.Public;
-  public static TOKEN: string = "token";
+  public static ACCESS_TOKEN: string = "accessToken";
+  public static REFRESH_TOKEN: string = "refreshToken";
+  public static DEVICE_ID: string = uuidv4();
 
   public static createUserDocument(
     updatedData?: Partial<UserDocument>
@@ -39,13 +46,53 @@ export default class UserTestFixture {
       googleId: this.GOOGLE_ID,
       email: this.EMAIL,
       authProvider: this.AUTH_PROVIDER,
+      refreshTokens: [
+        {
+          token: this.REFRESH_TOKEN,
+          deviceId: this.DEVICE_ID,
+          expiresAt: new Date(Date.now() + 1000 * 60 * 60 * 24),
+        },
+      ],
       createdAt: this.CREATED_AT,
       updatedAt: this.UPDATED_AT,
       ...updatedData,
     };
   }
 
+  public static createRefreshToken(
+    updatedData?: Partial<IRefreshToken>
+  ): IRefreshToken {
+    return {
+      token: this.REFRESH_TOKEN,
+      deviceId: this.DEVICE_ID,
+      expiresAt: new Date(Date.now() + 1000 * 60 * 60 * 24),
+      ...updatedData,
+    };
+  }
+
+  public static createGoogleAuthRequest(
+    updatedData?: Partial<GoogleAuthRequest>
+  ): GoogleAuthRequest {
+    return {
+      idToken: this.GOOGLE_ID,
+      name: this.NAME,
+      deviceId: this.DEVICE_ID,
+      ...updatedData,
+    };
+  }
+
+  public static createRefreshTokenResponse(
+    updatedData?: Partial<RefreshTokenResponse>
+  ): RefreshTokenResponse {
+    return {
+      accessToken: this.ACCESS_TOKEN,
+      refreshToken: this.REFRESH_TOKEN,
+      ...updatedData,
+    };
+  }
+
   public static createUserEntity(): User {
+    const refreshTokens: IRefreshToken[] = [this.createRefreshToken()];
     return User.builder()
       .setId(this.ID)
       .setUsername(this.USERNAME)
@@ -55,6 +102,7 @@ export default class UserTestFixture {
       .setGoogleId(this.GOOGLE_ID)
       .setEmail(this.EMAIL)
       .setAuthProvider(this.AUTH_PROVIDER)
+      .setRefreshTokens(refreshTokens)
       .setCreatedAt(this.CREATED_AT)
       .setUpdatedAt(this.UPDATED_AT)
       .build();
@@ -76,6 +124,7 @@ export default class UserTestFixture {
       isActive: this.IS_ACTIVE,
       email: this.EMAIL,
       authProvider: this.AUTH_PROVIDER,
+      deviceId: this.DEVICE_TOKEN,
       ...updatedData,
     };
   }
@@ -86,6 +135,7 @@ export default class UserTestFixture {
     return {
       email: this.EMAIL,
       password: this.PASSWORD,
+      deviceId: this.DEVICE_ID,
       ...request,
     };
   }
@@ -95,7 +145,8 @@ export default class UserTestFixture {
   ): UserResponse {
     return {
       userId: this.USER_ID,
-      token: this.TOKEN,
+      accessToken: this.ACCESS_TOKEN,
+      refreshToken: this.REFRESH_TOKEN,
       username: this.USERNAME,
       name: this.NAME,
       ...updatedData,

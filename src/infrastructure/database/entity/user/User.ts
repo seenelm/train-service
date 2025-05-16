@@ -1,4 +1,5 @@
 import { Types } from "mongoose";
+import { IRefreshToken } from "../../models/user/userModel.js";
 
 export default class User {
   private id: Types.ObjectId;
@@ -9,6 +10,7 @@ export default class User {
   private googleId?: string;
   private email: string;
   private authProvider: string;
+  private refreshTokens: IRefreshToken[];
   private createdAt?: Date;
   private updatedAt?: Date;
 
@@ -21,6 +23,7 @@ export default class User {
     this.googleId = builder.googleId;
     this.email = builder.email;
     this.authProvider = builder.authProvider;
+    this.refreshTokens = builder.refreshTokens;
     this.createdAt = builder.createdAt;
     this.updatedAt = builder.updatedAt;
   }
@@ -59,6 +62,10 @@ export default class User {
 
   public getAuthProvider(): string {
     return this.authProvider;
+  }
+
+  public getRefreshTokens(): IRefreshToken[] {
+    return this.refreshTokens;
   }
 
   public getCreatedAt(): Date | undefined {
@@ -101,6 +108,10 @@ export default class User {
     this.authProvider = authProvider;
   }
 
+  public setRefreshTokens(refreshTokens: IRefreshToken[]): void {
+    this.refreshTokens = refreshTokens;
+  }
+
   public setCreatedAt(createdAt: Date): void {
     this.createdAt = createdAt;
   }
@@ -119,6 +130,7 @@ class UserBuilder {
   googleId?: string;
   email: string = "";
   authProvider: string = "";
+  refreshTokens: IRefreshToken[] = [];
   createdAt?: Date;
   updatedAt?: Date;
 
@@ -159,6 +171,11 @@ class UserBuilder {
 
   public setAuthProvider(authProvider: string): this {
     this.authProvider = authProvider;
+    return this;
+  }
+
+  public setRefreshTokens(refreshTokens: IRefreshToken[]): this {
+    this.refreshTokens = refreshTokens;
     return this;
   }
 

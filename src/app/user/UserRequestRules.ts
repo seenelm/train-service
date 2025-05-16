@@ -1,5 +1,11 @@
 import { RuleSet } from "../../common/utils/requestValidation.js";
-import { ValidateRegisterUser, ValidateLoginUser } from "../../common/enums.js";
+import {
+  ValidateRegisterUser,
+  ValidateLoginUser,
+  ValidateLogout,
+  ValidateRefreshTokens,
+  ValidateGoogleAuth,
+} from "../../common/enums.js";
 
 export default class UserRequestRules {
   public static registerRules: RuleSet<any> = {
@@ -15,6 +21,10 @@ export default class UserRequestRules {
       hasError: (u) => !!u.name,
       message: ValidateRegisterUser.NameRequired,
     },
+    deviceId: {
+      hasError: (u) => !!u.deviceId,
+      message: ValidateRegisterUser.DeviceIdRequired,
+    },
   };
 
   // TODO: Add rules for password and email
@@ -26,6 +36,39 @@ export default class UserRequestRules {
     password: {
       hasError: (u) => !!u.password,
       message: ValidateLoginUser.PasswordRequired,
+    },
+    deviceId: {
+      hasError: (u) => !!u.deviceId,
+      message: ValidateLoginUser.DeviceIdRequired,
+    },
+  };
+
+  public static refreshTokenRules: RuleSet<any> = {
+    refreshToken: {
+      hasError: (u) => !!u.refreshToken,
+      message: ValidateRefreshTokens.RefreshTokenRequired,
+    },
+    deviceId: {
+      hasError: (u) => !!u.deviceId,
+      message: ValidateRefreshTokens.DeviceIdRequired,
+    },
+  };
+
+  public static logoutRules: RuleSet<any> = {
+    refreshToken: {
+      hasError: (u) => !!u.refreshToken,
+      message: ValidateLogout.RefreshTokenRequired,
+    },
+    deviceId: {
+      hasError: (u) => !!u.deviceId,
+      message: ValidateLogout.DeviceIdRequired,
+    },
+  };
+
+  public static googleAuthRules: RuleSet<any> = {
+    deviceId: {
+      hasError: (u) => !!u.deviceId,
+      message: ValidateGoogleAuth.DeviceIdRequired,
     },
   };
 }

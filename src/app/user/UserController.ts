@@ -46,14 +46,18 @@ export default class UserController {
     }
   };
 
-  googleAuth = async (req: Request, res: Response, next: NextFunction) => {
+  public googleAuth = async (
+    req: Request,
+    res: Response,
+    next: NextFunction
+  ) => {
     try {
-      const { name } = req.body as GoogleAuthRequest;
+      const googleAuthRequest = req.body as GoogleAuthRequest;
       const decodedToken = req.firebaseUser;
 
       const userResponse = await this.userService.authenticateWithGoogle(
         decodedToken,
-        name
+        googleAuthRequest
       );
       return res.status(HttpStatusCode.OK).json(userResponse);
     } catch (error) {
@@ -61,30 +65,36 @@ export default class UserController {
     }
   };
 
-  // findUserById = async (req: Request, res: Response, next: NextFunction) => {
-  //     try {
-  //         const { userId } = req.params;
-  //         let id = new Types.ObjectId(userId);
-  //         const user = await this.userService.findUserById(id);
-  //         return res.status(201).json(user);
-  //     } catch (error) {
-  //         next(error);
-  //     }
-  // };
+  public refreshTokens = async (
+    req: Request,
+    res: Response,
+    next: NextFunction
+  ) => {
+    try {
+      const { refreshToken, deviceId } = req.body;
 
-  // deleteUserAccount = async (
-  //     req: Request,
-  //     res: Response,
-  //     next: NextFunction,
-  // ) => {
-  //     const { userId } = req.params;
-  //     let userID = new Types.ObjectId(userId);
+      const userResponse = await this.userService.refreshTokens(
+        refreshToken,
+        deviceId
+      );
 
-  //     try {
-  //         await this.userService.deleteUserAccount(userID);
-  //         return res.status(201).json({ success: true });
-  //     } catch (error) {
-  //         next(error);
-  //     }
-  // };
+      return res.status(HttpStatusCode.OK).json(userResponse);
+    } catch (error) {
+      next(error);
+    }
+  };
+
+  public logout = async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const { refreshToken, deviceId } = req.body;
+
+      await this.userService.logoutUser(refreshToken, deviceId);
+
+      return res.status(HttpStatusCode.OK).json({
+        message: "User logged out successfully",
+      });
+    } catch (error) {
+      next(error);
+    }
+  };
 }
