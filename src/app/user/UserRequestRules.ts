@@ -4,6 +4,7 @@ import {
   ValidateLoginUser,
   ValidateLogout,
   ValidateRefreshTokens,
+  ValidateGoogleAuth,
 } from "../../common/enums.js";
 
 export default class UserRequestRules {
@@ -61,6 +62,13 @@ export default class UserRequestRules {
     deviceId: {
       hasError: (u) => !!u.deviceId,
       message: ValidateLogout.DeviceIdRequired,
+    },
+  };
+
+  public static googleAuthRules: RuleSet<any> = {
+    deviceId: {
+      hasError: (u) => !!u.deviceId,
+      message: ValidateGoogleAuth.DeviceIdRequired,
     },
   };
 }

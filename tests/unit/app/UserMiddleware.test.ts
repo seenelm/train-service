@@ -13,12 +13,14 @@ import { StatusCodes as HttpStatusCode } from "http-status-codes";
 import {
   UserRequest,
   UserLoginRequest,
+  GoogleAuthRequest,
 } from "../../../src/app/user/userDto.js";
 import {
   ValidateRegisterUser,
   ValidateLoginUser,
   ValidateLogout,
   ValidateRefreshTokens,
+  ValidateGoogleAuth,
 } from "../../../src/common/enums.js";
 import { CreateValidator } from "../../../src/common/utils/requestValidation.js";
 import UserTestFixture from "../../fixtures/UserTestFixture.js";
@@ -366,6 +368,63 @@ describe("UserMiddleware", () => {
       expect(CreateValidator.validate).toHaveBeenCalledWith(
         userLoginRequest,
         UserRequestRules.loginRules
+      );
+      expect(mockNext).toHaveBeenCalledWith(
+        APIError.BadRequest("Validation failed", validationErrors)
+      );
+    });
+  });
+
+  describe("validateGoogleAuth", () => {
+    it("should call next() when all required fields are provided", async () => {
+      // Arrange
+      const googleAuthRequest = UserTestFixture.createGoogleAuthRequest();
+
+      mockRequest.body = googleAuthRequest;
+
+      // Mock the validation to return empty array (no errors)
+      vi.mocked(CreateValidator.validate).mockReturnValueOnce([]);
+
+      // Act
+      await userMiddleware.validateGoogleAuth(
+        mockRequest as Request<{}, {}, GoogleAuthRequest>,
+        mockResponse as Response,
+        mockNext as NextFunction
+      );
+
+      // Assert
+      expect(CreateValidator.validate).toHaveBeenCalledWith(
+        googleAuthRequest,
+        UserRequestRules.googleAuthRules
+      );
+      expect(mockNext).toHaveBeenCalled();
+      expect(mockResponse.status).not.toHaveBeenCalled();
+      expect(mockResponse.json).not.toHaveBeenCalled();
+    });
+
+    it("should return 400 when deviceId is missing", async () => {
+      // Arrange
+      const googleAuthRequest = UserTestFixture.createGoogleAuthRequest({
+        deviceId: undefined,
+      });
+
+      mockRequest.body = googleAuthRequest;
+      const validationErrors = [ValidateGoogleAuth.DeviceIdRequired];
+
+      // Mock the validation to return an error
+      vi.mocked(CreateValidator.validate).mockReturnValueOnce(validationErrors);
+
+      // Act
+      await userMiddleware.validateGoogleAuth(
+        mockRequest as Request<{}, {}, GoogleAuthRequest>,
+        mockResponse as Response,
+        mockNext as NextFunction
+      );
+
+      // Assert
+      expect(CreateValidator.validate).toHaveBeenCalledWith(
+        googleAuthRequest,
+        UserRequestRules.googleAuthRules
       );
       expect(mockNext).toHaveBeenCalledWith(
         APIError.BadRequest("Validation failed", validationErrors)

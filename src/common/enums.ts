@@ -76,3 +76,7 @@ export enum ValidateLogout {
   RefreshTokenRequired = "Refresh token is required",
   DeviceIdRequired = "Device ID is required",
 }
+
+export enum ValidateGoogleAuth {
+  DeviceIdRequired = "Device ID is required",
+}
