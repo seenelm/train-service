@@ -209,10 +209,7 @@ describe("UserController", () => {
   describe("logout", () => {
     it("should log out a user successfully and return 200 status", async () => {
       // Arrange
-      const logoutRequest = {
-        refreshToken: UserTestFixture.REFRESH_TOKEN,
-        deviceId: UserTestFixture.DEVICE_ID,
-      };
+      const logoutRequest = UserTestFixture.createLogoutRequest();
       const expectedResponse = { message: "User logged out successfully" };
 
       mockRequest.body = logoutRequest;
@@ -227,10 +224,7 @@ describe("UserController", () => {
       );
 
       // Assert
-      expect(mockUserService.logoutUser).toHaveBeenCalledWith(
-        logoutRequest.refreshToken,
-        logoutRequest.deviceId
-      );
+      expect(mockUserService.logoutUser).toHaveBeenCalledWith(logoutRequest);
       expect(mockResponse.status).toHaveBeenCalledWith(HttpStatusCode.OK);
       expect(mockResponse.json).toHaveBeenCalledWith(expectedResponse);
       expect(mockNext).not.toHaveBeenCalled();
@@ -238,10 +232,7 @@ describe("UserController", () => {
 
     it("should pass any errors to the next middleware", async () => {
       // Arrange
-      const logoutRequest = {
-        refreshToken: UserTestFixture.REFRESH_TOKEN,
-        deviceId: UserTestFixture.DEVICE_ID,
-      };
+      const logoutRequest = UserTestFixture.createLogoutRequest();
       const expectedError = new DatabaseError("Database error");
 
       mockRequest.body = logoutRequest;
@@ -258,10 +249,7 @@ describe("UserController", () => {
       );
 
       // Assert
-      expect(mockUserService.logoutUser).toHaveBeenCalledWith(
-        logoutRequest.refreshToken,
-        logoutRequest.deviceId
-      );
+      expect(mockUserService.logoutUser).toHaveBeenCalledWith(logoutRequest);
       expect(mockResponse.status).not.toHaveBeenCalled();
       expect(mockResponse.json).not.toHaveBeenCalled();
       expect(mockNext).toHaveBeenCalledWith(expectedError);
@@ -271,10 +259,7 @@ describe("UserController", () => {
   describe("refreshTokens", () => {
     it("should refresh tokens successfully and return 200 status", async () => {
       // Arrange
-      const refreshTokenRequest = {
-        refreshToken: UserTestFixture.REFRESH_TOKEN,
-        deviceId: UserTestFixture.DEVICE_ID,
-      };
+      const refreshTokenRequest = UserTestFixture.createRefreshTokenRequest();
       const expectedResponse = UserTestFixture.createRefreshTokenResponse({
         accessToken: "newAccessToken",
         refreshToken: "newRefreshToken",
@@ -295,8 +280,7 @@ describe("UserController", () => {
 
       // Assert
       expect(mockUserService.refreshTokens).toHaveBeenCalledWith(
-        refreshTokenRequest.refreshToken,
-        refreshTokenRequest.deviceId
+        refreshTokenRequest
       );
       expect(mockResponse.status).toHaveBeenCalledWith(HttpStatusCode.OK);
       expect(mockResponse.json).toHaveBeenCalledWith(expectedResponse);
@@ -305,10 +289,7 @@ describe("UserController", () => {
 
     it("should pass any errors to the next middleware", async () => {
       // Arrange
-      const refreshTokenRequest = {
-        refreshToken: UserTestFixture.REFRESH_TOKEN,
-        deviceId: UserTestFixture.DEVICE_ID,
-      };
+      const refreshTokenRequest = UserTestFixture.createRefreshTokenRequest();
       const expectedError = new DatabaseError("Database error");
 
       mockRequest.body = refreshTokenRequest;
@@ -326,8 +307,7 @@ describe("UserController", () => {
 
       // Assert
       expect(mockUserService.refreshTokens).toHaveBeenCalledWith(
-        refreshTokenRequest.refreshToken,
-        refreshTokenRequest.deviceId
+        refreshTokenRequest
       );
       expect(mockResponse.status).not.toHaveBeenCalled();
       expect(mockResponse.json).not.toHaveBeenCalled();

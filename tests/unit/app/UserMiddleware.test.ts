@@ -435,10 +435,7 @@ describe("UserMiddleware", () => {
   describe("validateRefreshToken", () => {
     it("should call next() when all required fields are provided", async () => {
       // Arrange
-      const refreshTokenRequest = {
-        refreshToken: UserTestFixture.REFRESH_TOKEN,
-        deviceId: UserTestFixture.DEVICE_ID,
-      };
+      const refreshTokenRequest = UserTestFixture.createRefreshTokenRequest();
 
       mockRequest.body = refreshTokenRequest;
 
@@ -464,10 +461,9 @@ describe("UserMiddleware", () => {
 
     it("should return 400 when refreshToken is missing", async () => {
       // Arrange
-      const refreshTokenRequest = {
+      const refreshTokenRequest = UserTestFixture.createRefreshTokenRequest({
         refreshToken: undefined,
-        deviceId: UserTestFixture.DEVICE_ID,
-      };
+      });
 
       mockRequest.body = refreshTokenRequest;
       const validationErrors = [ValidateRefreshTokens.RefreshTokenRequired];
@@ -494,10 +490,9 @@ describe("UserMiddleware", () => {
 
     it("should return 400 when deviceId is missing", async () => {
       // Arrange
-      const refreshTokenRequest = {
-        refreshToken: UserTestFixture.REFRESH_TOKEN,
+      const refreshTokenRequest = UserTestFixture.createRefreshTokenRequest({
         deviceId: undefined,
-      };
+      });
 
       mockRequest.body = refreshTokenRequest;
       const validationErrors = [ValidateRefreshTokens.DeviceIdRequired];
@@ -556,10 +551,7 @@ describe("UserMiddleware", () => {
   describe("validateLogout", () => {
     it("should call next() when all required fields are provided", async () => {
       // Arrange
-      const logoutRequest = {
-        refreshToken: UserTestFixture.REFRESH_TOKEN,
-        deviceId: UserTestFixture.DEVICE_ID,
-      };
+      const logoutRequest = UserTestFixture.createLogoutRequest();
 
       mockRequest.body = logoutRequest;
 
@@ -585,10 +577,9 @@ describe("UserMiddleware", () => {
 
     it("should return 400 when refreshToken is missing", async () => {
       // Arrange
-      const logoutRequest = {
+      const logoutRequest = UserTestFixture.createLogoutRequest({
         refreshToken: undefined,
-        deviceId: UserTestFixture.DEVICE_ID,
-      };
+      });
 
       mockRequest.body = logoutRequest;
       const validationErrors = [ValidateLogout.RefreshTokenRequired];
@@ -615,10 +606,9 @@ describe("UserMiddleware", () => {
 
     it("should return 400 when deviceId is missing", async () => {
       // Arrange
-      const logoutRequest = {
-        refreshToken: UserTestFixture.REFRESH_TOKEN,
+      const logoutRequest = UserTestFixture.createLogoutRequest({
         deviceId: undefined,
-      };
+      });
 
       mockRequest.body = logoutRequest;
       const validationErrors = [ValidateLogout.DeviceIdRequired];

@@ -9,6 +9,8 @@ import {
   UserLoginRequest,
   UserRequest,
   GoogleAuthRequest,
+  RefreshTokenRequest,
+  LogoutRequest,
   RefreshTokenResponse,
 } from "../../src/app/user/userDto.js";
 import { DecodedIdToken } from "firebase-admin/auth";
@@ -76,6 +78,26 @@ export default class UserTestFixture {
     return {
       idToken: this.GOOGLE_ID,
       name: this.NAME,
+      deviceId: this.DEVICE_ID,
+      ...updatedData,
+    };
+  }
+
+  public static createRefreshTokenRequest(
+    updatedData?: Partial<RefreshTokenRequest>
+  ): RefreshTokenRequest {
+    return {
+      refreshToken: this.REFRESH_TOKEN,
+      deviceId: this.DEVICE_ID,
+      ...updatedData,
+    };
+  }
+
+  public static createLogoutRequest(
+    updatedData?: Partial<LogoutRequest>
+  ): LogoutRequest {
+    return {
+      refreshToken: this.REFRESH_TOKEN,
       deviceId: this.DEVICE_ID,
       ...updatedData,
     };

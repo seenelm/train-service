@@ -532,6 +532,7 @@ describe("UserService", () => {
   describe("refreshTokens", () => {
     it("should successfully refresh tokens", async () => {
       // Arrange
+      const refreshTokenRequest = UserTestFixture.createRefreshTokenRequest();
       const newRefreshToken = UserTestFixture.createRefreshToken({
         token: "new-refresh-token",
         deviceId: "new-device-id",
@@ -552,10 +553,7 @@ describe("UserService", () => {
       );
 
       // Act
-      const result = await userService.refreshTokens(
-        UserTestFixture.REFRESH_TOKEN,
-        UserTestFixture.DEVICE_ID
-      );
+      const result = await userService.refreshTokens(refreshTokenRequest);
 
       // Assert
       expect(mockUserRepository.findOne).toHaveBeenCalledWith({
@@ -571,14 +569,12 @@ describe("UserService", () => {
 
     it("should throw Forbidden error if user is not found with refresh token and deviceId", async () => {
       // Arrange
+      const refreshTokenRequest = UserTestFixture.createRefreshTokenRequest();
       vi.spyOn(mockUserRepository, "findOne").mockResolvedValue(null);
 
       // Act & Assert
       await expect(
-        userService.refreshTokens(
-          UserTestFixture.REFRESH_TOKEN,
-          UserTestFixture.DEVICE_ID
-        )
+        userService.refreshTokens(refreshTokenRequest)
       ).rejects.toThrowError(
         AuthError.Forbidden(AuthErrorType.InvalidRefreshToken)
       );
@@ -591,6 +587,7 @@ describe("UserService", () => {
 
     it("should throw Forbidden error if refresh token is expired", async () => {
       // Arrange
+      const refreshTokenRequest = UserTestFixture.createRefreshTokenRequest();
       const expiredRefreshToken = UserTestFixture.createRefreshToken({
         expiresAt: new Date(Date.now() - 1000), // Expired
       });
@@ -603,10 +600,7 @@ describe("UserService", () => {
 
       // Act & Assert
       await expect(
-        userService.refreshTokens(
-          UserTestFixture.REFRESH_TOKEN,
-          UserTestFixture.DEVICE_ID
-        )
+        userService.refreshTokens(refreshTokenRequest)
       ).rejects.toThrowError(
         AuthError.Forbidden(AuthErrorType.RefreshTokenExpired)
       );
@@ -626,15 +620,13 @@ describe("UserService", () => {
 
     it("should handle database errors", async () => {
       // Arrange
+      const refreshTokenRequest = UserTestFixture.createRefreshTokenRequest();
       const dbError = new MongooseError.DocumentNotFoundError("User not found");
       vi.spyOn(mockUserRepository, "findOne").mockRejectedValueOnce(dbError);
 
       // Act & Assert
       await expect(
-        userService.refreshTokens(
-          UserTestFixture.REFRESH_TOKEN,
-          UserTestFixture.DEVICE_ID
-        )
+        userService.refreshTokens(refreshTokenRequest)
       ).rejects.toThrowError(DatabaseError.handleMongoDBError(dbError));
     });
   });
@@ -642,16 +634,14 @@ describe("UserService", () => {
   describe("logoutUser", () => {
     it("should successfully logout a user", async () => {
       // Arrange
+      const logoutRequest = UserTestFixture.createLogoutRequest();
       const user = UserTestFixture.createUserEntity();
       user.setRefreshTokens([]);
 
       vi.spyOn(mockUserRepository, "findOneAndUpdate").mockResolvedValue(user);
 
       // Act
-      await userService.logoutUser(
-        UserTestFixture.REFRESH_TOKEN,
-        UserTestFixture.DEVICE_ID
-      );
+      await userService.logoutUser(logoutRequest);
 
       // Assert
       expect(mockUserRepository.findOneAndUpdate).toHaveBeenCalledWith(
@@ -672,20 +662,18 @@ describe("UserService", () => {
 
     it("should throw 404 error if user is not found", async () => {
       // Arrange
-
+      const logoutRequest = UserTestFixture.createLogoutRequest();
       vi.spyOn(mockUserRepository, "findOneAndUpdate").mockResolvedValue(null);
 
       // Act & Assert
-      await expect(
-        userService.logoutUser(
-          UserTestFixture.REFRESH_TOKEN,
-          UserTestFixture.DEVICE_ID
-        )
-      ).rejects.toThrowError(APIError.NotFound(APIErrorType.UserNotFound));
+      await expect(userService.logoutUser(logoutRequest)).rejects.toThrowError(
+        APIError.NotFound(APIErrorType.UserNotFound)
+      );
     });
 
     it("should handle database errors", async () => {
       // Arrange
+      const logoutRequest = UserTestFixture.createLogoutRequest();
       const dbError = new MongooseError.DocumentNotFoundError("User not found");
 
       vi.spyOn(mockUserRepository, "findOneAndUpdate").mockRejectedValueOnce(
@@ -693,12 +681,9 @@ describe("UserService", () => {
       );
 
       // Act & Assert
-      await expect(
-        userService.logoutUser(
-          UserTestFixture.REFRESH_TOKEN,
-          UserTestFixture.DEVICE_ID
-        )
-      ).rejects.toThrowError(DatabaseError.handleMongoDBError(dbError));
+      await expect(userService.logoutUser(logoutRequest)).rejects.toThrowError(
+        DatabaseError.handleMongoDBError(dbError)
+      );
     });
   });
 });

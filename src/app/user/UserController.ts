@@ -5,6 +5,8 @@ import {
   UserResponse,
   GoogleAuthRequest,
   UserRequest,
+  RefreshTokenRequest,
+  LogoutRequest,
 } from "./userDto.js";
 import { StatusCodes as HttpStatusCode } from "http-status-codes";
 import { Logger } from "../../common/logger.js";
@@ -71,11 +73,10 @@ export default class UserController {
     next: NextFunction
   ) => {
     try {
-      const { refreshToken, deviceId } = req.body;
+      const refreshTokensRequest = req.body as RefreshTokenRequest;
 
       const userResponse = await this.userService.refreshTokens(
-        refreshToken,
-        deviceId
+        refreshTokensRequest
       );
 
       return res.status(HttpStatusCode.OK).json(userResponse);
@@ -86,9 +87,9 @@ export default class UserController {
 
   public logout = async (req: Request, res: Response, next: NextFunction) => {
     try {
-      const { refreshToken, deviceId } = req.body;
+      const logoutRequest = req.body as LogoutRequest;
 
-      await this.userService.logoutUser(refreshToken, deviceId);
+      await this.userService.logoutUser(logoutRequest);
 
       return res.status(HttpStatusCode.OK).json({
         message: "User logged out successfully",

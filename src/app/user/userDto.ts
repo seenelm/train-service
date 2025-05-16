@@ -39,3 +39,13 @@ export interface RefreshTokenResponse {
   accessToken: string;
   refreshToken: string;
 }
+
+export interface RefreshTokenRequest {
+  refreshToken: string;
+  deviceId: string;
+}
+
+export interface LogoutRequest {
+  refreshToken: string;
+  deviceId: string;
+}

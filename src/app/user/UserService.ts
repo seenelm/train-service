@@ -14,6 +14,8 @@ import {
   updateUserRequest,
   GoogleAuthRequest,
   RefreshTokenResponse,
+  RefreshTokenRequest,
+  LogoutRequest,
 } from "./userDto.js";
 
 import mongoose from "mongoose";
@@ -46,10 +48,9 @@ export interface IUserService {
     googleAuthRequest: GoogleAuthRequest
   ): Promise<UserResponse>;
   refreshTokens(
-    refreshToken: string,
-    deviceId: string
+    refreshTokens: RefreshTokenRequest
   ): Promise<RefreshTokenResponse>;
-  logoutUser(refreshToken: string, deviceId: string): Promise<void>;
+  logoutUser(logoutRequest: LogoutRequest): Promise<void>;
 }
 
 export default class UserService implements IUserService {
@@ -283,9 +284,10 @@ export default class UserService implements IUserService {
   }
 
   public async refreshTokens(
-    refreshToken: string,
-    deviceId: string
+    refreshTokensRequest: RefreshTokenRequest
   ): Promise<RefreshTokenResponse> {
+    const { refreshToken, deviceId } = refreshTokensRequest;
+
     try {
       const user = await this.userRepository.findOne({
         "refreshTokens.token": refreshToken,
@@ -368,10 +370,9 @@ export default class UserService implements IUserService {
     }
   }
 
-  public async logoutUser(
-    refreshToken: string,
-    deviceId: string
-  ): Promise<void> {
+  public async logoutUser(logoutRequest: LogoutRequest): Promise<void> {
+    const { refreshToken, deviceId } = logoutRequest;
+
     try {
       const user = await this.userRepository.findOneAndUpdate(
         {
