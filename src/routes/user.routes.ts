@@ -34,7 +34,7 @@ router.post("/login", userMiddleware.validateLoginUser, userController.login);
 
 router.post("/google-auth", verifyFirebaseToken, userController.googleAuth);
 
-router.post("/refresh", userController.refreshToken);
+router.post("/refresh", userController.refreshTokens);
 
 router.post("/logout", userController.logout);
 

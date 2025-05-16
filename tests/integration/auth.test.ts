@@ -52,7 +52,7 @@ describe("Train Service Integration Tests", () => {
     expect(response.username).toBeDefined();
     expect(response.name).toBe(userRequest.name);
     expect(response.userId).toBeDefined();
-    expect(response.token).toBeDefined();
+    expect(response.accessToken).toBeDefined();
   });
 
   it("should login a user successfully", async () => {
@@ -70,7 +70,7 @@ describe("Train Service Integration Tests", () => {
     expect(response.username).toBe(userResponse.username);
     expect(response.name).toBe(userResponse.name);
     expect(response.userId).toBe(userResponse.userId);
-    expect(response.token).toBeDefined();
+    expect(response.accessToken).toBeDefined();
   });
 
   describe("User Registration Error Cases", () => {

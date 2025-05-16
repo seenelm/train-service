@@ -68,6 +68,6 @@ export const mockUserService: IUserService = {
   registerUser: vi.fn(),
   loginUser: vi.fn(),
   authenticateWithGoogle: vi.fn(),
-  refreshToken: vi.fn(),
+  refreshTokens: vi.fn(),
   logoutUser: vi.fn(),
 };

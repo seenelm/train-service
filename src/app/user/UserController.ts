@@ -65,7 +65,7 @@ export default class UserController {
     }
   };
 
-  public refreshToken = async (
+  public refreshTokens = async (
     req: Request,
     res: Response,
     next: NextFunction
@@ -73,7 +73,7 @@ export default class UserController {
     try {
       const { refreshToken, deviceId } = req.body;
 
-      const userResponse = await this.userService.refreshToken(
+      const userResponse = await this.userService.refreshTokens(
         refreshToken,
         deviceId
       );
@@ -90,7 +90,7 @@ export default class UserController {
 
       await this.userService.logoutUser(refreshToken, deviceId);
 
-      return res.status(HttpStatusCode.NO_CONTENT).json({
+      return res.status(HttpStatusCode.OK).json({
         message: "User logged out successfully",
       });
     } catch (error) {

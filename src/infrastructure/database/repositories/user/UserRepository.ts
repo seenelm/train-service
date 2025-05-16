@@ -20,7 +20,7 @@ export interface IUserRepository extends IBaseRepository<User, UserDocument> {
 
   toResponse(
     user: User,
-    token: string,
+    accessToken: string,
     name: string,
     refreshToken: string
   ): UserResponse;
@@ -89,13 +89,13 @@ export default class UserRepository
 
   toResponse(
     user: User,
-    token: string,
+    accessToken: string,
     name: string,
     refreshToken: string
   ): UserResponse {
     return {
       userId: user.getId().toString(),
-      token,
+      accessToken: accessToken,
       refreshToken,
       username: user.getUsername(),
       name,

@@ -26,12 +26,24 @@ import { AuthError } from "../../../src/common/errors/AuthError.js";
 import { JsonWebTokenError } from "jsonwebtoken";
 import { Error as MongooseError } from "mongoose";
 import { DatabaseError } from "../../../src/common/errors/DatabaseError.js";
+import { IRefreshToken } from "../../../src/infrastructure/database/models/user/userModel.js";
+import {
+  RegisterUserAPIError,
+  LoginUserAPIError,
+  GoogleAuthAPIError,
+  AuthErrorType,
+  APIErrorType,
+} from "../../../src/common/enums.js";
 
 describe("UserService", () => {
   let userService: UserService;
   let mockSession: MockedObject<ClientSession>;
 
   beforeEach(() => {
+    process.env.SECRET_CODE = "test-secret-key";
+    process.env.ACCESS_TOKEN_EXPIRY = "15m";
+    process.env.REFRESH_TOKEN_EXPIRY = "30";
+
     userService = new UserService(
       mockUserRepository,
       mockUserProfileRepository,
@@ -61,10 +73,18 @@ describe("UserService", () => {
       const mockPasswordHash = "hashedPassword";
       const userDocument = UserTestFixture.createUserDocument();
       const expectedUserResponse = UserTestFixture.createUserResponse();
+      const refreshToken = UserTestFixture.createRefreshToken();
 
       vi.spyOn(mockUserRepository, "findOne").mockResolvedValueOnce(null);
       vi.spyOn(BcryptUtil, "hashPassword").mockResolvedValueOnce(
         mockPasswordHash
+      );
+
+      const expectedUniqueUsername = `${
+        userRequest.email.split("@")[0]
+      }_mockedUniqueId`;
+      vi.spyOn(userService, "generateUniqueUsername").mockReturnValue(
+        expectedUniqueUsername
       );
       vi.spyOn(mockUserRepository, "toDocument").mockReturnValueOnce(
         userDocument
@@ -79,7 +99,9 @@ describe("UserService", () => {
       );
       vi.spyOn(mockFollowRepository, "create").mockResolvedValueOnce({} as any);
 
-      vi.spyOn(JWTUtil, "sign").mockResolvedValueOnce(UserTestFixture.TOKEN);
+      vi.spyOn(JWTUtil, "sign").mockResolvedValueOnce(
+        UserTestFixture.ACCESS_TOKEN
+      );
       vi.spyOn(mockUserRepository, "toResponse").mockReturnValueOnce(
         expectedUserResponse
       );
@@ -97,10 +119,18 @@ describe("UserService", () => {
       );
       expect(mockUserRepository.toDocument).toHaveBeenCalledWith(
         expect.objectContaining({
-          username: expect.any(String),
+          username: expectedUniqueUsername,
+          name: userRequest.name,
           password: mockPasswordHash,
           isActive: true,
           email: userRequest.email,
+          authProvider: userRequest.authProvider,
+          deviceId: userRequest.deviceId,
+        }),
+        expect.objectContaining({
+          token: expect.any(String), // uuidv4() in createRefreshToken
+          deviceId: userRequest.deviceId, // Passed from userRequest to createRefreshToken
+          expiresAt: expect.any(Date),
         })
       );
       expect(mockUserRepository.create).toHaveBeenCalledWith(userDocument, {
@@ -127,8 +157,9 @@ describe("UserService", () => {
       expect(mockSession.endSession).toHaveBeenCalled();
       expect(mockUserRepository.toResponse).toHaveBeenCalledWith(
         user,
-        UserTestFixture.TOKEN,
-        userRequest.name
+        UserTestFixture.ACCESS_TOKEN,
+        userRequest.name,
+        expect.any(String) // refreshToken
       );
     });
 
@@ -149,10 +180,7 @@ describe("UserService", () => {
 
       // Act & Assert
       await expect(userService.registerUser(userRequest)).rejects.toThrowError(
-        APIError.Conflict("Account with this email/username already exists", {
-          email,
-          username: expectedUsername,
-        })
+        APIError.Conflict(RegisterUserAPIError.UserAlreadyExists)
       );
       expect(mockUserRepository.findOne).toHaveBeenCalledWith({
         $or: [{ email: userRequest.email }, { username: expect.any(String) }],
@@ -270,7 +298,9 @@ describe("UserService", () => {
       vi.spyOn(mockUserProfileRepository, "findOne").mockResolvedValueOnce(
         userProfile
       );
-      vi.spyOn(JWTUtil, "sign").mockResolvedValueOnce(UserTestFixture.TOKEN);
+      vi.spyOn(JWTUtil, "sign").mockResolvedValueOnce(
+        UserTestFixture.ACCESS_TOKEN
+      );
       vi.spyOn(mockUserRepository, "toResponse").mockReturnValueOnce(
         expectedUserResponse
       );
@@ -293,17 +323,16 @@ describe("UserService", () => {
 
       expect(mockUserRepository.toResponse).toHaveBeenCalledWith(
         user,
-        UserTestFixture.TOKEN,
-        userProfile.getName()
+        UserTestFixture.ACCESS_TOKEN,
+        userProfile.getName(),
+        expect.any(String) // refreshToken
       );
     });
 
     it("should throw a conflict error if the user is not found", async () => {
       // Arrange
       const userLoginRequest = UserTestFixture.createUserLoginRequest();
-      const expectedError = APIError.NotFound("User not found", {
-        email: userLoginRequest.email,
-      });
+      const expectedError = APIError.NotFound(LoginUserAPIError.UserNotFound);
 
       vi.spyOn(mockUserRepository, "findOne").mockResolvedValueOnce(null);
 
@@ -317,10 +346,9 @@ describe("UserService", () => {
       // Arrange
       const userLoginRequest = UserTestFixture.createUserLoginRequest();
       const user = UserTestFixture.createUserEntity();
-      const expectedError = AuthError.HashingFailed({
-        email: userLoginRequest.email,
-        password: userLoginRequest.password,
-      });
+      const expectedError = AuthError.HashingFailed(
+        LoginUserAPIError.InvalidPassword
+      );
 
       vi.spyOn(mockUserRepository, "findOne").mockResolvedValueOnce(user);
       vi.spyOn(BcryptUtil, "comparePassword").mockResolvedValueOnce(false);
@@ -349,6 +377,7 @@ describe("UserService", () => {
     it("should successfully authenticate a new user with Google", async () => {
       // Arrange
       const decodedToken = UserTestFixture.createDecodedIdToken();
+      const googleAuthRequest = UserTestFixture.createGoogleAuthRequest();
       const user = UserTestFixture.createUserEntity();
       const expectedUsername = "username_001";
       const userDocument = UserTestFixture.createUserDocument({
@@ -379,7 +408,9 @@ describe("UserService", () => {
         {} as any
       );
       vi.spyOn(mockFollowRepository, "create").mockResolvedValueOnce({} as any);
-      vi.spyOn(JWTUtil, "sign").mockResolvedValueOnce(UserTestFixture.TOKEN);
+      vi.spyOn(JWTUtil, "sign").mockResolvedValueOnce(
+        UserTestFixture.ACCESS_TOKEN
+      );
       vi.spyOn(mockUserRepository, "toResponse").mockReturnValueOnce(
         expectedUserResponse
       );
@@ -387,11 +418,7 @@ describe("UserService", () => {
       // Act
       const result = await userService.authenticateWithGoogle(
         decodedToken,
-        {
-          name: UserTestFixture.NAME,
-          deviceId: UserTestFixture.DEVICE_TOKEN,
-          idToken: "mock-id-token",
-        }
+        googleAuthRequest
       );
 
       // Assert
@@ -406,18 +433,25 @@ describe("UserService", () => {
           email: decodedToken.email,
           authProvider: "google",
         }),
+        expect.objectContaining({
+          token: expect.any(String), // uuidv4() in createRefreshToken
+          deviceId: googleAuthRequest.deviceId,
+          expiresAt: expect.any(Date),
+        }),
         decodedToken.uid
       );
       expect(mockUserRepository.toResponse).toHaveBeenCalledWith(
         user,
-        UserTestFixture.TOKEN,
-        UserTestFixture.NAME
+        UserTestFixture.ACCESS_TOKEN,
+        UserTestFixture.NAME,
+        expect.any(String) // refreshToken
       );
     });
 
     it("should successfully authenticate an existing user with Google", async () => {
       // Arrange
       const decodedToken = UserTestFixture.createDecodedIdToken();
+      const googleAuthRequest = UserTestFixture.createGoogleAuthRequest();
       const user = UserTestFixture.createUserEntity();
       const userProfile = UserTestFixture.createUserProfile();
       const expectedUserResponse = UserTestFixture.createUserResponse({
@@ -428,16 +462,18 @@ describe("UserService", () => {
       vi.spyOn(mockUserProfileRepository, "findOne").mockResolvedValueOnce(
         userProfile
       );
-      vi.spyOn(JWTUtil, "sign").mockResolvedValueOnce(UserTestFixture.TOKEN);
+      vi.spyOn(JWTUtil, "sign").mockResolvedValueOnce(
+        UserTestFixture.ACCESS_TOKEN
+      );
       vi.spyOn(mockUserRepository, "toResponse").mockReturnValueOnce(
         expectedUserResponse
       );
 
       // Act
-      const result = await userService.authenticateWithGoogle(decodedToken, {
-        deviceId: UserTestFixture.DEVICE_TOKEN,
-        idToken: "mock-id-token",
-      });
+      const result = await userService.authenticateWithGoogle(
+        decodedToken,
+        googleAuthRequest
+      );
 
       // Assert
       expect(result).toEqual(expectedUserResponse);
@@ -449,14 +485,16 @@ describe("UserService", () => {
       });
       expect(mockUserRepository.toResponse).toHaveBeenCalledWith(
         user,
-        UserTestFixture.TOKEN,
-        userProfile.getName()
+        UserTestFixture.ACCESS_TOKEN,
+        userProfile.getName(),
+        expect.any(String) // refreshToken
       );
     });
 
     it("should throw a conflict error if the user already exists", async () => {
       // Arrange
       const decodedToken = UserTestFixture.createDecodedIdToken();
+      const googleAuthRequest = UserTestFixture.createGoogleAuthRequest();
       const existingUser = UserTestFixture.createUserEntity();
       const expectedUsername = "username_001";
       const email = decodedToken.email;
@@ -470,31 +508,196 @@ describe("UserService", () => {
 
       // Act & Assert
       await expect(
-        userService.authenticateWithGoogle(decodedToken, {
-          deviceId: UserTestFixture.DEVICE_TOKEN,
-          idToken: "mock-id-token",
-        })
+        userService.authenticateWithGoogle(decodedToken, googleAuthRequest)
       ).rejects.toThrowError(
-        APIError.Conflict(
-          "Account with this email/username already exists but not linked to this authentication provider",
-          { email, username: expectedUsername }
-        )
+        APIError.Conflict(GoogleAuthAPIError.UserAlreadyExists)
       );
     });
 
     it("should handle database errors when authenticating with Google", async () => {
       // Arrange
       const decodedToken = UserTestFixture.createDecodedIdToken();
+      const googleAuthRequest = UserTestFixture.createGoogleAuthRequest();
       const dbError = new MongooseError.DocumentNotFoundError("User not found");
 
       vi.spyOn(mockUserRepository, "findOne").mockRejectedValueOnce(dbError);
 
       // Act & Assert
       await expect(
-        userService.authenticateWithGoogle(decodedToken, {
-          deviceId: UserTestFixture.DEVICE_TOKEN,
-          idToken: "mock-id-token",
-        })
+        userService.authenticateWithGoogle(decodedToken, googleAuthRequest)
+      ).rejects.toThrowError(DatabaseError.handleMongoDBError(dbError));
+    });
+  });
+
+  describe("refreshTokens", () => {
+    it("should successfully refresh tokens", async () => {
+      // Arrange
+      const newRefreshToken = UserTestFixture.createRefreshToken({
+        token: "new-refresh-token",
+        deviceId: "new-device-id",
+      });
+      const newAccessToken = "new-access-token";
+      const existingUser: User = UserTestFixture.createUserEntity();
+      const updatedUser: User = UserTestFixture.createUserEntity();
+      updatedUser.setRefreshTokens([newRefreshToken]);
+
+      const refreshTokenResponse = UserTestFixture.createRefreshTokenResponse({
+        accessToken: newAccessToken,
+        refreshToken: newRefreshToken.token,
+      });
+
+      vi.spyOn(mockUserRepository, "findOne").mockResolvedValue(existingUser);
+      vi.spyOn(mockUserRepository, "findOneAndUpdate").mockResolvedValue(
+        updatedUser
+      );
+
+      // Act
+      const result = await userService.refreshTokens(
+        UserTestFixture.REFRESH_TOKEN,
+        UserTestFixture.DEVICE_ID
+      );
+
+      // Assert
+      expect(mockUserRepository.findOne).toHaveBeenCalledWith({
+        "refreshTokens.token": UserTestFixture.REFRESH_TOKEN,
+        "refreshTokens.deviceId": UserTestFixture.DEVICE_ID,
+      });
+
+      expect(result).toEqual({
+        accessToken: expect.any(String),
+        refreshToken: expect.any(String),
+      });
+    });
+
+    it("should throw Forbidden error if user is not found with refresh token and deviceId", async () => {
+      // Arrange
+      vi.spyOn(mockUserRepository, "findOne").mockResolvedValue(null);
+
+      // Act & Assert
+      await expect(
+        userService.refreshTokens(
+          UserTestFixture.REFRESH_TOKEN,
+          UserTestFixture.DEVICE_ID
+        )
+      ).rejects.toThrowError(
+        AuthError.Forbidden(AuthErrorType.InvalidRefreshToken)
+      );
+
+      expect(mockUserRepository.findOne).toHaveBeenCalledWith({
+        "refreshTokens.token": UserTestFixture.REFRESH_TOKEN,
+        "refreshTokens.deviceId": UserTestFixture.DEVICE_ID,
+      });
+    });
+
+    it("should throw Forbidden error if refresh token is expired", async () => {
+      // Arrange
+      const expiredRefreshToken = UserTestFixture.createRefreshToken({
+        expiresAt: new Date(Date.now() - 1000), // Expired
+      });
+
+      const user = UserTestFixture.createUserEntity();
+      user.setRefreshTokens([expiredRefreshToken]);
+
+      vi.spyOn(mockUserRepository, "findOne").mockResolvedValue(user);
+      vi.spyOn(mockUserRepository, "findByIdAndUpdate").mockResolvedValue(null);
+
+      // Act & Assert
+      await expect(
+        userService.refreshTokens(
+          UserTestFixture.REFRESH_TOKEN,
+          UserTestFixture.DEVICE_ID
+        )
+      ).rejects.toThrowError(
+        AuthError.Forbidden(AuthErrorType.RefreshTokenExpired)
+      );
+
+      expect(mockUserRepository.findByIdAndUpdate).toHaveBeenCalledWith(
+        user.getId(),
+        {
+          $pull: {
+            refreshTokens: {
+              token: UserTestFixture.REFRESH_TOKEN,
+              deviceId: UserTestFixture.DEVICE_ID,
+            },
+          },
+        }
+      );
+    });
+
+    it("should handle database errors", async () => {
+      // Arrange
+      const dbError = new MongooseError.DocumentNotFoundError("User not found");
+      vi.spyOn(mockUserRepository, "findOne").mockRejectedValueOnce(dbError);
+
+      // Act & Assert
+      await expect(
+        userService.refreshTokens(
+          UserTestFixture.REFRESH_TOKEN,
+          UserTestFixture.DEVICE_ID
+        )
+      ).rejects.toThrowError(DatabaseError.handleMongoDBError(dbError));
+    });
+  });
+
+  describe("logoutUser", () => {
+    it("should successfully logout a user", async () => {
+      // Arrange
+      const user = UserTestFixture.createUserEntity();
+      user.setRefreshTokens([]);
+
+      vi.spyOn(mockUserRepository, "findOneAndUpdate").mockResolvedValue(user);
+
+      // Act
+      await userService.logoutUser(
+        UserTestFixture.REFRESH_TOKEN,
+        UserTestFixture.DEVICE_ID
+      );
+
+      // Assert
+      expect(mockUserRepository.findOneAndUpdate).toHaveBeenCalledWith(
+        {
+          "refreshTokens.token": UserTestFixture.REFRESH_TOKEN,
+          "refreshTokens.deviceId": UserTestFixture.DEVICE_ID,
+        },
+        {
+          $pull: {
+            refreshTokens: {
+              token: UserTestFixture.REFRESH_TOKEN,
+              deviceId: UserTestFixture.DEVICE_ID,
+            },
+          },
+        }
+      );
+    });
+
+    it("should throw 404 error if user is not found", async () => {
+      // Arrange
+
+      vi.spyOn(mockUserRepository, "findOneAndUpdate").mockResolvedValue(null);
+
+      // Act & Assert
+      await expect(
+        userService.logoutUser(
+          UserTestFixture.REFRESH_TOKEN,
+          UserTestFixture.DEVICE_ID
+        )
+      ).rejects.toThrowError(APIError.NotFound(APIErrorType.UserNotFound));
+    });
+
+    it("should handle database errors", async () => {
+      // Arrange
+      const dbError = new MongooseError.DocumentNotFoundError("User not found");
+
+      vi.spyOn(mockUserRepository, "findOneAndUpdate").mockRejectedValueOnce(
+        dbError
+      );
+
+      // Act & Assert
+      await expect(
+        userService.logoutUser(
+          UserTestFixture.REFRESH_TOKEN,
+          UserTestFixture.DEVICE_ID
+        )
       ).rejects.toThrowError(DatabaseError.handleMongoDBError(dbError));
     });
   });

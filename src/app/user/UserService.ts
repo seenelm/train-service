@@ -16,10 +16,16 @@ import {
   RefreshTokenResponse,
 } from "./userDto.js";
 
-import mongoose, { ClientSession } from "mongoose";
+import mongoose from "mongoose";
 import { APIError } from "../../common/errors/APIError.js";
 import { Logger } from "../../common/logger.js";
-import { RegisterUserAPIError, LoginUserAPIError } from "../../common/enums.js";
+import {
+  RegisterUserAPIError,
+  LoginUserAPIError,
+  GoogleAuthAPIError,
+  AuthErrorType,
+  APIErrorType,
+} from "../../common/enums.js";
 
 import { DecodedIdToken } from "firebase-admin/auth";
 import { MongoServerError } from "mongodb";
@@ -39,7 +45,7 @@ export interface IUserService {
     decodedToken: DecodedIdToken,
     googleAuthRequest: GoogleAuthRequest
   ): Promise<UserResponse>;
-  refreshToken(
+  refreshTokens(
     refreshToken: string,
     deviceId: string
   ): Promise<RefreshTokenResponse>;
@@ -103,7 +109,12 @@ export default class UserService implements IUserService {
 
       return this.createUser(userDocument, name);
     } catch (error) {
-      this.logger.error("Error registering user", error);
+      this.logger.error("User registration error", {
+        error,
+        email: userRequest.email,
+        name: userRequest.name,
+        deviceId: userRequest.deviceId,
+      });
       if (error instanceof MongooseError || error instanceof MongoServerError) {
         throw DatabaseError.handleMongoDBError(error);
       } else if (error instanceof AuthError) {
@@ -112,9 +123,7 @@ export default class UserService implements IUserService {
         throw error;
       }
 
-      throw APIError.InternalServerError("An error occurred while logging in", {
-        error,
-      });
+      throw APIError.InternalServerError("User registration error");
     }
   }
 
@@ -130,6 +139,7 @@ export default class UserService implements IUserService {
         this.logger.warn("Login: User not found", {
           email,
           message: LoginUserAPIError.UserNotFound,
+          deviceId,
         });
         throw APIError.NotFound(LoginUserAPIError.UserNotFound);
       }
@@ -140,10 +150,12 @@ export default class UserService implements IUserService {
       );
 
       if (!isValidPassword) {
-        throw AuthError.HashingFailed({
+        this.logger.warn(LoginUserAPIError.InvalidPassword, {
           email,
-          password,
+          userId: user.getId(),
+          deviceId,
         });
+        throw AuthError.HashingFailed(LoginUserAPIError.InvalidPassword);
       }
 
       const refreshToken = await this.generateRefreshToken(user, deviceId);
@@ -160,18 +172,23 @@ export default class UserService implements IUserService {
         throw APIError.NotFound(LoginUserAPIError.UserProfileNotFound);
       }
 
-      const token = await this.generateAuthToken(
+      const accessToken = await this.generateAccessToken(
         user.getUsername(),
         user.getId()
       );
 
       return this.userRepository.toResponse(
         user,
-        token,
+        accessToken,
         userProfile.getName(),
         refreshToken
       );
     } catch (error) {
+      this.logger.error("User login error", {
+        error,
+        email: userLoginRequest.email,
+        deviceId: userLoginRequest.deviceId,
+      });
       if (error instanceof MongooseError || error instanceof MongoServerError) {
         throw DatabaseError.handleMongoDBError(error);
       } else if (error instanceof AuthError) {
@@ -180,9 +197,7 @@ export default class UserService implements IUserService {
         throw error;
       }
 
-      throw APIError.InternalServerError("An error occurred while logging in", {
-        error,
-      });
+      throw APIError.InternalServerError("User login error");
     }
   }
 
@@ -203,6 +218,13 @@ export default class UserService implements IUserService {
       let user = await this.userRepository.findOne({ googleId });
 
       if (user) {
+        this.logger.info("Logging in existing user with Google", {
+          username: user.getUsername(),
+          email: email,
+          deviceId: deviceId,
+          userId: user.getId(),
+          authProvider: user.getAuthProvider(),
+        });
         return this.loginExistingGoogleUser(user, deviceId);
       }
 
@@ -213,11 +235,15 @@ export default class UserService implements IUserService {
         $or: [{ email: email }, { username: username }],
       });
 
+      // TODO: look this over.
       if (user) {
-        throw APIError.Conflict(
-          "Account with this email/username already exists but not linked to this authentication provider",
-          { email, username }
-        );
+        this.logger.warn("Google Auth registration conflict", {
+          email,
+          username,
+          userId: user.getId(),
+          message: GoogleAuthAPIError.UserAlreadyExists,
+        });
+        throw APIError.Conflict(GoogleAuthAPIError.UserAlreadyExists);
       }
 
       const userRequest = {
@@ -237,6 +263,13 @@ export default class UserService implements IUserService {
 
       return this.createUser(userDocument, name);
     } catch (error) {
+      this.logger.error("User login error", {
+        error,
+        email: decodedToken.email,
+        deviceId: googleAuthRequest.deviceId,
+        googleId: decodedToken.uid,
+        name: googleAuthRequest.name,
+      });
       if (error instanceof MongooseError || error instanceof MongoServerError) {
         throw DatabaseError.handleMongoDBError(error);
       } else if (error instanceof AuthError) {
@@ -245,14 +278,11 @@ export default class UserService implements IUserService {
         throw error;
       }
 
-      throw APIError.InternalServerError(
-        "An error occurred while logging in with google",
-        { error }
-      );
+      throw APIError.InternalServerError("Google Auth login error");
     }
   }
 
-  public async refreshToken(
+  public async refreshTokens(
     refreshToken: string,
     deviceId: string
   ): Promise<RefreshTokenResponse> {
@@ -264,7 +294,10 @@ export default class UserService implements IUserService {
 
       if (!user) {
         // Add logging
-        throw AuthError.Forbidden("Invalid refresh token");
+        this.logger.warn(AuthErrorType.InvalidRefreshToken, {
+          deviceId,
+        });
+        throw AuthError.Forbidden(AuthErrorType.InvalidRefreshToken);
       }
 
       const refreshTokenDocument = user
@@ -282,7 +315,14 @@ export default class UserService implements IUserService {
             refreshTokens: { token: refreshToken, deviceId: deviceId },
           },
         });
-        throw AuthError.Forbidden("Refresh token expired");
+
+        this.logger.warn(AuthErrorType.RefreshTokenExpired, {
+          deviceId,
+          userId: user.getId(),
+          email: user.getEmail(),
+          username: user.getUsername(),
+        });
+        throw AuthError.Forbidden(AuthErrorType.RefreshTokenExpired);
       }
 
       // Generate new refresh token
@@ -300,7 +340,7 @@ export default class UserService implements IUserService {
         { new: true } // Return the modified document
       );
 
-      const newAccessToken = await this.generateAuthToken(
+      const newAccessToken = await this.generateAccessToken(
         user.getUsername(),
         user.getId()
       );
@@ -310,6 +350,10 @@ export default class UserService implements IUserService {
         refreshToken: newRefreshToken.token,
       };
     } catch (error) {
+      this.logger.error("Error refreshing tokens", {
+        error,
+        deviceId,
+      });
       if (error instanceof MongooseError || error instanceof MongoServerError) {
         throw DatabaseError.handleMongoDBError(error);
       } else if (error instanceof AuthError) {
@@ -319,8 +363,7 @@ export default class UserService implements IUserService {
       }
 
       throw APIError.InternalServerError(
-        "An error occurred while refreshing token",
-        { error }
+        "An error occurred while refreshing tokens"
       );
     }
   }
@@ -347,15 +390,10 @@ export default class UserService implements IUserService {
           "Logout: Refresh token/device ID not found or already removed.",
           {
             deviceId,
-            message: LoginUserAPIError.UserNotFound, // Or a more specific error message
           }
         );
-        // If the token is not found, it might mean it was already removed or never existed.
-        // Depending on desired behavior, you might not throw an error or throw a specific one.
-        // Throwing NotFound to indicate the specific token/device combo wasn't active.
-        throw APIError.NotFound(
-          "Invalid refresh token or device ID. Session may have already been terminated."
-        );
+
+        throw APIError.NotFound(APIErrorType.UserNotFound);
       }
 
       this.logger.info(
@@ -366,7 +404,10 @@ export default class UserService implements IUserService {
         }
       );
     } catch (error) {
-      this.logger.error("Error during user logout", error);
+      this.logger.error("Logout error", {
+        error,
+        deviceId,
+      });
       if (error instanceof MongooseError || error instanceof MongoServerError) {
         throw DatabaseError.handleMongoDBError(error);
       } else if (error instanceof APIError || error instanceof AuthError) {
@@ -386,14 +427,12 @@ export default class UserService implements IUserService {
       });
 
       if (!userProfile) {
-        throw APIError.NotFound("User profile not found", {
-          userId: user.getId(),
-        });
+        throw APIError.NotFound(APIErrorType.UserProfileNotFound);
       }
 
       const refreshToken = await this.generateRefreshToken(user, deviceId);
 
-      const token = await this.generateAuthToken(
+      const token = await this.generateAccessToken(
         userProfile.getName(),
         user.getId()
       );
@@ -401,6 +440,7 @@ export default class UserService implements IUserService {
       this.logger.info("User logged in with Google", {
         username: user.getUsername(),
         userId: user.getId(),
+        deviceId,
       });
 
       return this.userRepository.toResponse(
@@ -454,7 +494,7 @@ export default class UserService implements IUserService {
       await session.commitTransaction();
 
       // Generate JWT token
-      const token = await this.generateAuthToken(name, newUser.getId());
+      const accessToken = await this.generateAccessToken(name, newUser.getId());
       const refreshToken = newUser.getRefreshTokens()[0].token;
 
       this.logger.info("New user created", {
@@ -463,9 +503,19 @@ export default class UserService implements IUserService {
         authProvider: newUser.getAuthProvider(),
       });
 
-      return this.userRepository.toResponse(newUser, token, name, refreshToken);
+      return this.userRepository.toResponse(
+        newUser,
+        accessToken,
+        name,
+        refreshToken
+      );
     } catch (error) {
-      this.logger.error("Error creating user", error);
+      this.logger.error("Error creating user", {
+        error,
+        name,
+        email: userDocument.email,
+        username: userDocument.username,
+      });
       if (session) {
         await session.abortTransaction();
       }
@@ -477,7 +527,7 @@ export default class UserService implements IUserService {
     }
   }
 
-  private async generateAuthToken(
+  private async generateAccessToken(
     username: string,
     userId: Types.ObjectId
   ): Promise<string> {
@@ -493,7 +543,8 @@ export default class UserService implements IUserService {
       );
     }
     try {
-      return await JWTUtil.sign(payload, secretKey, "15m");
+      const expiresAt = process.env.ACCESS_TOKEN_EXPIRY;
+      return await JWTUtil.sign(payload, secretKey, expiresAt);
     } catch (error) {
       // TODO: throw internal server error if not JWT error
       throw AuthError.handleJWTError(error);
@@ -505,7 +556,8 @@ export default class UserService implements IUserService {
     deviceId: string
   ): Promise<string> {
     const refreshToken: string = uuidv4();
-    const expiresAt = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000); // 30 days
+    const expiresAtNum = process.env.REFRESH_TOKEN_EXPIRY as unknown as number;
+    const expiresAt = new Date(Date.now() + expiresAtNum * 24 * 60 * 60 * 1000); // 30 days
 
     const refreshTokenDocument: IRefreshToken = {
       token: refreshToken,
@@ -531,7 +583,8 @@ export default class UserService implements IUserService {
 
   private createRefreshToken(deviceId: string): IRefreshToken {
     const refreshToken: string = uuidv4();
-    const expiresAt = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000); // 30 days
+    const expiresAtNum = process.env.REFRESH_TOKEN_EXPIRY as unknown as number;
+    const expiresAt = new Date(Date.now() + expiresAtNum * 24 * 60 * 60 * 1000); // 30 days
 
     const refreshTokenDocument: IRefreshToken = {
       token: refreshToken,

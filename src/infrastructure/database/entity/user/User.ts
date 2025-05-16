@@ -108,6 +108,10 @@ export default class User {
     this.authProvider = authProvider;
   }
 
+  public setRefreshTokens(refreshTokens: IRefreshToken[]): void {
+    this.refreshTokens = refreshTokens;
+  }
+
   public setCreatedAt(createdAt: Date): void {
     this.createdAt = createdAt;
   }

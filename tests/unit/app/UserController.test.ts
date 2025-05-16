@@ -147,7 +147,7 @@ describe("UserController", () => {
   describe("googleAuth", () => {
     it("should authenticate a user with Google and return 200 status", async () => {
       // Arrange
-      const googleAuthRequest = { name: "John Doe" } as GoogleAuthRequest;
+      const googleAuthRequest = UserTestFixture.createGoogleAuthRequest();
       const decodedToken = UserTestFixture.createDecodedIdToken();
       const expectedResponse = UserTestFixture.createUserResponse();
 
@@ -168,7 +168,7 @@ describe("UserController", () => {
       // Assert
       expect(mockUserService.authenticateWithGoogle).toHaveBeenCalledWith(
         decodedToken,
-        googleAuthRequest.name
+        googleAuthRequest
       );
       expect(mockResponse.status).toHaveBeenCalledWith(HttpStatusCode.OK);
       expect(mockResponse.json).toHaveBeenCalledWith(expectedResponse);
@@ -177,7 +177,7 @@ describe("UserController", () => {
 
     it("should pass any errors to the next middleware", async () => {
       // Arrange
-      const googleAuthRequest = { name: "John Doe" } as GoogleAuthRequest;
+      const googleAuthRequest = UserTestFixture.createGoogleAuthRequest();
       const decodedToken = UserTestFixture.createDecodedIdToken();
       const expectedError = new DatabaseError("Database error");
 
@@ -198,7 +198,136 @@ describe("UserController", () => {
       // Assert
       expect(mockUserService.authenticateWithGoogle).toHaveBeenCalledWith(
         decodedToken,
-        googleAuthRequest.name
+        googleAuthRequest
+      );
+      expect(mockResponse.status).not.toHaveBeenCalled();
+      expect(mockResponse.json).not.toHaveBeenCalled();
+      expect(mockNext).toHaveBeenCalledWith(expectedError);
+    });
+  });
+
+  describe("logout", () => {
+    it("should log out a user successfully and return 200 status", async () => {
+      // Arrange
+      const logoutRequest = {
+        refreshToken: UserTestFixture.REFRESH_TOKEN,
+        deviceId: UserTestFixture.DEVICE_ID,
+      };
+      const expectedResponse = { message: "User logged out successfully" };
+
+      mockRequest.body = logoutRequest;
+
+      vi.spyOn(mockUserService, "logoutUser").mockResolvedValueOnce(undefined);
+
+      // Act
+      await userController.logout(
+        mockRequest as Request,
+        mockResponse as Response,
+        mockNext as NextFunction
+      );
+
+      // Assert
+      expect(mockUserService.logoutUser).toHaveBeenCalledWith(
+        logoutRequest.refreshToken,
+        logoutRequest.deviceId
+      );
+      expect(mockResponse.status).toHaveBeenCalledWith(HttpStatusCode.OK);
+      expect(mockResponse.json).toHaveBeenCalledWith(expectedResponse);
+      expect(mockNext).not.toHaveBeenCalled();
+    });
+
+    it("should pass any errors to the next middleware", async () => {
+      // Arrange
+      const logoutRequest = {
+        refreshToken: UserTestFixture.REFRESH_TOKEN,
+        deviceId: UserTestFixture.DEVICE_ID,
+      };
+      const expectedError = new DatabaseError("Database error");
+
+      mockRequest.body = logoutRequest;
+
+      vi.spyOn(mockUserService, "logoutUser").mockRejectedValueOnce(
+        expectedError
+      );
+
+      // Act
+      await userController.logout(
+        mockRequest as Request,
+        mockResponse as Response,
+        mockNext as NextFunction
+      );
+
+      // Assert
+      expect(mockUserService.logoutUser).toHaveBeenCalledWith(
+        logoutRequest.refreshToken,
+        logoutRequest.deviceId
+      );
+      expect(mockResponse.status).not.toHaveBeenCalled();
+      expect(mockResponse.json).not.toHaveBeenCalled();
+      expect(mockNext).toHaveBeenCalledWith(expectedError);
+    });
+  });
+
+  describe("refreshTokens", () => {
+    it("should refresh tokens successfully and return 200 status", async () => {
+      // Arrange
+      const refreshTokenRequest = {
+        refreshToken: UserTestFixture.REFRESH_TOKEN,
+        deviceId: UserTestFixture.DEVICE_ID,
+      };
+      const expectedResponse = UserTestFixture.createRefreshTokenResponse({
+        accessToken: "newAccessToken",
+        refreshToken: "newRefreshToken",
+      });
+
+      mockRequest.body = refreshTokenRequest;
+
+      vi.spyOn(mockUserService, "refreshTokens").mockResolvedValueOnce(
+        expectedResponse
+      );
+
+      // Act
+      await userController.refreshTokens(
+        mockRequest as Request,
+        mockResponse as Response,
+        mockNext as NextFunction
+      );
+
+      // Assert
+      expect(mockUserService.refreshTokens).toHaveBeenCalledWith(
+        refreshTokenRequest.refreshToken,
+        refreshTokenRequest.deviceId
+      );
+      expect(mockResponse.status).toHaveBeenCalledWith(HttpStatusCode.OK);
+      expect(mockResponse.json).toHaveBeenCalledWith(expectedResponse);
+      expect(mockNext).not.toHaveBeenCalled();
+    });
+
+    it("should pass any errors to the next middleware", async () => {
+      // Arrange
+      const refreshTokenRequest = {
+        refreshToken: UserTestFixture.REFRESH_TOKEN,
+        deviceId: UserTestFixture.DEVICE_ID,
+      };
+      const expectedError = new DatabaseError("Database error");
+
+      mockRequest.body = refreshTokenRequest;
+
+      vi.spyOn(mockUserService, "refreshTokens").mockRejectedValueOnce(
+        expectedError
+      );
+
+      // Act
+      await userController.refreshTokens(
+        mockRequest as Request,
+        mockResponse as Response,
+        mockNext as NextFunction
+      );
+
+      // Assert
+      expect(mockUserService.refreshTokens).toHaveBeenCalledWith(
+        refreshTokenRequest.refreshToken,
+        refreshTokenRequest.deviceId
       );
       expect(mockResponse.status).not.toHaveBeenCalled();
       expect(mockResponse.json).not.toHaveBeenCalled();
