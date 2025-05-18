@@ -190,7 +190,7 @@ describe("UserService", () => {
     it("should throw an auth error if the password hashing fails", async () => {
       // Arrange
       const userRequest: UserRequest = UserTestFixture.createUserRequest();
-      const expectedError = AuthError.HashingFailed({
+      const expectedError = AuthError.InvalidPassword({
         email: userRequest.email,
         password: "******", // masked for security
       });
@@ -346,7 +346,7 @@ describe("UserService", () => {
       // Arrange
       const userLoginRequest = UserTestFixture.createUserLoginRequest();
       const user = UserTestFixture.createUserEntity();
-      const expectedError = AuthError.HashingFailed(
+      const expectedError = AuthError.InvalidPassword(
         LoginUserAPIError.InvalidPassword
       );
 

@@ -62,11 +62,11 @@ export class AuthError extends ServerError {
     );
   }
 
-  static HashingFailed(details?: unknown) {
+  static InvalidPassword(details?: unknown) {
     return new AuthError(
-      "Failed to hash password",
+      "Invalid password",
       HttpStatusCode.INTERNAL_SERVER_ERROR,
-      "PASSWORD_HASHING_FAILED",
+      "INVALID_PASSWORD",
       details
     );
   }

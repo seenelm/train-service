@@ -9,7 +9,7 @@ export default class BcryptUtil {
     try {
       return await bcrypt.hash(password, 12);
     } catch (error) {
-      throw AuthError.HashingFailed(error);
+      throw AuthError.InvalidPassword(error);
     }
   }
 

@@ -16,6 +16,8 @@ import {
   RefreshTokenResponse,
   RefreshTokenRequest,
   LogoutRequest,
+  RequestPasswordResetRequest,
+  ResetPasswordWithCodeRequest,
 } from "./userDto.js";
 
 import mongoose from "mongoose";
@@ -38,7 +40,10 @@ import { IUserRepository } from "../../infrastructure/database/repositories/user
 import { IUserProfileRepository } from "../../infrastructure/database/repositories/user/UserProfileRepository.js";
 import { IUserGroupsRepository } from "../../infrastructure/database/repositories/user/UserGroupsRepository.js";
 import { IFollowRepository } from "../../infrastructure/database/repositories/user/FollowRepository.js";
+import { IPasswordResetRepository } from "../../infrastructure/database/repositories/user/PasswordResetRepository.js";
 import { TokenPayload } from "../../common/middleware/AuthMiddleware.js";
+import { IEmailService } from "../../infrastructure/EmailService.js";
+import crypto from "crypto";
 
 export interface IUserService {
   registerUser(userRequest: UserRequest): Promise<UserResponse>;
@@ -50,6 +55,8 @@ export interface IUserService {
   refreshTokens(
     refreshTokens: RefreshTokenRequest
   ): Promise<RefreshTokenResponse>;
+  requestPasswordReset(request: RequestPasswordResetRequest): Promise<void>;
+  resetPasswordWithCode(request: ResetPasswordWithCodeRequest): Promise<void>;
   logoutUser(logoutRequest: LogoutRequest): Promise<void>;
 }
 
@@ -58,18 +65,24 @@ export default class UserService implements IUserService {
   private userProfileRepository: IUserProfileRepository;
   private userGroupsRepository: IUserGroupsRepository;
   private followRepository: IFollowRepository;
+  private passwordResetRepository: IPasswordResetRepository;
+  private emailService: IEmailService;
   private logger: Logger;
 
   constructor(
     userRepository: IUserRepository,
     userProfileRepository: IUserProfileRepository,
     userGroupsRepository: IUserGroupsRepository,
-    followRepository: IFollowRepository
+    followRepository: IFollowRepository,
+    passwordResetRepository: IPasswordResetRepository,
+    emailService: IEmailService
   ) {
     this.userRepository = userRepository;
     this.userProfileRepository = userProfileRepository;
     this.userGroupsRepository = userGroupsRepository;
     this.followRepository = followRepository;
+    this.passwordResetRepository = passwordResetRepository;
+    this.emailService = emailService;
     this.logger = Logger.getInstance();
   }
 
@@ -156,7 +169,7 @@ export default class UserService implements IUserService {
           userId: user.getId(),
           deviceId,
         });
-        throw AuthError.HashingFailed(LoginUserAPIError.InvalidPassword);
+        throw AuthError.InvalidPassword(LoginUserAPIError.InvalidPassword);
       }
 
       const refreshToken = await this.generateRefreshToken(user, deviceId);
@@ -366,6 +379,126 @@ export default class UserService implements IUserService {
 
       throw APIError.InternalServerError(
         "An error occurred while refreshing tokens"
+      );
+    }
+  }
+
+  public async requestPasswordReset(
+    request: RequestPasswordResetRequest
+  ): Promise<void> {
+    const { email } = request;
+
+    try {
+      const user = await this.userRepository.findOne({ email });
+
+      if (!user) {
+        // FIX THIS
+        this.logger.warn("Password reset: User not found", {
+          email,
+          message: APIErrorType.UserNotFound,
+        });
+        throw APIError.NotFound(APIErrorType.UserNotFound);
+      }
+
+      const resetCode = await this.generatePasswordResetCode(user);
+
+      await this.emailService.sendPasswordResetCode(
+        email,
+        resetCode,
+        user.getUsername()
+      );
+    } catch (error) {
+      this.logger.error("Request password reset error", {
+        error,
+        email: request.email,
+      });
+      if (error instanceof MongooseError || error instanceof MongoServerError) {
+        throw DatabaseError.handleMongoDBError(error);
+      } else if (error instanceof AuthError) {
+        throw error;
+      } else if (error instanceof APIError) {
+        throw error;
+      }
+
+      throw APIError.InternalServerError("Request password reset error");
+    }
+  }
+
+  public async resetPasswordWithCode(
+    request: ResetPasswordWithCodeRequest
+  ): Promise<void> {
+    const { email, resetCode, newPassword } = request;
+
+    try {
+      const resetRequestDoc = await this.passwordResetRepository.findOne({
+        email: email,
+        code: resetCode,
+      });
+
+      if (!resetRequestDoc) {
+        this.logger.warn("Invalid Code", {
+          email,
+          providedCode: resetCode,
+        });
+        throw APIError.BadRequest("Invalid Code");
+      }
+
+      if (resetRequestDoc.getExpiresAt() < new Date()) {
+        this.logger.warn("Expired Code", {
+          email,
+          providedCode: resetCode,
+        });
+
+        await this.passwordResetRepository.findByIdAndDelete(
+          resetRequestDoc.getId()
+        );
+
+        throw APIError.BadRequest("Expired Code");
+      }
+
+      const user = await this.userRepository.findById(
+        resetRequestDoc.getUserId()
+      );
+      if (!user) {
+        this.logger.error("User not found for a valid reset request.", {
+          userId: resetRequestDoc.getUserId(),
+          email,
+        });
+        await this.passwordResetRepository.findByIdAndDelete(
+          resetRequestDoc.getId()
+        );
+        throw APIError.InternalServerError(
+          "User associated with reset code not found."
+        );
+      }
+
+      const newHashedPassword = await BcryptUtil.hashPassword(newPassword);
+
+      await this.userRepository.findByIdAndUpdate(user.getId(), {
+        password: newHashedPassword,
+        refreshTokens: [], // Invalidate all existing refresh tokens
+      });
+
+      // Single Use: Delete the used reset token
+      await this.passwordResetRepository.findByIdAndDelete(
+        resetRequestDoc.getId()
+      );
+
+      this.logger.info("Password successfully reset.", {
+        userId: user.getId(),
+        email,
+      });
+
+      // TODO: Optionally, send a confirmation email that the password has been changed.
+      // await this.emailService.sendPasswordChangedConfirmation(email, user.getUsername());
+    } catch (error) {
+      this.logger.error("Error resetting password with code", { error, email });
+      if (error instanceof APIError) throw error;
+      if (error instanceof MongooseError || error instanceof MongoServerError) {
+        throw DatabaseError.handleMongoDBError(error);
+      }
+      throw APIError.InternalServerError(
+        "An error occurred while resetting the password."
       );
     }
   }
@@ -594,6 +727,28 @@ export default class UserService implements IUserService {
     };
 
     return refreshTokenDocument;
+  }
+
+  private async generatePasswordResetCode(user: User): Promise<string> {
+    // Secure Code Generation
+    const resetCode = crypto.randomInt(100000, 999999).toString(); // 6-digit code
+    // Code Expiry
+    const expiresAt = new Date(Date.now() + 10 * 60 * 1000); // Code expires in 10 minutes
+
+    // Optional: Invalidate any previous active reset codes for this user
+    await this.passwordResetRepository.deleteMany({
+      userId: user.getId(),
+      expiresAt: { $gt: new Date() },
+    });
+
+    await this.passwordResetRepository.create({
+      userId: user.getId(),
+      email: user.getEmail(),
+      code: resetCode,
+      expiresAt: expiresAt,
+    });
+
+    return resetCode;
   }
 
   public generateUniqueUsername(email: string): string {

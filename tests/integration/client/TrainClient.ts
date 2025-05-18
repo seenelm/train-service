@@ -4,6 +4,8 @@ import {
   UserResponse,
   UserLoginRequest,
   RefreshTokenResponse,
+  RefreshTokenRequest,
+  LogoutRequest,
 } from "../../../src/app/user/userDto.js";
 
 export default class TrainClient {
@@ -39,13 +41,12 @@ export default class TrainClient {
   }
 
   public async refreshTokens(
-    refreshToken: string,
-    deviceId: string
+    request: RefreshTokenRequest
   ): Promise<RefreshTokenResponse> {
     try {
       const response = await axios.post<RefreshTokenResponse>(
         `${this.baseUrl}/user/refresh`,
-        { refreshToken, deviceId }
+        request
       );
       return response.data;
     } catch (error) {
@@ -54,12 +55,12 @@ export default class TrainClient {
     }
   }
 
-  public async logout(refreshToken: string, deviceId: string): Promise<string> {
+  public async logout(request: LogoutRequest): Promise<string> {
     try {
-      const response = await axios.post<string>(`${this.baseUrl}/user/logout`, {
-        refreshToken,
-        deviceId,
-      });
+      const response = await axios.post<string>(
+        `${this.baseUrl}/user/logout`,
+        request
+      );
       return response.data;
     } catch (error) {
       console.error("Logout error: ", error);

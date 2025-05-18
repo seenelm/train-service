@@ -49,3 +49,13 @@ export interface LogoutRequest {
   refreshToken: string;
   deviceId: string;
 }
+
+export interface RequestPasswordResetRequest {
+  email: string;
+}
+
+export interface ResetPasswordWithCodeRequest {
+  email: string;
+  resetCode: string;
+  newPassword: string;
+}

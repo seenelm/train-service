@@ -11,6 +11,10 @@ import { FollowModel } from "../infrastructure/database/models/user/followModel.
 import UserController from "../app/user/UserController.js";
 import { verifyFirebaseToken } from "../common/middleware/verifyFirebaseToken.js";
 import UserMiddleware from "../app/user/UserMiddleware.js";
+import PasswordResetRepository from "../infrastructure/database/repositories/user/PasswordResetRepository.js";
+import { PasswordResetModel } from "../infrastructure/database/models/user/passwordResetModel.js";
+import EmailService from "../infrastructure/EmailService.js";
+
 const router = Router();
 
 const userMiddleware = new UserMiddleware();
@@ -19,7 +23,9 @@ const userService = new UserService(
   new UserRepository(UserModel),
   new UserProfileRepository(UserProfileModel),
   new UserGroupsRepository(UserGroupsModel),
-  new FollowRepository(FollowModel)
+  new FollowRepository(FollowModel),
+  new PasswordResetRepository(PasswordResetModel),
+  new EmailService()
 );
 
 const userController = new UserController(userService);
