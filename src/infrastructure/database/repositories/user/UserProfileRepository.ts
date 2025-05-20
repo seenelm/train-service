@@ -1,7 +1,6 @@
 import { UserProfileDocument } from "../../models/user/userProfileModel.js";
 import UserProfile from "../../entity/user/UserProfile.js";
-import { IBaseRepository } from "../BaseRepository.js";
-import BaseRepository from "../BaseRepository.js";
+import { IBaseRepository, BaseRepository } from "../BaseRepository.js";
 import { Model, Types } from "mongoose";
 
 export interface IUserProfileRepository

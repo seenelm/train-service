@@ -1,7 +1,6 @@
 import { UserDocument, IRefreshToken } from "../../models/user/userModel.js";
 import User from "../../entity/user/User.js";
-import { IBaseRepository } from "../BaseRepository.js";
-import BaseRepository from "../BaseRepository.js";
+import { IBaseRepository, BaseRepository } from "../BaseRepository.js";
 import { Model, Types } from "mongoose";
 import { UserResponse, UserRequest } from "../../../../app/user/userDto.js";
 
