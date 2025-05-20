@@ -12,6 +12,8 @@ import {
   mockUserProfileRepository,
   mockUserGroupsRepository,
   mockFollowRepository,
+  mockPasswordResetRepository,
+  mockEmailService,
 } from "../../mocks/userMocks.js";
 import UserService from "../../../src/app/user/UserService.js";
 import { ClientSession } from "mongoose";
@@ -48,7 +50,9 @@ describe("UserService", () => {
       mockUserRepository,
       mockUserProfileRepository,
       mockUserGroupsRepository,
-      mockFollowRepository
+      mockFollowRepository,
+      mockPasswordResetRepository,
+      mockEmailService
     );
 
     mockSession = {

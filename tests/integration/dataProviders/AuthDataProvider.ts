@@ -221,5 +221,9 @@ export default class AuthDataProvider {
     ];
   }
 
-  static refreshTokenErrorCases(): ErrorTestCase<RefreshTokenRequest>[] {}
+  static refreshTokenErrorCases(): ErrorTestCase<RefreshTokenRequest>[] {
+    return [
+      // Add specific refresh token error test cases here as needed
+    ];
+  }
 }
