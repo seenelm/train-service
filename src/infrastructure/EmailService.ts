@@ -18,28 +18,23 @@ export default class EmailService implements IEmailService {
   constructor() {
     this.logger = Logger.getInstance();
     this.emailFrom = process.env.EMAIL_FROM || "noreply@example.com";
-    this.transporter = nodemailer.createTransport({
-      jsonTransport: true,
-    });
-    // For production, use a robust transport like SMTP with a reliable email provider (SendGrid, Mailgun, AWS SES, etc.)
-    // For development/testing, you can use ethereal.email or a local SMTP server like MailHog.
+    
+    // Check for required SMTP configuration
     if (
-      process.env.NODE_ENV === "production" ||
-      process.env.NODE_ENV === "stage"
+      !process.env.SMTP_HOST ||
+      !process.env.SMTP_PORT ||
+      !process.env.SMTP_USER ||
+      !process.env.SMTP_PASS
     ) {
-      if (
-        !process.env.SMTP_HOST ||
-        !process.env.SMTP_PORT ||
-        !process.env.SMTP_USER ||
-        !process.env.SMTP_PASS
-      ) {
-        this.logger.error(
-          "SMTP configuration missing for email service in production/stage environment."
-        );
-        // Depending on strictness, you might throw an error here to prevent startup
-        // or allow the service to start but log critical errors when sending emails.
-        // For this example, we'll let it proceed but sending will fail.
-      }
+      this.logger.error(
+        "SMTP configuration missing for email service."
+      );
+      // Fallback to a dummy transporter if SMTP config is missing
+      this.transporter = nodemailer.createTransport({
+        jsonTransport: true,
+      });
+    } else {
+      // Always use the configured SMTP settings
       this.transporter = nodemailer.createTransport({
         host: process.env.SMTP_HOST,
         port: parseInt(process.env.SMTP_PORT || "587"),
@@ -49,42 +44,14 @@ export default class EmailService implements IEmailService {
           pass: process.env.SMTP_PASS,
         },
         pool: true, // Use connection pooling for better performance
-        maxConnections: 5, // Example: configure as needed
-        maxMessages: 100, // Example: configure as needed
-        rateLimit: 10, // Example: max 10 messages per second
+        maxConnections: 5, 
+        maxMessages: 100,
+        rateLimit: 10, // max 10 messages per second
       });
-    } else {
-      // For local development, you might use a test account from ethereal.email
-      // or a local SMTP server like MailHog/Mailtrap
-      // This example uses ethereal.email for easy setup without a real SMTP server
+      
       this.logger.info(
-        "EmailService: Using Ethereal for email transport in development/test."
+        `EmailService: Using SMTP transport with host ${process.env.SMTP_HOST}`
       );
-      nodemailer.createTestAccount((err, account) => {
-        if (err) {
-          this.logger.error(
-            "Failed to create a testing account for Ethereal. " + err.message
-          );
-          // Fallback to a dummy transporter if Ethereal fails
-          this.transporter = nodemailer.createTransport({
-            jsonTransport: true,
-          });
-          return;
-        }
-        this.logger.info("Ethereal test account created:");
-        this.logger.info(`User: ${account.user}`);
-        this.logger.info(`Pass: ${account.pass}`);
-
-        this.transporter = nodemailer.createTransport({
-          host: account.smtp.host,
-          port: account.smtp.port,
-          secure: account.smtp.secure,
-          auth: {
-            user: account.user,
-            pass: account.pass,
-          },
-        });
-      });
     }
   }
 
@@ -107,19 +74,15 @@ export default class EmailService implements IEmailService {
         toEmail,
         messageId: info.messageId,
       });
-      if (nodemailer.getTestMessageUrl(info)) {
-        this.logger.info(`Preview URL: ${nodemailer.getTestMessageUrl(info)}`);
-      }
+      // Remove the Ethereal preview URL check
     } catch (error: any) {
-      this.logger.error("Error sending password reset email", {
+      this.logger.error("Failed to send password reset email", {
         toEmail,
-        errorMessage: error.message,
-        errorStack: error.stack,
+        error: error.message,
       });
-      // Do not re-throw the raw nodemailer error to the client.
-      // Throw a generic application-specific error.
       throw APIError.InternalServerError(
-        "We encountered an issue sending the password reset email. Please try again later."
+        "Failed to send password reset email. Please try again later.",
+        error
       );
     }
   }

@@ -39,7 +39,7 @@ export interface IBaseRepository<T, TDocument> {
   deleteMany(query: FilterQuery<TDocument>, options?: object): Promise<void>;
 }
 
-export default abstract class BaseRepository<T, TDocument extends Document>
+export abstract class BaseRepository<T, TDocument extends Document>
   implements IBaseRepository<T, TDocument>
 {
   private model: Model<TDocument>;

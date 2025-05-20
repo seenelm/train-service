@@ -1,7 +1,6 @@
 import { FollowDocument } from "../../models/user/followModel.js";
 import Follow from "../../entity/user/Follow.js";
-import { IBaseRepository } from "../BaseRepository.js";
-import BaseRepository from "../BaseRepository.js";
+import { IBaseRepository, BaseRepository } from "../BaseRepository.js";
 import { Model, Types } from "mongoose";
 
 export interface IFollowRepository

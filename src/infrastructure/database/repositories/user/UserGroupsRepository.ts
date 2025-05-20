@@ -1,6 +1,5 @@
 import { UserGroupsDocument } from "../../models/user/userGroupsModel.js";
-import { IBaseRepository } from "../BaseRepository.js";
-import BaseRepository from "../BaseRepository.js";
+import { IBaseRepository, BaseRepository } from "../BaseRepository.js";
 import { Model, Types } from "mongoose";
 import UserGroups from "../../entity/user/UserGroups.js";
 

@@ -6,9 +6,6 @@ import { IPasswordResetRepository } from "../../src/infrastructure/database/repo
 import { IEmailService } from "../../src/infrastructure/EmailService.js";
 import { vi } from "vitest";
 import { IUserService } from "../../src/app/user/UserService.js";
-import BaseRepository from "../../src/infrastructure/database/repositories/BaseRepository.js";
-import PasswordReset from "../../src/infrastructure/database/entity/user/PasswordReset.js";
-import { PasswordResetDocument } from "../../src/infrastructure/database/models/user/passwordResetModel.js";
 
 export const mockUserRepository: IUserRepository = {
   toDocument: vi.fn(),
@@ -69,26 +66,19 @@ export const mockFollowRepository: IFollowRepository = {
   deleteMany: vi.fn(),
 };
 
-class MockPasswordResetRepository extends BaseRepository<PasswordReset, PasswordResetDocument> {
-  constructor() {
-    super({} as any);
-  }
-
-  toEntity = vi.fn();
-  findById = vi.fn();
-  findOne = vi.fn();
-  find = vi.fn();
-  create = vi.fn();
-  insertMany = vi.fn();
-  findOneAndUpdate = vi.fn();
-  findByIdAndUpdate = vi.fn();
-  updateOne = vi.fn();
-  updateMany = vi.fn();
-  findByIdAndDelete = vi.fn();
-  deleteMany = vi.fn();
-}
-
-export const mockPasswordResetRepository = new MockPasswordResetRepository();
+export const mockPasswordResetRepository: IPasswordResetRepository = {
+  findById: vi.fn(),
+  findOne: vi.fn(),
+  find: vi.fn(),
+  create: vi.fn(),
+  insertMany: vi.fn(),
+  findOneAndUpdate: vi.fn(),
+  findByIdAndUpdate: vi.fn(),
+  updateOne: vi.fn(),
+  updateMany: vi.fn(),
+  findByIdAndDelete: vi.fn(),
+  deleteMany: vi.fn(),
+};
 
 export const mockEmailService: IEmailService = {
   sendPasswordResetCode: vi.fn(),

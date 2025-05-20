@@ -1,7 +1,6 @@
 import PasswordReset from "../../entity/user/PasswordReset.js";
 import { PasswordResetDocument } from "../../models/user/passwordResetModel.js";
-import IBaseRepository from "../BaseRepository.js";
-import BaseRepository from "../BaseRepository.js";
+import { IBaseRepository, BaseRepository } from "../BaseRepository.js";
 import { Model, Types } from "mongoose";
 
 export interface IPasswordResetRepository
