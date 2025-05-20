@@ -7,6 +7,8 @@ import {
   UserRequest,
   RefreshTokenRequest,
   LogoutRequest,
+  RequestPasswordResetRequest,
+  ResetPasswordWithCodeRequest,
 } from "./userDto.js";
 import { StatusCodes as HttpStatusCode } from "http-status-codes";
 import { Logger } from "../../common/logger.js";
@@ -62,6 +64,46 @@ export default class UserController {
         googleAuthRequest
       );
       return res.status(HttpStatusCode.OK).json(userResponse);
+    } catch (error) {
+      next(error);
+    }
+  };
+
+  public requestPasswordReset = async (
+    req: Request,
+    res: Response,
+    next: NextFunction
+  ) => {
+    try {
+      const requestPasswordResetRequest =
+        req.body as RequestPasswordResetRequest;
+
+      await this.userService.requestPasswordReset(requestPasswordResetRequest);
+
+      return res.status(HttpStatusCode.OK).json({
+        message: "Password reset request sent successfully",
+      });
+    } catch (error) {
+      next(error);
+    }
+  };
+
+  public resetPasswordWithCode = async (
+    req: Request,
+    res: Response,
+    next: NextFunction
+  ) => {
+    try {
+      const resetPasswordWithCodeRequest =
+        req.body as ResetPasswordWithCodeRequest;
+
+      await this.userService.resetPasswordWithCode(
+        resetPasswordWithCodeRequest
+      );
+
+      return res.status(HttpStatusCode.OK).json({
+        message: "Password reset successful",
+      });
     } catch (error) {
       next(error);
     }

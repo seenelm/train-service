@@ -46,6 +46,18 @@ router.post(
 );
 
 router.post(
+  "/request-password-reset",
+  // userMiddleware.validateRequestPasswordReset,
+  userController.requestPasswordReset
+);
+
+router.post(
+  "/reset-password-with-code",
+  // userMiddleware.validateResetPasswordWithCode,
+  userController.resetPasswordWithCode
+);
+
+router.post(
   "/refresh",
   userMiddleware.validateRefreshToken,
   userController.refreshTokens

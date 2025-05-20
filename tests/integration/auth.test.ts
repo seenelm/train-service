@@ -112,4 +112,40 @@ describe("Train Service Integration Tests", () => {
       }
     );
   });
+
+  describe("Refresh Tokens", () => {
+    let userResponse: UserResponse;
+    let refreshToken: string;
+
+    beforeAll(async () => {
+      // Register and login a user to get initial tokens
+      const userRequest = UserTestFixture.createUserRequest({
+        username: undefined,
+        name: "Test User",
+        password: "Password98!",
+        email: "testuser@example.com",
+        authProvider: "local",
+      });
+
+      userResponse = await trainClient.register(userRequest);
+      refreshToken = userResponse.refreshToken;
+    });
+
+    it("should successfully refresh tokens", async () => {
+      // Arrange
+      const refreshTokenRequest = UserTestFixture.createRefreshTokenRequest({
+        refreshToken: refreshToken,
+        deviceId: UserTestFixture.DEVICE_ID,
+      });
+
+      // Act
+      const response = await trainClient.refreshTokens(refreshTokenRequest);
+
+      // Assert
+      expect(response.accessToken).toBeDefined();
+      expect(response.refreshToken).toBeDefined();
+      expect(response.accessToken).not.toBe(userResponse.accessToken);
+      expect(response.refreshToken).not.toBe(refreshToken);
+    });
+  });
 });
