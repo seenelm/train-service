@@ -94,7 +94,7 @@ export default class EmailService implements IEmailService {
     username: string
   ): Promise<void> {
     const mailOptions = {
-      from: `"Your App Name" <${this.emailFrom}>`,
+      from: `"Train App" <${this.emailFrom}>`,
       to: toEmail,
       subject: "Your Password Reset Code",
       text: `Hello ${username},\n\nYour password reset code is: ${code}\n\nThis code will expire in 10 minutes.\nIf you did not request this, please ignore this email.\n\nThanks,\nThe Your App Name Team`,
