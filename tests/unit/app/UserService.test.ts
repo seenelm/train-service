@@ -36,6 +36,9 @@ import {
   AuthErrorType,
   APIErrorType,
 } from "../../../src/common/enums.js";
+import { MongoServerError } from "mongodb";
+import PasswordReset from "../../../src/infrastructure/database/entity/user/PasswordReset.js";
+import { Types } from "mongoose";
 
 describe("UserService", () => {
   let userService: UserService;
@@ -552,9 +555,9 @@ describe("UserService", () => {
       });
 
       vi.spyOn(mockUserRepository, "findOne").mockResolvedValue(existingUser);
-      vi.spyOn(mockUserRepository, "findOneAndUpdate").mockResolvedValue(
-        updatedUser
-      );
+      // vi.spyOn(mockUserRepository, "findOneAndUpdate").mockResolvedValue(
+      //   updatedUser
+      // );
 
       // Act
       const result = await userService.refreshTokens(refreshTokenRequest);
@@ -606,7 +609,7 @@ describe("UserService", () => {
       await expect(
         userService.refreshTokens(refreshTokenRequest)
       ).rejects.toThrowError(
-        AuthError.Forbidden(AuthErrorType.RefreshTokenExpired)
+        AuthError.Forbidden(AuthErrorType.InvalidRefreshToken)
       );
 
       expect(mockUserRepository.findByIdAndUpdate).toHaveBeenCalledWith(
@@ -688,6 +691,321 @@ describe("UserService", () => {
       await expect(userService.logoutUser(logoutRequest)).rejects.toThrowError(
         DatabaseError.handleMongoDBError(dbError)
       );
+    });
+  });
+
+  describe("requestPasswordReset", () => {
+    it("should successfully request password reset for local auth user", async () => {
+      // Arrange
+      const request = {
+        email: "test@example.com",
+      };
+      const user = UserTestFixture.createUserEntity();
+      const resetCode = "123456";
+
+      vi.spyOn(mockUserRepository, "findOne").mockResolvedValue(user);
+      vi.spyOn(
+        userService as any,
+        "generatePasswordResetCode"
+      ).mockResolvedValue(resetCode);
+      vi.spyOn(mockEmailService, "sendPasswordResetCode").mockResolvedValue();
+
+      // Act
+      await userService.requestPasswordReset(request);
+
+      // Assert
+      expect(mockUserRepository.findOne).toHaveBeenCalledWith({
+        email: request.email,
+      });
+      expect(mockEmailService.sendPasswordResetCode).toHaveBeenCalledWith(
+        request.email,
+        resetCode,
+        user.getUsername()
+      );
+    });
+
+    it("should throw NotFound error when user does not exist", async () => {
+      // Arrange
+      const request = {
+        email: "nonexistent@example.com",
+      };
+
+      vi.spyOn(mockUserRepository, "findOne").mockResolvedValue(null);
+
+      // Act & Assert
+      await expect(userService.requestPasswordReset(request)).rejects.toThrow(
+        APIError.NotFound(APIErrorType.UserNotFound)
+      );
+      expect(mockUserRepository.findOne).toHaveBeenCalledWith({
+        email: request.email,
+      });
+    });
+
+    it("should throw BadRequest error when user is a Google auth user", async () => {
+      // Arrange
+      const request = {
+        email: "google@example.com",
+      };
+      const user = UserTestFixture.createUserEntity();
+      user.setAuthProvider("google");
+
+      vi.spyOn(mockUserRepository, "findOne").mockResolvedValue(user);
+
+      // Act & Assert
+      await expect(userService.requestPasswordReset(request)).rejects.toThrow(
+        APIError.BadRequest("Google auth users cannot reset password")
+      );
+      expect(mockUserRepository.findOne).toHaveBeenCalledWith({
+        email: request.email,
+      });
+    });
+
+    it("should throw DatabaseError when MongoDB operation fails", async () => {
+      // Arrange
+      const request = {
+        email: "test@example.com",
+      };
+      const mongoError = new MongoServerError({ message: "Database error" });
+
+      vi.spyOn(mockUserRepository, "findOne").mockRejectedValue(mongoError);
+
+      // Act & Assert
+      await expect(userService.requestPasswordReset(request)).rejects.toThrow(
+        DatabaseError
+      );
+      expect(mockUserRepository.findOne).toHaveBeenCalledWith({
+        email: request.email,
+      });
+    });
+
+    it("should throw InternalServerError when email service fails", async () => {
+      // Arrange
+      const request = {
+        email: "test@example.com",
+      };
+      const user = UserTestFixture.createUserEntity();
+      const resetCode = "123456";
+      const emailError = new Error("Email service error");
+
+      vi.spyOn(mockUserRepository, "findOne").mockResolvedValue(user);
+      vi.spyOn(
+        userService as any,
+        "generatePasswordResetCode"
+      ).mockResolvedValue(resetCode);
+      vi.spyOn(mockEmailService, "sendPasswordResetCode").mockRejectedValue(
+        emailError
+      );
+
+      // Act & Assert
+      await expect(userService.requestPasswordReset(request)).rejects.toThrow(
+        APIError.InternalServerError("Request password reset error")
+      );
+      expect(mockUserRepository.findOne).toHaveBeenCalledWith({
+        email: request.email,
+      });
+      expect(mockEmailService.sendPasswordResetCode).toHaveBeenCalledWith(
+        request.email,
+        resetCode,
+        user.getUsername()
+      );
+    });
+
+    it("should invalidate any existing reset codes before creating new one", async () => {
+      // Arrange
+      const request = {
+        email: "test@example.com",
+      };
+      const user = UserTestFixture.createUserEntity();
+
+      vi.spyOn(mockUserRepository, "findOne").mockResolvedValue(user);
+      vi.spyOn(mongoose, "startSession").mockResolvedValue(mockSession);
+      vi.spyOn(mockPasswordResetRepository, "deleteMany").mockResolvedValue();
+      vi.spyOn(mockEmailService, "sendPasswordResetCode").mockResolvedValue();
+
+      // Act
+      await userService.requestPasswordReset(request);
+
+      // Assert
+      expect(mockPasswordResetRepository.deleteMany).toHaveBeenCalledWith(
+        {
+          userId: user.getId(),
+          expiresAt: { $gt: expect.any(Date) },
+        },
+        { session: mockSession } // Add this second argument to match the actual call
+      );
+    });
+  });
+
+  describe("resetPasswordWithCode", () => {
+    it("should successfully reset password with valid code", async () => {
+      // Arrange
+      const hashedPassword = "hashedPassword";
+      const newResetCode = UserTestFixture.createResetCode();
+      const request = UserTestFixture.createResetPasswordWithCodeRequest({
+        newPassword: "newPassword123",
+        resetCode: newResetCode,
+      });
+      const user = UserTestFixture.createUserEntity();
+
+      const resetRequest = PasswordReset.builder()
+        .setEmail(request.email)
+        .setCode(request.resetCode)
+        .setUserId(user.getId())
+        .setExpiresAt(new Date(Date.now() + 1000 * 60 * 10)) // 10 minutes from now
+        .build();
+
+      vi.spyOn(mockPasswordResetRepository, "findOne").mockResolvedValue(
+        resetRequest
+      );
+      vi.spyOn(mockUserRepository, "findById").mockResolvedValue(user);
+      vi.spyOn(BcryptUtil, "hashPassword").mockResolvedValue(hashedPassword);
+
+      vi.spyOn(mockUserRepository, "findByIdAndUpdate").mockResolvedValue(user);
+      vi.spyOn(
+        mockPasswordResetRepository,
+        "findByIdAndDelete"
+      ).mockResolvedValue();
+
+      // Act
+      await userService.resetPasswordWithCode(request);
+
+      // Assert
+      expect(mockPasswordResetRepository.findOne).toHaveBeenCalledWith({
+        email: request.email,
+        code: request.resetCode,
+      });
+      expect(mockUserRepository.findById).toHaveBeenCalledWith(
+        resetRequest.getUserId()
+      );
+      expect(BcryptUtil.hashPassword).toHaveBeenCalledWith(request.newPassword);
+      expect(mockUserRepository.findByIdAndUpdate).toHaveBeenCalledWith(
+        user.getId(),
+        {
+          password: hashedPassword,
+          refreshTokens: [],
+        }
+      );
+      expect(
+        mockPasswordResetRepository.findByIdAndDelete
+      ).toHaveBeenCalledWith(resetRequest.getId());
+    });
+
+    it("should throw BadRequest when reset code is invalid", async () => {
+      // Arrange
+      const request = UserTestFixture.createResetPasswordWithCodeRequest({
+        email: "test@example.com",
+        resetCode: "invalid",
+        newPassword: "newPassword123",
+      });
+
+      vi.spyOn(mockPasswordResetRepository, "findOne").mockResolvedValue(null);
+
+      // Act & Assert
+      await expect(userService.resetPasswordWithCode(request)).rejects.toThrow(
+        APIError.BadRequest("Invalid Code")
+      );
+      expect(mockPasswordResetRepository.findOne).toHaveBeenCalledWith({
+        email: request.email,
+        code: request.resetCode,
+      });
+    });
+
+    it("should throw BadRequest when reset code is expired", async () => {
+      // Arrange
+      const request = UserTestFixture.createResetPasswordWithCodeRequest({
+        email: "test@example.com",
+        resetCode: "invalid",
+        newPassword: "newPassword123",
+      });
+      const resetRequest = PasswordReset.builder()
+        .setEmail(request.email)
+        .setCode(request.resetCode)
+        .setUserId(new Types.ObjectId())
+        .setExpiresAt(new Date(Date.now() - 1000)) // Expired
+        .build();
+
+      vi.spyOn(mockPasswordResetRepository, "findOne").mockResolvedValue(
+        resetRequest
+      );
+      vi.spyOn(
+        mockPasswordResetRepository,
+        "findByIdAndDelete"
+      ).mockResolvedValue();
+
+      // Act & Assert
+      await expect(userService.resetPasswordWithCode(request)).rejects.toThrow(
+        APIError.BadRequest("Expired Code")
+      );
+      expect(mockPasswordResetRepository.findOne).toHaveBeenCalledWith({
+        email: request.email,
+        code: request.resetCode,
+      });
+      expect(
+        mockPasswordResetRepository.findByIdAndDelete
+      ).toHaveBeenCalledWith(resetRequest.getId());
+    });
+
+    it("should throw 404 status code when user is not found", async () => {
+      // Arrange
+      const request = UserTestFixture.createResetPasswordWithCodeRequest({
+        email: "test@example.com",
+        resetCode: "invalid",
+        newPassword: "newPassword123",
+      });
+
+      const resetRequest = PasswordReset.builder()
+        .setEmail(request.email)
+        .setCode(request.resetCode)
+        .setUserId(new Types.ObjectId())
+        .setExpiresAt(new Date(Date.now() + 1000 * 60 * 10))
+        .build();
+
+      vi.spyOn(mockPasswordResetRepository, "findOne").mockResolvedValue(
+        resetRequest
+      );
+      vi.spyOn(mockUserRepository, "findById").mockResolvedValue(null);
+      vi.spyOn(
+        mockPasswordResetRepository,
+        "findByIdAndDelete"
+      ).mockResolvedValue();
+
+      // Act & Assert
+      await expect(userService.resetPasswordWithCode(request)).rejects.toThrow(
+        APIError.NotFound(APIErrorType.UserNotFound)
+      );
+      expect(mockPasswordResetRepository.findOne).toHaveBeenCalledWith({
+        email: request.email,
+        code: request.resetCode,
+      });
+      expect(mockUserRepository.findById).toHaveBeenCalledWith(
+        resetRequest.getUserId()
+      );
+      expect(
+        mockPasswordResetRepository.findByIdAndDelete
+      ).toHaveBeenCalledWith(resetRequest.getId());
+    });
+
+    it("should handle database errors", async () => {
+      // Arrange
+      const request = UserTestFixture.createResetPasswordWithCodeRequest({
+        email: "test@example.com",
+        resetCode: "invalid",
+        newPassword: "newPassword123",
+      });
+      const dbError = new MongoServerError({ message: "Database error" });
+
+      vi.spyOn(mockPasswordResetRepository, "findOne").mockRejectedValue(
+        dbError
+      );
+
+      // Act & Assert
+      await expect(userService.resetPasswordWithCode(request)).rejects.toThrow(
+        DatabaseError.handleMongoDBError(dbError)
+      );
+      expect(mockPasswordResetRepository.findOne).toHaveBeenCalledWith({
+        email: request.email,
+        code: request.resetCode,
+      });
     });
   });
 });

@@ -92,4 +92,5 @@ export const mockUserService: IUserService = {
   requestPasswordReset: vi.fn(),
   resetPasswordWithCode: vi.fn(),
   logoutUser: vi.fn(),
+  expireRefreshToken: vi.fn(),
 };

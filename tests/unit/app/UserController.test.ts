@@ -314,4 +314,17 @@ describe("UserController", () => {
       expect(mockNext).toHaveBeenCalledWith(expectedError);
     });
   });
+
+  // describe("requestPasswordReset", () => {
+  //   it("should request a password reset successfully and return 200 status", async () => {
+  //     // Arrange
+  //     const requestPasswordResetRequest =
+  //       UserTestFixture.createRequestPasswordResetRequest();
+  //     const expectedResponse = {
+  //       message: "Password reset request sent successfully",
+  //     };
+
+  //     mockRequest.body = requestPasswordResetRequest;
+  //   });
+  // });
 });

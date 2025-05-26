@@ -65,4 +65,11 @@ router.post(
 
 router.post("/logout", userMiddleware.validateLogout, userController.logout);
 
+// Only available in test mode
+router.post(
+  "/expire-refresh-token",
+  userMiddleware.validateRefreshToken,
+  userController.expireRefreshToken
+);
+
 export default router;

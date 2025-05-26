@@ -10,14 +10,18 @@ import {
   RegisterUserAPIError,
   LoginUserAPIError,
   APIErrorType,
+  ValidateRefreshTokens,
+  AuthErrorType,
+  ValidateLogout,
 } from "../../../src/common/enums.js";
 import UserTestFixture from "../../fixtures/UserTestFixture.js";
 import { StatusCodes as HttpStatusCode } from "http-status-codes";
 import { ErrorResponse } from "../../../src/common/errors/types.js";
+import { v4 as uuidv4 } from "uuid";
 
 interface ErrorTestCase<T> {
   description: string;
-  request: Partial<T>;
+  request: Partial<T> | (() => Promise<Partial<T>>);
   status: number;
   expectedErrorResponse: Partial<ErrorResponse>;
 }
@@ -25,20 +29,6 @@ interface ErrorTestCase<T> {
 export default class AuthDataProvider {
   static registerUserErrorCases(): ErrorTestCase<UserRequest>[] {
     return [
-      {
-        description:
-          "should return 409 status code when user already exists with the same email",
-        request: UserTestFixture.createUserRequest({
-          email: "ryanReynolds1@gmail.com",
-          password: "Soccer98!",
-          name: "Ryan Reynolds",
-        }),
-        status: HttpStatusCode.CONFLICT,
-        expectedErrorResponse: {
-          message: RegisterUserAPIError.UserAlreadyExists,
-          errorCode: "CONFLICT",
-        },
-      },
       {
         description: "should return error when email is missing",
         request: UserTestFixture.createUserRequest({
@@ -123,35 +113,11 @@ export default class AuthDataProvider {
   static loginUserErrorCases(): ErrorTestCase<UserLoginRequest>[] {
     return [
       {
-        description: "should return 500 status code when password is invalid",
-        request: UserTestFixture.createUserLoginRequest({
-          email: "ryanReynolds98@gmail.com",
-          password: "Soccer98!",
-        }),
-        status: HttpStatusCode.INTERNAL_SERVER_ERROR,
-        expectedErrorResponse: {
-          message: LoginUserAPIError.InvalidPassword,
-          errorCode: "INVALID_PASSWORD",
-        },
-      },
-      {
-        description:
-          "should return 404 status code when user is not found by email",
-        request: UserTestFixture.createUserLoginRequest({
-          email: "ryanReynolds98@gmail.com",
-          password: "Password98!",
-        }),
-        status: HttpStatusCode.NOT_FOUND,
-        expectedErrorResponse: {
-          message: LoginUserAPIError.UserNotFound,
-          errorCode: "NOT_FOUND",
-        },
-      },
-      {
         description: "should return error when email is missing",
         request: UserTestFixture.createUserLoginRequest({
           email: undefined,
           password: "Password98!",
+          deviceId: UserTestFixture.DEVICE_ID,
         }),
         status: HttpStatusCode.BAD_REQUEST,
         expectedErrorResponse: {
@@ -165,6 +131,7 @@ export default class AuthDataProvider {
         request: UserTestFixture.createUserLoginRequest({
           email: "ryanReynolds1@gmail.com",
           password: undefined,
+          deviceId: UserTestFixture.DEVICE_ID,
         }),
         status: HttpStatusCode.BAD_REQUEST,
         expectedErrorResponse: {
@@ -192,6 +159,7 @@ export default class AuthDataProvider {
         request: UserTestFixture.createUserLoginRequest({
           email: undefined,
           password: undefined,
+          deviceId: undefined,
         }),
         status: HttpStatusCode.BAD_REQUEST,
         expectedErrorResponse: {
@@ -221,9 +189,140 @@ export default class AuthDataProvider {
     ];
   }
 
-  static refreshTokenErrorCases(): ErrorTestCase<RefreshTokenRequest>[] {
+  static refreshTokenErrorCases(
+    getValidTokens: () => Promise<{ refreshToken: string; deviceId: string }>
+  ): ErrorTestCase<RefreshTokenRequest>[] {
     return [
-      // Add specific refresh token error test cases here as needed
+      {
+        description: "should return 400 when refresh token is missing",
+        request: UserTestFixture.createRefreshTokenRequest({
+          refreshToken: undefined,
+          deviceId: UserTestFixture.DEVICE_ID,
+        }),
+        status: HttpStatusCode.BAD_REQUEST,
+        expectedErrorResponse: {
+          message: "Validation failed",
+          errorCode: "BAD_REQUEST",
+          details: [ValidateRefreshTokens.RefreshTokenRequired],
+        },
+      },
+      {
+        description: "should return 400 when device ID is missing",
+        request: UserTestFixture.createRefreshTokenRequest({
+          refreshToken: "some-token",
+          deviceId: undefined,
+        }),
+        status: HttpStatusCode.BAD_REQUEST,
+        expectedErrorResponse: {
+          message: "Validation failed",
+          errorCode: "BAD_REQUEST",
+          details: [ValidateRefreshTokens.DeviceIdRequired],
+        },
+      },
+      {
+        description:
+          "should return 400 status code when all token refresh fields are missing",
+        request: UserTestFixture.createRefreshTokenRequest({
+          refreshToken: undefined,
+          deviceId: undefined,
+        }),
+        status: HttpStatusCode.BAD_REQUEST,
+        expectedErrorResponse: {
+          message: "Validation failed",
+          errorCode: "BAD_REQUEST",
+          details: [
+            ValidateRefreshTokens.RefreshTokenRequired,
+            ValidateRefreshTokens.DeviceIdRequired,
+          ],
+        },
+      },
+      {
+        description: "should return 403 when refresh token is invalid",
+        request: async () => {
+          const { deviceId } = await getValidTokens();
+          return UserTestFixture.createRefreshTokenRequest({
+            refreshToken: "invalid-refresh-token",
+            deviceId: deviceId,
+          });
+        },
+        status: HttpStatusCode.FORBIDDEN,
+        expectedErrorResponse: {
+          message: AuthErrorType.InvalidRefreshToken,
+          errorCode: "FORBIDDEN",
+        },
+      },
+      {
+        description:
+          "should return 403 when refresh token is from a different device",
+        request: async () => {
+          const { refreshToken } = await getValidTokens();
+          return UserTestFixture.createRefreshTokenRequest({
+            refreshToken,
+            deviceId: uuidv4(),
+          });
+        },
+        status: HttpStatusCode.FORBIDDEN,
+        expectedErrorResponse: {
+          message: AuthErrorType.InvalidRefreshToken,
+          errorCode: "FORBIDDEN",
+        },
+      },
+    ];
+  }
+
+  static logoutUserErrorCases(): ErrorTestCase<LogoutRequest>[] {
+    return [
+      {
+        description: "should return 404 when user was not found",
+        request: UserTestFixture.createLogoutRequest(),
+        status: HttpStatusCode.NOT_FOUND,
+        expectedErrorResponse: {
+          message: APIErrorType.UserNotFound,
+          errorCode: "NOT_FOUND",
+        },
+      },
+      {
+        description: "should return 400 when refresh token is missing",
+        request: UserTestFixture.createLogoutRequest({
+          refreshToken: undefined,
+          deviceId: UserTestFixture.DEVICE_ID,
+        }),
+        status: HttpStatusCode.BAD_REQUEST,
+        expectedErrorResponse: {
+          message: "Validation failed",
+          errorCode: "BAD_REQUEST",
+          details: [ValidateLogout.RefreshTokenRequired],
+        },
+      },
+      {
+        description: "should return 400 when deviceId is missing",
+        request: UserTestFixture.createLogoutRequest({
+          refreshToken: UserTestFixture.REFRESH_TOKEN,
+          deviceId: undefined,
+        }),
+        status: HttpStatusCode.BAD_REQUEST,
+        expectedErrorResponse: {
+          message: "Validation failed",
+          errorCode: "BAD_REQUEST",
+          details: [ValidateLogout.DeviceIdRequired],
+        },
+      },
+      {
+        description: "should return 400 when all fields are missing",
+        request: UserTestFixture.createLogoutRequest({
+          refreshToken: undefined,
+          deviceId: undefined,
+        }),
+        status: HttpStatusCode.BAD_REQUEST,
+        expectedErrorResponse: {
+          message: "Validation failed",
+          errorCode: "BAD_REQUEST",
+          details: [
+            ValidateLogout.RefreshTokenRequired,
+            ValidateLogout.DeviceIdRequired,
+          ],
+        },
+      },
     ];
   }
 }

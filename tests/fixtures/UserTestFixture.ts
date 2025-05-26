@@ -12,11 +12,15 @@ import {
   RefreshTokenRequest,
   LogoutRequest,
   RefreshTokenResponse,
+  RequestPasswordResetRequest,
+  ResetPasswordWithCodeRequest,
 } from "../../src/app/user/userDto.js";
 import { DecodedIdToken } from "firebase-admin/auth";
 import UserProfile from "../../src/infrastructure/database/entity/user/UserProfile.js";
 import { ProfileAccess } from "../../src/common/enums.js";
 import { v4 as uuidv4 } from "uuid";
+import crypto from "crypto";
+import PasswordReset from "../../src/infrastructure/database/entity/user/PasswordReset.js";
 
 export default class UserTestFixture {
   public static ID: Types.ObjectId = new Types.ObjectId();
@@ -146,7 +150,7 @@ export default class UserTestFixture {
       isActive: this.IS_ACTIVE,
       email: this.EMAIL,
       authProvider: this.AUTH_PROVIDER,
-      deviceId: this.DEVICE_TOKEN,
+      deviceId: this.DEVICE_ID,
       ...updatedData,
     };
   }
@@ -197,5 +201,28 @@ export default class UserTestFixture {
       name: this.NAME,
       ...updatedData,
     } as DecodedIdToken;
+  }
+
+  public static createResetPasswordWithCodeRequest(
+    updatedData?: Partial<ResetPasswordWithCodeRequest>
+  ): ResetPasswordWithCodeRequest {
+    return {
+      email: this.EMAIL,
+      resetCode: this.createResetCode(),
+      newPassword: this.PASSWORD,
+      ...updatedData,
+    };
+  }
+
+  // public static createPasswordResetEntity(): PasswordReset {
+  //   return PasswordReset.builder()
+  //     .setEmail(this.EMAIL)
+  //     .setCode(this.createResetCode())
+  //     .setUserId(this.ID)
+  //     .setExpiresAt(new Date(Date.now() + 1000 * 60 * 10));
+  // }
+
+  public static createResetCode(): string {
+    return crypto.randomInt(100000, 999999).toString();
   }
 }

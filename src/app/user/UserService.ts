@@ -58,6 +58,7 @@ export interface IUserService {
   requestPasswordReset(request: RequestPasswordResetRequest): Promise<void>;
   resetPasswordWithCode(request: ResetPasswordWithCodeRequest): Promise<void>;
   logoutUser(logoutRequest: LogoutRequest): Promise<void>;
+  expireRefreshToken(refreshTokenRequest: RefreshTokenRequest): Promise<void>;
 }
 
 export default class UserService implements IUserService {
@@ -307,6 +308,8 @@ export default class UserService implements IUserService {
         "refreshTokens.deviceId": deviceId,
       });
 
+      this.logger.info("Refresh Token User: ", user);
+
       if (!user) {
         // Add logging
         this.logger.warn(AuthErrorType.InvalidRefreshToken, {
@@ -337,22 +340,21 @@ export default class UserService implements IUserService {
           email: user.getEmail(),
           username: user.getUsername(),
         });
-        throw AuthError.Forbidden(AuthErrorType.RefreshTokenExpired);
+        throw AuthError.Forbidden(AuthErrorType.InvalidRefreshToken);
       }
 
       // Generate new refresh token
       const newRefreshToken = this.createRefreshToken(deviceId);
-      const updatedUser = await this.userRepository.findOneAndUpdate(
+      this.logger.info("New refresh token: ", newRefreshToken);
+      await this.userRepository.updateOne(
         {
           _id: user.getId(),
           "refreshTokens.token": refreshToken,
           "refreshTokens.deviceId": deviceId,
         },
         {
-          $pull: { refreshTokens: { token: refreshToken, deviceId: deviceId } },
-          $push: { refreshTokens: newRefreshToken },
-        },
-        { new: true } // Return the modified document
+          $set: { refreshTokens: newRefreshToken },
+        }
       );
 
       const newAccessToken = await this.generateAccessToken(
@@ -389,6 +391,7 @@ export default class UserService implements IUserService {
     const { email } = request;
 
     try {
+      // Put in check for provider
       const user = await this.userRepository.findOne({ email });
 
       if (!user) {
@@ -398,6 +401,10 @@ export default class UserService implements IUserService {
           message: APIErrorType.UserNotFound,
         });
         throw APIError.NotFound(APIErrorType.UserNotFound);
+      }
+
+      if (user.getAuthProvider() !== "local") {
+        throw APIError.BadRequest("Google auth users cannot reset password");
       }
 
       const resetCode = await this.generatePasswordResetCode(user);
@@ -467,9 +474,7 @@ export default class UserService implements IUserService {
         await this.passwordResetRepository.findByIdAndDelete(
           resetRequestDoc.getId()
         );
-        throw APIError.InternalServerError(
-          "User associated with reset code not found."
-        );
+        throw APIError.NotFound(APIErrorType.UserNotFound);
       }
 
       const newHashedPassword = await BcryptUtil.hashPassword(newPassword);
@@ -488,9 +493,6 @@ export default class UserService implements IUserService {
         userId: user.getId(),
         email,
       });
-
-      // TODO: Optionally, send a confirmation email that the password has been changed.
-      // await this.emailService.sendPasswordChangedConfirmation(email, user.getUsername());
     } catch (error) {
       this.logger.error("Error resetting password with code", { error, email });
       if (error instanceof APIError) throw error;
@@ -730,30 +732,102 @@ export default class UserService implements IUserService {
   }
 
   private async generatePasswordResetCode(user: User): Promise<string> {
-    // Secure Code Generation
-    const resetCode = crypto.randomInt(100000, 999999).toString(); // 6-digit code
-    // Code Expiry
-    const expiresAt = new Date(Date.now() + 10 * 60 * 1000); // Code expires in 10 minutes
+    const session = await mongoose.startSession();
 
-    // Optional: Invalidate any previous active reset codes for this user
-    await this.passwordResetRepository.deleteMany({
-      userId: user.getId(),
-      expiresAt: { $gt: new Date() },
-    });
+    try {
+      session.startTransaction();
 
-    await this.passwordResetRepository.create({
-      userId: user.getId(),
-      email: user.getEmail(),
-      code: resetCode,
-      expiresAt: expiresAt,
-    });
+      const resetCode = crypto.randomInt(100000, 999999).toString(); // 6-digit code
+      const expiresAt = new Date(Date.now() + 10 * 60 * 1000); // Code expires in 10 minutes
 
-    return resetCode;
+      // Invalidate any previous active reset codes for this user
+      await this.passwordResetRepository.deleteMany(
+        {
+          userId: user.getId(),
+          expiresAt: { $gt: new Date() },
+        },
+        { session }
+      );
+
+      await this.passwordResetRepository.create(
+        {
+          userId: user.getId(),
+          email: user.getEmail(),
+          code: resetCode,
+          expiresAt: expiresAt,
+        },
+        { session }
+      );
+
+      await session.commitTransaction();
+      return resetCode;
+    } catch (error) {
+      await session.abortTransaction();
+      this.logger.error("Error generating password reset code", {
+        error,
+        userId: user.getId(),
+        email: user.getEmail(),
+      });
+      throw error;
+    } finally {
+      session.endSession();
+    }
   }
 
   public generateUniqueUsername(email: string): string {
     const username = email.split("@")[0];
     const uniqueId = uuidv4().split("-")[0]; // Generate a short unique ID
     return `${username}_${uniqueId}`;
+  }
+
+  public async expireRefreshToken(
+    refreshTokenRequest: RefreshTokenRequest
+  ): Promise<void> {
+    const { refreshToken, deviceId } = refreshTokenRequest;
+
+    // if (process.env.NODE_ENV !== "test") {
+    //   throw APIError.Forbidden("This endpoint is only available in test mode");
+    // }
+
+    try {
+      const user = await this.userRepository.findOne({
+        "refreshTokens.token": refreshToken,
+        "refreshTokens.deviceId": deviceId,
+      });
+
+      if (!user) {
+        this.logger.warn("User not found", {
+          deviceId,
+        });
+        throw APIError.NotFound(APIErrorType.UserNotFound);
+      }
+
+      await this.userRepository.updateOne(
+        {
+          _id: user.getId(),
+          "refreshTokens.token": refreshToken,
+          "refreshTokens.deviceId": deviceId,
+        },
+        {
+          $set: {
+            "refreshTokens.$.expiresAt": new Date(),
+          },
+        }
+      );
+    } catch (error) {
+      this.logger.error("Error expiring refresh token", {
+        error,
+        deviceId,
+      });
+      if (error instanceof MongooseError || error instanceof MongoServerError) {
+        throw DatabaseError.handleMongoDBError(error);
+      } else if (error instanceof APIError) {
+        throw error;
+      }
+
+      throw APIError.InternalServerError(
+        "An error occurred while expiring refresh token"
+      );
+    }
   }
 }

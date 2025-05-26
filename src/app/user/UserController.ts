@@ -116,6 +116,7 @@ export default class UserController {
   ) => {
     try {
       const refreshTokensRequest = req.body as RefreshTokenRequest;
+      this.logger.info("Refresh tokens request: ", refreshTokensRequest);
 
       const userResponse = await this.userService.refreshTokens(
         refreshTokensRequest
@@ -135,6 +136,24 @@ export default class UserController {
 
       return res.status(HttpStatusCode.OK).json({
         message: "User logged out successfully",
+      });
+    } catch (error) {
+      next(error);
+    }
+  };
+
+  public expireRefreshToken = async (
+    req: Request,
+    res: Response,
+    next: NextFunction
+  ) => {
+    try {
+      const refreshTokenRequest = req.body as RefreshTokenRequest;
+
+      await this.userService.expireRefreshToken(refreshTokenRequest);
+
+      return res.status(HttpStatusCode.OK).json({
+        message: "Refresh token expired successfully",
       });
     } catch (error) {
       next(error);

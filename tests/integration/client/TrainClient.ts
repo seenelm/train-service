@@ -1,4 +1,4 @@
-import axios from "axios";
+import axios, { AxiosError } from "axios";
 import {
   UserRequest,
   UserResponse,
@@ -7,6 +7,8 @@ import {
   RefreshTokenRequest,
   LogoutRequest,
 } from "../../../src/app/user/userDto.js";
+import { v4 as uuidv4 } from "uuid";
+import { StatusCodes as HttpStatusCode } from "http-status-codes";
 
 export default class TrainClient {
   private baseUrl: string;
@@ -66,5 +68,18 @@ export default class TrainClient {
       console.error("Logout error: ", error);
       throw error;
     }
+  }
+
+  public async expireRefreshToken(request: RefreshTokenRequest): Promise<void> {
+    try {
+      await axios.post(`${this.baseUrl}/user/expire-refresh-token`, request);
+    } catch (error) {
+      console.error("Error expiring refresh token: ", error);
+      throw error;
+    }
+  }
+
+  public generateDeviceId(): string {
+    return uuidv4();
   }
 }
