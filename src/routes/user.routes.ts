@@ -47,13 +47,13 @@ router.post(
 
 router.post(
   "/request-password-reset",
-  // userMiddleware.validateRequestPasswordReset,
+  userMiddleware.validatePasswordReset,
   userController.requestPasswordReset
 );
 
 router.post(
   "/reset-password-with-code",
-  // userMiddleware.validateResetPasswordWithCode,
+  userMiddleware.validatePasswordResetWithCode,
   userController.resetPasswordWithCode
 );
 
@@ -71,5 +71,8 @@ router.post(
   userMiddleware.validateRefreshToken,
   userController.expireRefreshToken
 );
+
+// Only available in test mode
+router.get("/reset-code/:userId", userController.getResetCode);
 
 export default router;

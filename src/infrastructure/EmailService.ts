@@ -11,48 +11,54 @@ export interface IEmailService {
 }
 
 export default class EmailService implements IEmailService {
-  private transporter: Transporter;
+  private transporter: Transporter = nodemailer.createTransport({
+    jsonTransport: true,
+  });
   private logger: Logger;
   private emailFrom: string;
 
   constructor() {
     this.logger = Logger.getInstance();
     this.emailFrom = process.env.EMAIL_FROM || "noreply@example.com";
-    
-    // Check for required SMTP configuration
-    if (
-      !process.env.SMTP_HOST ||
-      !process.env.SMTP_PORT ||
-      !process.env.SMTP_USER ||
-      !process.env.SMTP_PASS
-    ) {
-      this.logger.error(
-        "SMTP configuration missing for email service."
-      );
-      // Fallback to a dummy transporter if SMTP config is missing
-      this.transporter = nodemailer.createTransport({
-        jsonTransport: true,
-      });
+
+    if (process.env.NODE_ENV === "test") {
+      this.setupTestTransporter();
     } else {
-      // Always use the configured SMTP settings
-      this.transporter = nodemailer.createTransport({
-        host: process.env.SMTP_HOST,
-        port: parseInt(process.env.SMTP_PORT || "587"),
-        secure: process.env.SMTP_SECURE === "true", // true for 465, false for other ports
-        auth: {
-          user: process.env.SMTP_USER,
-          pass: process.env.SMTP_PASS,
-        },
-        pool: true, // Use connection pooling for better performance
-        maxConnections: 5, 
-        maxMessages: 100,
-        rateLimit: 10, // max 10 messages per second
-      });
-      
-      this.logger.info(
-        `EmailService: Using SMTP transport with host ${process.env.SMTP_HOST}`
-      );
+      this.setupProductionTransporter();
     }
+
+    // // Check for required SMTP configuration
+    // if (
+    //   !process.env.SMTP_HOST ||
+    //   !process.env.SMTP_PORT ||
+    //   !process.env.SMTP_USER ||
+    //   !process.env.SMTP_PASS
+    // ) {
+    //   this.logger.error("SMTP configuration missing for email service.");
+    //   // Fallback to a dummy transporter if SMTP config is missing
+    //   this.transporter = nodemailer.createTransport({
+    //     jsonTransport: true,
+    //   });
+    // } else {
+    //   // Always use the configured SMTP settings
+    //   this.transporter = nodemailer.createTransport({
+    //     host: process.env.SMTP_HOST,
+    //     port: parseInt(process.env.SMTP_PORT || "587"),
+    //     secure: process.env.SMTP_SECURE === "true", // true for 465, false for other ports
+    //     auth: {
+    //       user: process.env.SMTP_USER,
+    //       pass: process.env.SMTP_PASS,
+    //     },
+    //     pool: true, // Use connection pooling for better performance
+    //     maxConnections: 5,
+    //     maxMessages: 100,
+    //     rateLimit: 10, // max 10 messages per second
+    //   });
+
+    //   this.logger.info(
+    //     `EmailService: Using SMTP transport with host ${process.env.SMTP_HOST}`
+    //   );
+    // }
   }
 
   public async sendPasswordResetCode(
@@ -84,6 +90,61 @@ export default class EmailService implements IEmailService {
         "Failed to send password reset email. Please try again later.",
         error
       );
+    }
+  }
+
+  private async setupTestTransporter() {
+    try {
+      const testAccount = await nodemailer.createTestAccount();
+      this.transporter = nodemailer.createTransport({
+        host: testAccount.smtp.host,
+        port: testAccount.smtp.port,
+        secure: testAccount.smtp.secure,
+        auth: {
+          user: testAccount.user,
+          pass: testAccount.pass,
+        },
+      });
+
+      this.logger.info("EmailService: Using Ethereal test SMTP", {
+        host: testAccount.smtp.host,
+        user: testAccount.user,
+      });
+    } catch (error) {
+      this.logger.error("Failed to setup test SMTP", { error });
+      throw APIError.InternalServerError("Failed to setup test email service");
+    }
+  }
+
+  private setupProductionTransporter() {
+    if (
+      !process.env.SMTP_HOST ||
+      !process.env.SMTP_PORT ||
+      !process.env.SMTP_USER ||
+      !process.env.SMTP_PASS
+    ) {
+      this.logger.error("SMTP configuration missing for email service.");
+      this.transporter = nodemailer.createTransport({
+        jsonTransport: true,
+      });
+    } else {
+      this.transporter = nodemailer.createTransport({
+        host: process.env.SMTP_HOST,
+        port: parseInt(process.env.SMTP_PORT || "587"),
+        secure: process.env.SMTP_SECURE === "true",
+        auth: {
+          user: process.env.SMTP_USER,
+          pass: process.env.SMTP_PASS,
+        },
+        pool: true,
+        maxConnections: 5,
+        maxMessages: 100,
+        rateLimit: 10,
+      });
+
+      this.logger.info("EmailService: Using production SMTP", {
+        host: process.env.SMTP_HOST,
+      });
     }
   }
 }

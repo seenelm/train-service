@@ -159,4 +159,21 @@ export default class UserController {
       next(error);
     }
   };
+
+  public getResetCode = async (
+    req: Request,
+    res: Response,
+    next: NextFunction
+  ) => {
+    try {
+      const userId = req.params.userId;
+      const resetCode = await this.userService.getResetCode(userId);
+
+      return res.status(HttpStatusCode.OK).json({
+        resetCode,
+      });
+    } catch (error) {
+      next(error);
+    }
+  };
 }

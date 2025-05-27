@@ -59,6 +59,7 @@ export interface IUserService {
   resetPasswordWithCode(request: ResetPasswordWithCodeRequest): Promise<void>;
   logoutUser(logoutRequest: LogoutRequest): Promise<void>;
   expireRefreshToken(refreshTokenRequest: RefreshTokenRequest): Promise<void>;
+  getResetCode(userId: string): Promise<string | null>;
 }
 
 export default class UserService implements IUserService {
@@ -829,5 +830,18 @@ export default class UserService implements IUserService {
         "An error occurred while expiring refresh token"
       );
     }
+  }
+
+  public async getResetCode(userId: string): Promise<string | null> {
+    if (process.env.NODE_ENV !== "test") {
+      throw new Error("getResetCode is only available in test environment");
+    }
+
+    const resetCode = await this.passwordResetRepository.findOne({
+      userId,
+      expiresAt: { $gt: new Date() },
+    });
+
+    return resetCode?.getCode() || null;
   }
 }

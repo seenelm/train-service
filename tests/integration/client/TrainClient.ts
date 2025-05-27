@@ -6,6 +6,8 @@ import {
   RefreshTokenResponse,
   RefreshTokenRequest,
   LogoutRequest,
+  RequestPasswordResetRequest,
+  ResetPasswordWithCodeRequest,
 } from "../../../src/app/user/userDto.js";
 import { v4 as uuidv4 } from "uuid";
 import { StatusCodes as HttpStatusCode } from "http-status-codes";
@@ -70,11 +72,48 @@ export default class TrainClient {
     }
   }
 
+  public async requestPasswordReset(
+    request: RequestPasswordResetRequest
+  ): Promise<void> {
+    try {
+      await axios.post(`${this.baseUrl}/user/request-password-reset`, request);
+    } catch (error) {
+      console.error("Error requesting password reset: ", error);
+      throw error;
+    }
+  }
+
+  public async resetPasswordWithCode(
+    request: ResetPasswordWithCodeRequest
+  ): Promise<void> {
+    try {
+      await axios.post(
+        `${this.baseUrl}/user/reset-password-with-code`,
+        request
+      );
+    } catch (error) {
+      console.error("Error resetting password with code: ", error);
+      throw error;
+    }
+  }
+
   public async expireRefreshToken(request: RefreshTokenRequest): Promise<void> {
     try {
       await axios.post(`${this.baseUrl}/user/expire-refresh-token`, request);
     } catch (error) {
       console.error("Error expiring refresh token: ", error);
+      throw error;
+    }
+  }
+
+  public async getResetCode(userId: string): Promise<string> {
+    try {
+      const response = await axios.get(
+        `${this.baseUrl}/user/reset-code/${userId}`
+      );
+      return response.data.resetCode;
+    } catch (error) {
+      console.error("Error getting reset code: ", error);
       throw error;
     }
   }

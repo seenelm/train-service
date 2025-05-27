@@ -14,6 +14,8 @@ import {
   UserRequest,
   UserLoginRequest,
   GoogleAuthRequest,
+  RequestPasswordResetRequest,
+  ResetPasswordWithCodeRequest,
 } from "../../../src/app/user/userDto.js";
 import {
   ValidateRegisterUser,
@@ -21,6 +23,7 @@ import {
   ValidateLogout,
   ValidateRefreshTokens,
   ValidateGoogleAuth,
+  ValidatePasswordReset,
 } from "../../../src/common/enums.js";
 import { CreateValidator } from "../../../src/common/utils/requestValidation.js";
 import UserTestFixture from "../../fixtures/UserTestFixture.js";
@@ -657,6 +660,215 @@ describe("UserMiddleware", () => {
       expect(CreateValidator.validate).toHaveBeenCalledWith(
         logoutRequest,
         UserRequestRules.logoutRules
+      );
+      expect(mockNext).toHaveBeenCalledWith(
+        APIError.BadRequest("Validation failed", validationErrors)
+      );
+    });
+  });
+
+  describe("validatePasswordReset", () => {
+    it("should call next() when all required fields are provided", async () => {
+      // Arrange
+      const requestPasswordResetRequest =
+        UserTestFixture.createPasswordResetRequest();
+
+      mockRequest.body = requestPasswordResetRequest;
+
+      // Mock the validation to return empty array (no errors)
+      vi.mocked(CreateValidator.validate).mockReturnValueOnce([]);
+
+      // Act
+      await userMiddleware.validatePasswordReset(
+        mockRequest as Request<{}, {}, RequestPasswordResetRequest>,
+        mockResponse as Response,
+        mockNext as NextFunction
+      );
+
+      // Assert
+      expect(CreateValidator.validate).toHaveBeenCalledWith(
+        requestPasswordResetRequest,
+        UserRequestRules.passwordResetRules
+      );
+      expect(mockNext).toHaveBeenCalled();
+      expect(mockResponse.status).not.toHaveBeenCalled();
+      expect(mockResponse.json).not.toHaveBeenCalled();
+    });
+
+    it("should return 400 when email is missing", async () => {
+      // Arrange
+      const requestPasswordResetRequest =
+        UserTestFixture.createPasswordResetRequest({
+          email: undefined,
+        });
+
+      mockRequest.body = requestPasswordResetRequest;
+      const validationErrors = [ValidatePasswordReset.EmailRequired];
+
+      // Mock the validation to return an error
+      vi.mocked(CreateValidator.validate).mockReturnValueOnce(validationErrors);
+
+      // Act
+      await userMiddleware.validatePasswordReset(
+        mockRequest as Request<{}, {}, RequestPasswordResetRequest>,
+        mockResponse as Response,
+        mockNext as NextFunction
+      );
+
+      // Assert
+      expect(CreateValidator.validate).toHaveBeenCalledWith(
+        requestPasswordResetRequest,
+        UserRequestRules.passwordResetRules
+      );
+      expect(mockNext).toHaveBeenCalledWith(
+        APIError.BadRequest("Validation failed", validationErrors)
+      );
+    });
+  });
+
+  describe("validatePasswordResetWithCode", () => {
+    it("should call next() when all required fields are provided", async () => {
+      // Arrange
+      const resetPasswordWithCodeRequest =
+        UserTestFixture.createResetPasswordWithCodeRequest();
+
+      mockRequest.body = resetPasswordWithCodeRequest;
+
+      // Mock the validation to return empty array (no errors)
+      vi.mocked(CreateValidator.validate).mockReturnValueOnce([]);
+
+      // Act
+      await userMiddleware.validatePasswordResetWithCode(
+        mockRequest as Request<{}, {}, ResetPasswordWithCodeRequest>,
+        mockResponse as Response,
+        mockNext as NextFunction
+      );
+
+      // Assert
+      expect(CreateValidator.validate).toHaveBeenCalledWith(
+        resetPasswordWithCodeRequest,
+        UserRequestRules.resetPasswordWithCodeRules
+      );
+      expect(mockNext).toHaveBeenCalled();
+      expect(mockResponse.status).not.toHaveBeenCalled();
+      expect(mockResponse.json).not.toHaveBeenCalled();
+    });
+
+    it("should return 400 when email is missing", async () => {
+      // Arrange
+      const resetPasswordWithCodeRequest =
+        UserTestFixture.createResetPasswordWithCodeRequest({
+          email: undefined,
+        });
+
+      mockRequest.body = resetPasswordWithCodeRequest;
+      const validationErrors = [ValidatePasswordReset.EmailRequired];
+
+      // Mock the validation to return an error
+      vi.mocked(CreateValidator.validate).mockReturnValueOnce(validationErrors);
+
+      // Act
+      await userMiddleware.validatePasswordResetWithCode(
+        mockRequest as Request<{}, {}, ResetPasswordWithCodeRequest>,
+        mockResponse as Response,
+        mockNext as NextFunction
+      );
+
+      // Assert
+      expect(CreateValidator.validate).toHaveBeenCalledWith(
+        resetPasswordWithCodeRequest,
+        UserRequestRules.resetPasswordWithCodeRules
+      );
+      expect(mockNext).toHaveBeenCalledWith(
+        APIError.BadRequest("Validation failed", validationErrors)
+      );
+    });
+
+    it("should return 400 when resetCode is missing", async () => {
+      // Arrange
+      const resetPasswordWithCodeRequest =
+        UserTestFixture.createResetPasswordWithCodeRequest({
+          resetCode: undefined,
+        });
+
+      mockRequest.body = resetPasswordWithCodeRequest;
+      const validationErrors = [ValidatePasswordReset.ResetCodeRequired];
+
+      // Mock the validation to return an error
+      vi.mocked(CreateValidator.validate).mockReturnValueOnce(validationErrors);
+
+      // Act
+      await userMiddleware.validatePasswordResetWithCode(
+        mockRequest as Request<{}, {}, ResetPasswordWithCodeRequest>,
+        mockResponse as Response,
+        mockNext as NextFunction
+      );
+
+      // Assert
+      expect(CreateValidator.validate).toHaveBeenCalledWith(
+        resetPasswordWithCodeRequest,
+        UserRequestRules.resetPasswordWithCodeRules
+      );
+      expect(mockNext).toHaveBeenCalledWith(
+        APIError.BadRequest("Validation failed", validationErrors)
+      );
+    });
+
+    it("should return 400 when newPassword is missing", async () => {
+      // Arrange
+      const resetPasswordWithCodeRequest =
+        UserTestFixture.createResetPasswordWithCodeRequest({
+          newPassword: undefined,
+        });
+
+      mockRequest.body = resetPasswordWithCodeRequest;
+      const validationErrors = [ValidatePasswordReset.NewPasswordRequired];
+
+      // Mock the validation to return an error
+      vi.mocked(CreateValidator.validate).mockReturnValueOnce(validationErrors);
+
+      // Act
+      await userMiddleware.validatePasswordResetWithCode(
+        mockRequest as Request<{}, {}, ResetPasswordWithCodeRequest>,
+        mockResponse as Response,
+        mockNext as NextFunction
+      );
+
+      // Assert
+      expect(CreateValidator.validate).toHaveBeenCalledWith(
+        resetPasswordWithCodeRequest,
+        UserRequestRules.resetPasswordWithCodeRules
+      );
+      expect(mockNext).toHaveBeenCalledWith(
+        APIError.BadRequest("Validation failed", validationErrors)
+      );
+    });
+
+    it("should return 400 with multiple errors when multiple fields are missing", async () => {
+      // Arrange
+      const resetPasswordWithCodeRequest = {};
+
+      mockRequest.body = resetPasswordWithCodeRequest;
+      const validationErrors = [
+        ValidatePasswordReset.EmailRequired,
+        ValidatePasswordReset.ResetCodeRequired,
+        ValidatePasswordReset.NewPasswordRequired,
+      ];
+
+      // Mock the validation to return an error
+      vi.mocked(CreateValidator.validate).mockReturnValueOnce(validationErrors);
+
+      // Act
+      await userMiddleware.validatePasswordResetWithCode(
+        mockRequest as Request<{}, {}, ResetPasswordWithCodeRequest>,
+        mockResponse as Response,
+        mockNext as NextFunction
+      );
+
+      // Assert
+      expect(CreateValidator.validate).toHaveBeenCalledWith(
+        resetPasswordWithCodeRequest,
+        UserRequestRules.resetPasswordWithCodeRules
       );
       expect(mockNext).toHaveBeenCalledWith(
         APIError.BadRequest("Validation failed", validationErrors)

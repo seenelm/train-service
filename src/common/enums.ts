@@ -80,3 +80,9 @@ export enum ValidateLogout {
 export enum ValidateGoogleAuth {
   DeviceIdRequired = "Device ID is required",
 }
+
+export enum ValidatePasswordReset {
+  EmailRequired = "Email is required",
+  ResetCodeRequired = "Reset code is required",
+  NewPasswordRequired = "New password is required",
+}

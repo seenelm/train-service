@@ -322,20 +322,62 @@ describe("Train Service Integration Tests", () => {
     });
   });
 
-  // describe("Password Reset", () => {
-  //   beforeEach(async () => {
-  //     const userRequest = UserTestFixture.createUserRequest({
-  //       username: undefined,
-  //       name: "Will Ferrell",
-  //       password: "Password98!",
-  //       isActive: undefined,
-  //       email: "willFerrell1@gmail.com",
-  //       authProvider: "local",
-  //     });
+  describe("Password Reset", () => {
+    let userResponse: UserResponse;
+    let userRequest: UserRequest;
+    let resetCode: string;
+    let deviceId: string;
 
-  //     await trainClient.register(userRequest);
-  //   });
-  // });
+    beforeEach(async () => {
+      deviceId = trainClient.generateDeviceId();
+      userRequest = UserTestFixture.createUserRequest({
+        username: undefined,
+        name: "Will Ferrell",
+        password: "Password98!",
+        isActive: undefined,
+        email: "willFerrell1@gmail.com",
+        authProvider: "local",
+      });
+
+      userResponse = await trainClient.register(userRequest);
+    });
+
+    it("should successfully reset password with valid code", async () => {
+      // 1. Request password reset
+      await trainClient.requestPasswordReset({
+        email: userRequest.email,
+      });
+
+      // 2. Get the reset code from the mock email service
+      // const emailCalls = mockEmailService.sendPasswordResetCode.mock.calls;
+      // const lastEmailCall = emailCalls[emailCalls.length - 1];
+      // resetCode = lastEmailCall[1]; // The code is the second parameter
+
+      const resetCode = await trainClient.getResetCode(userResponse.userId);
+      console.log("Reset code: ", resetCode);
+
+      // 3. Reset password with the code
+      const newPassword = "NewPassword123!";
+      await trainClient.resetPasswordWithCode({
+        email: userRequest.email,
+        resetCode,
+        newPassword,
+      });
+
+      // 4. Verify we can login with new password
+      const loginResponse = await trainClient.login({
+        email: userRequest.email,
+        password: newPassword,
+        deviceId: deviceId,
+      });
+
+      expect(loginResponse.username).toBe(userResponse.username);
+      expect(loginResponse.name).toBe(userResponse.name);
+      expect(loginResponse.userId).toBe(userResponse.userId);
+      expect(loginResponse.accessToken).toBeDefined();
+      expect(loginResponse.refreshToken).toBeDefined();
+    });
+  });
 
   describe("Logout", () => {
     let userResponse: UserResponse = UserTestFixture.createUserResponse();

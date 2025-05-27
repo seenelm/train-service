@@ -315,16 +315,119 @@ describe("UserController", () => {
     });
   });
 
-  // describe("requestPasswordReset", () => {
-  //   it("should request a password reset successfully and return 200 status", async () => {
-  //     // Arrange
-  //     const requestPasswordResetRequest =
-  //       UserTestFixture.createRequestPasswordResetRequest();
-  //     const expectedResponse = {
-  //       message: "Password reset request sent successfully",
-  //     };
+  describe("requestPasswordReset", () => {
+    it("should request a password reset successfully and return 200 status", async () => {
+      // Arrange
+      const request = UserTestFixture.createPasswordResetRequest();
+      const expectedResponse = {
+        message: "Password reset request sent successfully",
+      };
 
-  //     mockRequest.body = requestPasswordResetRequest;
-  //   });
-  // });
+      mockRequest.body = request;
+
+      vi.spyOn(mockUserService, "requestPasswordReset").mockResolvedValueOnce(
+        undefined
+      );
+
+      // Act
+      await userController.requestPasswordReset(
+        mockRequest as Request,
+        mockResponse as Response,
+        mockNext as NextFunction
+      );
+
+      // Assert
+      expect(mockUserService.requestPasswordReset).toHaveBeenCalledWith(
+        request
+      );
+      expect(mockResponse.status).toHaveBeenCalledWith(HttpStatusCode.OK);
+      expect(mockResponse.json).toHaveBeenCalledWith(expectedResponse);
+      expect(mockNext).not.toHaveBeenCalled();
+    });
+
+    it("should pass any errors to the next middleware", async () => {
+      // Arrange
+      const request = UserTestFixture.createPasswordResetRequest();
+      const expectedError = new DatabaseError("Database error");
+
+      mockRequest.body = request;
+
+      vi.spyOn(mockUserService, "requestPasswordReset").mockRejectedValueOnce(
+        expectedError
+      );
+
+      // Act
+      await userController.requestPasswordReset(
+        mockRequest as Request,
+        mockResponse as Response,
+        mockNext as NextFunction
+      );
+
+      // Assert
+      expect(mockUserService.requestPasswordReset).toHaveBeenCalledWith(
+        request
+      );
+      expect(mockResponse.status).not.toHaveBeenCalled();
+      expect(mockResponse.json).not.toHaveBeenCalled();
+      expect(mockNext).toHaveBeenCalledWith(expectedError);
+    });
+  });
+
+  describe("resetPasswordWithCode", () => {
+    it("should reset a user's password successfully and return 200 status", async () => {
+      // Arrange
+      const resetPasswordWithCodeRequest =
+        UserTestFixture.createResetPasswordWithCodeRequest();
+      const expectedResponse = { message: "Password reset successful" };
+
+      mockRequest.body = resetPasswordWithCodeRequest;
+
+      vi.spyOn(mockUserService, "resetPasswordWithCode").mockResolvedValueOnce(
+        undefined
+      );
+
+      // Act
+      await userController.resetPasswordWithCode(
+        mockRequest as Request,
+        mockResponse as Response,
+        mockNext as NextFunction
+      );
+
+      // Assert
+      expect(mockUserService.resetPasswordWithCode).toHaveBeenCalledWith(
+        resetPasswordWithCodeRequest
+      );
+      expect(mockResponse.status).toHaveBeenCalledWith(HttpStatusCode.OK);
+      expect(mockResponse.json).toHaveBeenCalledWith(expectedResponse);
+      expect(mockNext).not.toHaveBeenCalled();
+    });
+
+    it("should pass any errors to the next middleware", async () => {
+      // Arrange
+      const resetPasswordWithCodeRequest =
+        UserTestFixture.createResetPasswordWithCodeRequest();
+      const expectedError = new DatabaseError("Database error");
+
+      mockRequest.body = resetPasswordWithCodeRequest;
+
+      vi.spyOn(mockUserService, "resetPasswordWithCode").mockRejectedValueOnce(
+        expectedError
+      );
+
+      // Act
+      await userController.resetPasswordWithCode(
+        mockRequest as Request,
+        mockResponse as Response,
+        mockNext as NextFunction
+      );
+
+      // Assert
+      expect(mockUserService.resetPasswordWithCode).toHaveBeenCalledWith(
+        resetPasswordWithCodeRequest
+      );
+      expect(mockResponse.status).not.toHaveBeenCalled();
+      expect(mockResponse.json).not.toHaveBeenCalled();
+      expect(mockNext).toHaveBeenCalledWith(expectedError);
+    });
+  });
 });

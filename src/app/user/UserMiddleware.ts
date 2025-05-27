@@ -1,5 +1,11 @@
 import { Request, Response, NextFunction } from "express";
-import { UserRequest, UserLoginRequest, GoogleAuthRequest } from "./userDto.js";
+import {
+  UserRequest,
+  UserLoginRequest,
+  GoogleAuthRequest,
+  RequestPasswordResetRequest,
+  ResetPasswordWithCodeRequest,
+} from "./userDto.js";
 import { StatusCodes as HttpStatusCode } from "http-status-codes";
 import { CreateValidator } from "../../common/utils/requestValidation.js";
 import UserRequestRules from "./UserRequestRules.js";
@@ -86,6 +92,42 @@ export default class UserMiddleware {
     const errors = CreateValidator.validate(
       req.body,
       UserRequestRules.logoutRules
+    );
+
+    if (errors && errors.length > 0) {
+      return next(APIError.BadRequest("Validation failed", errors));
+    }
+    next();
+  };
+
+  validatePasswordReset = async (
+    req: Request<{}, {}, RequestPasswordResetRequest>,
+    res: Response,
+    next: NextFunction
+  ) => {
+    const request: RequestPasswordResetRequest = req.body;
+
+    const errors = CreateValidator.validate(
+      request,
+      UserRequestRules.passwordResetRules
+    );
+
+    if (errors && errors.length > 0) {
+      return next(APIError.BadRequest("Validation failed", errors));
+    }
+    next();
+  };
+
+  validatePasswordResetWithCode = async (
+    req: Request<{}, {}, ResetPasswordWithCodeRequest>,
+    res: Response,
+    next: NextFunction
+  ) => {
+    const request: ResetPasswordWithCodeRequest = req.body;
+
+    const errors = CreateValidator.validate(
+      request,
+      UserRequestRules.resetPasswordWithCodeRules
     );
 
     if (errors && errors.length > 0) {

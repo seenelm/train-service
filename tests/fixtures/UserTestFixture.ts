@@ -214,6 +214,15 @@ export default class UserTestFixture {
     };
   }
 
+  public static createPasswordResetRequest(
+    updatedData?: Partial<RequestPasswordResetRequest>
+  ): RequestPasswordResetRequest {
+    return {
+      email: this.EMAIL,
+      ...updatedData,
+    };
+  }
+
   // public static createPasswordResetEntity(): PasswordReset {
   //   return PasswordReset.builder()
   //     .setEmail(this.EMAIL)

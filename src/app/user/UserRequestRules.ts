@@ -5,6 +5,7 @@ import {
   ValidateLogout,
   ValidateRefreshTokens,
   ValidateGoogleAuth,
+  ValidatePasswordReset,
 } from "../../common/enums.js";
 
 export default class UserRequestRules {
@@ -69,6 +70,28 @@ export default class UserRequestRules {
     deviceId: {
       hasError: (u) => !!u.deviceId,
       message: ValidateGoogleAuth.DeviceIdRequired,
+    },
+  };
+
+  public static passwordResetRules: RuleSet<any> = {
+    email: {
+      hasError: (u) => !!u.email,
+      message: ValidatePasswordReset.EmailRequired,
+    },
+  };
+
+  public static resetPasswordWithCodeRules: RuleSet<any> = {
+    email: {
+      hasError: (u) => !!u.email,
+      message: ValidatePasswordReset.EmailRequired,
+    },
+    resetCode: {
+      hasError: (u) => !!u.resetCode,
+      message: ValidatePasswordReset.ResetCodeRequired,
+    },
+    newPassword: {
+      hasError: (u) => !!u.newPassword,
+      message: ValidatePasswordReset.NewPasswordRequired,
     },
   };
 }
