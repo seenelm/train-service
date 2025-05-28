@@ -3,6 +3,8 @@ import {
   UserLoginRequest,
   RefreshTokenRequest,
   LogoutRequest,
+  RequestPasswordResetRequest,
+  ResetPasswordWithCodeRequest,
 } from "../../../src/app/user/userDto.js";
 import {
   ValidateRegisterUser,
@@ -13,6 +15,7 @@ import {
   ValidateRefreshTokens,
   AuthErrorType,
   ValidateLogout,
+  ValidatePasswordReset,
 } from "../../../src/common/enums.js";
 import UserTestFixture from "../../fixtures/UserTestFixture.js";
 import { StatusCodes as HttpStatusCode } from "http-status-codes";
@@ -320,6 +323,65 @@ export default class AuthDataProvider {
           details: [
             ValidateLogout.RefreshTokenRequired,
             ValidateLogout.DeviceIdRequired,
+          ],
+        },
+      },
+    ];
+  }
+
+  static resetPasswordWithCodeErrorCases(): ErrorTestCase<ResetPasswordWithCodeRequest>[] {
+    return [
+      {
+        description: "should return 400 when email is missing",
+        request: UserTestFixture.createResetPasswordWithCodeRequest({
+          email: undefined,
+        }),
+        status: HttpStatusCode.BAD_REQUEST,
+        expectedErrorResponse: {
+          message: "Validation failed",
+          errorCode: "BAD_REQUEST",
+          details: [ValidatePasswordReset.EmailRequired],
+        },
+      },
+      {
+        description: "should return 400 when reset code is missing",
+        request: UserTestFixture.createResetPasswordWithCodeRequest({
+          resetCode: undefined,
+        }),
+        status: HttpStatusCode.BAD_REQUEST,
+        expectedErrorResponse: {
+          message: "Validation failed",
+          errorCode: "BAD_REQUEST",
+          details: [ValidatePasswordReset.ResetCodeRequired],
+        },
+      },
+      {
+        description: "should return 400 when new password is missing",
+        request: UserTestFixture.createResetPasswordWithCodeRequest({
+          newPassword: undefined,
+        }),
+        status: HttpStatusCode.BAD_REQUEST,
+        expectedErrorResponse: {
+          message: "Validation failed",
+          errorCode: "BAD_REQUEST",
+          details: [ValidatePasswordReset.NewPasswordRequired],
+        },
+      },
+      {
+        description: "should return 400 when all fields are missing",
+        request: UserTestFixture.createResetPasswordWithCodeRequest({
+          email: undefined,
+          resetCode: undefined,
+          newPassword: undefined,
+        }),
+        status: HttpStatusCode.BAD_REQUEST,
+        expectedErrorResponse: {
+          message: "Validation failed",
+          errorCode: "BAD_REQUEST",
+          details: [
+            ValidatePasswordReset.EmailRequired,
+            ValidatePasswordReset.ResetCodeRequired,
+            ValidatePasswordReset.NewPasswordRequired,
           ],
         },
       },

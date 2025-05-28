@@ -18,11 +18,15 @@ import {
   UserLoginRequest,
   RefreshTokenRequest,
   LogoutRequest,
+  ResetPasswordWithCodeRequest,
 } from "../../src/app/user/userDto.js";
 import AuthDataProvider from "./dataProviders/AuthDataProvider.js";
 import axios, { AxiosError } from "axios";
 import { StatusCodes as HttpStatusCode } from "http-status-codes";
-import { AuthErrorType } from "../../src/common/enums.js";
+import {
+  AuthErrorType,
+  ValidatePasswordReset,
+} from "../../src/common/enums.js";
 import {
   RegisterUserAPIError,
   LoginUserAPIError,
@@ -348,14 +352,7 @@ describe("Train Service Integration Tests", () => {
         email: userRequest.email,
       });
 
-      // 2. Get the reset code from the mock email service
-      // const emailCalls = mockEmailService.sendPasswordResetCode.mock.calls;
-      // const lastEmailCall = emailCalls[emailCalls.length - 1];
-      // resetCode = lastEmailCall[1]; // The code is the second parameter
-
       const resetCode = await trainClient.getResetCode(userResponse.userId);
-      console.log("Reset code: ", resetCode);
-
       // 3. Reset password with the code
       const newPassword = "NewPassword123!";
       await trainClient.resetPasswordWithCode({
@@ -376,6 +373,49 @@ describe("Train Service Integration Tests", () => {
       expect(loginResponse.userId).toBe(userResponse.userId);
       expect(loginResponse.accessToken).toBeDefined();
       expect(loginResponse.refreshToken).toBeDefined();
+    });
+
+    describe("Password Reset Error Cases", () => {
+      it("should return 400 when email is missing", async () => {
+        const requestPasswordResetRequest =
+          UserTestFixture.createPasswordResetRequest({
+            email: undefined,
+          });
+
+        try {
+          await trainClient.requestPasswordReset(requestPasswordResetRequest);
+        } catch (error) {
+          if (error instanceof AxiosError) {
+            expect(error.response?.status).toBe(HttpStatusCode.BAD_REQUEST);
+            expect(error.response?.data).toMatchObject({
+              message: "Validation failed",
+              errorCode: "BAD_REQUEST",
+              details: [ValidatePasswordReset.EmailRequired],
+            });
+          }
+        }
+      });
+    });
+
+    describe("Reset Password with Code Error Cases", () => {
+      it.each(AuthDataProvider.resetPasswordWithCodeErrorCases())(
+        "$description",
+        async ({ request, status, expectedErrorResponse }) => {
+          try {
+            await trainClient.resetPasswordWithCode(
+              request as ResetPasswordWithCodeRequest
+            );
+          } catch (error) {
+            if (error instanceof AxiosError) {
+              const axiosError = error as AxiosError;
+              expect(axiosError.response?.status).toBe(status);
+
+              const errorResponse = axiosError.response?.data;
+              expect(errorResponse).toMatchObject(expectedErrorResponse);
+            }
+          }
+        }
+      );
     });
   });
 

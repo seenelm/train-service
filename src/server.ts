@@ -1,11 +1,11 @@
 import TrainService from "./app.js";
 import { Application } from "express";
-import mongoose from "mongoose";
-import envConfig from "./common/config/envConfig.js";
+// import mongoose from "mongoose";
+// import envConfig from "./common/config/envConfig.js";
 import { Logger } from "./common/logger.js";
 
 let server: any = null;
-const port = envConfig.server.port || 3000;
+const port = process.env.PORT || 3000;
 const trainService = TrainService.getInstance();
 const app: Application = trainService.getApp();
 const logger = Logger.getInstance();

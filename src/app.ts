@@ -1,5 +1,4 @@
 import express, { Application } from "express";
-import envConfig from "./common/config/envConfig.js";
 import MongoDB from "./infrastructure/database/db.js";
 import routes from "./routes/index.js";
 import { Logger } from "./common/logger.js";
@@ -15,9 +14,9 @@ export default class TrainService {
 
   private constructor() {
     this.app = express();
-    this.db = new MongoDB(envConfig.database.uri);
+    this.db = new MongoDB(process.env.MONGO_URI);
     this.logger = Logger.getInstance();
-    this.logger.info("Database uri: ", envConfig.database.uri);
+    this.logger.info("Database uri: ", process.env.MONGO_URI);
 
     this.configureMiddleware();
     this.configureRoutes();

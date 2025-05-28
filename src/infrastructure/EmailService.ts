@@ -26,39 +26,6 @@ export default class EmailService implements IEmailService {
     } else {
       this.setupProductionTransporter();
     }
-
-    // // Check for required SMTP configuration
-    // if (
-    //   !process.env.SMTP_HOST ||
-    //   !process.env.SMTP_PORT ||
-    //   !process.env.SMTP_USER ||
-    //   !process.env.SMTP_PASS
-    // ) {
-    //   this.logger.error("SMTP configuration missing for email service.");
-    //   // Fallback to a dummy transporter if SMTP config is missing
-    //   this.transporter = nodemailer.createTransport({
-    //     jsonTransport: true,
-    //   });
-    // } else {
-    //   // Always use the configured SMTP settings
-    //   this.transporter = nodemailer.createTransport({
-    //     host: process.env.SMTP_HOST,
-    //     port: parseInt(process.env.SMTP_PORT || "587"),
-    //     secure: process.env.SMTP_SECURE === "true", // true for 465, false for other ports
-    //     auth: {
-    //       user: process.env.SMTP_USER,
-    //       pass: process.env.SMTP_PASS,
-    //     },
-    //     pool: true, // Use connection pooling for better performance
-    //     maxConnections: 5,
-    //     maxMessages: 100,
-    //     rateLimit: 10, // max 10 messages per second
-    //   });
-
-    //   this.logger.info(
-    //     `EmailService: Using SMTP transport with host ${process.env.SMTP_HOST}`
-    //   );
-    // }
   }
 
   public async sendPasswordResetCode(
