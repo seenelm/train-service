@@ -103,12 +103,13 @@ jobs:
         run: docker compose up train-test
         env:
           NODE_ENV: test
+          MONGO_URI: mongodb://mongodb:27017/?replicaSet=rs0&directConnection=true
           SECRET_CODE: ${{ steps.get_secrets.outputs.SECRET_CODE }}
           SMTP_HOST: ${{ steps.get_secrets.outputs.SMTP_HOST }}
           SMTP_PORT: ${{ steps.get_secrets.outputs.SMTP_PORT }}
           SMTP_USER: ${{ steps.get_secrets.outputs.SMTP_USER }}
           SMTP_PASS: ${{ steps.get_secrets.outputs.SMTP_PASS }}
-          SMTP_FROM: ${{ steps.get_secrets.outputs.EMAIL_FROM }}
+          EMAIL_FROM: ${{ steps.get_secrets.outputs.EMAIL_FROM }}
           SMTP_SECURE: ${{ steps.get_secrets.outputs.SMTP_SECURE }}
           REFRESH_TOKEN_EXPIRY: ${{ steps.get_secrets.outputs.REFRESH_TOKEN_EXPIRY }}
           ACCESS_TOKEN_EXPIRY: ${{ steps.get_secrets.outputs.ACCESS_TOKEN_EXPIRY }}
@@ -198,22 +199,20 @@ jobs:
       - name: Build Docker Image
         env:
           MONGO_URI: ${{ steps.get_secrets.outputs.MONGO_URI }}
-          SECRET_CODE: ${{ steps.get_secrets.outputs.JWT_SECRET }}
+          SECRET_CODE: ${{ steps.get_secrets.outputs.SECRET_CODE }}
           NODE_ENV: stage
+          SMTP_HOST: ${{ steps.get_secrets.outputs.SMTP_HOST }}
+          SMTP_PORT: ${{ steps.get_secrets.outputs.SMTP_PORT }}
+          SMTP_USER: ${{ steps.get_secrets.outputs.SMTP_USER }}
+          SMTP_PASS: ${{ steps.get_secrets.outputs.SMTP_PASS }}
+          EMAIL_FROM: ${{ steps.get_secrets.outputs.EMAIL_FROM }}
+          SMTP_SECURE: ${{ steps.get_secrets.outputs.SMTP_SECURE }}
+          REFRESH_TOKEN_EXPIRY: ${{ steps.get_secrets.outputs.REFRESH_TOKEN_EXPIRY }}
+          ACCESS_TOKEN_EXPIRY: ${{ steps.get_secrets.outputs.ACCESS_TOKEN_EXPIRY }}
         run: |
           docker compose build \
             --build-arg APP_NAME=$APP_NAME \
-            --build-arg APP_VERSION=$APP_VERSION \
-            --build-arg MONGO_URI=$MONGO_URI \
-            --build-arg SECRET_CODE=$SECRET_CODE \
-            --build-arg SMTP_HOST=$SMTP_HOST \
-            --build-arg SMTP_PORT=$SMTP_PORT \
-            --build-arg SMTP_USER=$SMTP_USER \
-            --build-arg SMTP_PASS=$SMTP_PASS \
-            --build-arg SMTP_SECURE=$SMTP_SECURE \
-            --build-arg EMAIL_FROM=$EMAIL_FROM \
-            --build-arg REFRESH_TOKEN_EXPIRY=$REFRESH_TOKEN_EXPIRY \
-            --build-arg ACCESS_TOKEN_EXPIRY=$ACCESS_TOKEN_EXPIRY train-service
+            --build-arg APP_VERSION=$APP_VERSION train-service
 
       - name: Configure Docker for GCR
         run: gcloud auth configure-docker ${{ env.GCP_REGION}}-docker.pkg.dev
