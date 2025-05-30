@@ -41,7 +41,7 @@ jobs:
           service_account: "github-wif@train-service-staging.iam.gserviceaccount.com"
 
       - name: Install jq
-        run: apk add --no-cache jq
+        run: apt-get update && apt-get install -y jq
 
       - name: Retrieve Secrets from GCP Secret Manager
         id: get_secrets
