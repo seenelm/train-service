@@ -18,6 +18,11 @@ jobs:
     if: github.event.pull_request.merged == true
     runs-on: ubuntu-latest
     name: Run Tests
+
+    permissions:
+      contents: read
+      id-token: write
+
     container:
       image: google/cloud-sdk:517.0.0
       options: --user root
