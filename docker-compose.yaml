@@ -31,8 +31,8 @@ services:
             dockerfile: Dockerfile
             target: test
         environment:
-            - MONGO_URI=${MONGO_URI}
-            - NODE_ENV=${NODE_ENV}
+            - MONGO_URI=mongodb://mongodb:27017/?replicaSet=rs0&directConnection=true
+            - NODE_ENV=test
             - SECRET_CODE=${SECRET_CODE}
             - SMTP_HOST=${SMTP_HOST}
             - SMTP_PORT=${SMTP_PORT}

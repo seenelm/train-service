@@ -10,5 +10,10 @@ until curl -s http://localhost:3000/health; do
   sleep 1
 done
 
+echo "Waiting for MongoDB to be ready..."
+until mongosh --eval "db.adminCommand('ping')" > /dev/null 2>&1; do
+  sleep 1
+done
+
 # Run integration tests
 npm run test:integration
