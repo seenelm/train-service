@@ -37,7 +37,7 @@ jobs:
         uses: google-github-actions/auth@v2
         with:
           project_id: train-service-staging
-          workload_identity_provider: "pprojects/747563489918/locations/global/workloadIdentityPools/github-train-service-pool/providers/github"
+          workload_identity_provider: "projects/747563489918/locations/global/workloadIdentityPools/github-train-service-pool/providers/github"
           service_account: "github-wif@train-service-staging.iam.gserviceaccount.com"
 
       - name: Retrieve Secrets from GCP Secret Manager
@@ -127,7 +127,7 @@ jobs:
       - uses: google-github-actions/auth@v2
         with:
           project_id: train-service-staging
-          workload_identity_provider: "pprojects/747563489918/locations/global/workloadIdentityPools/github-train-service-pool/providers/github"
+          workload_identity_provider: "projects/747563489918/locations/global/workloadIdentityPools/github-train-service-pool/providers/github"
           service_account: "github-wif@train-service-staging.iam.gserviceaccount.com"
 
       - name: Retrieve Secrets from GCP Secret Manager
