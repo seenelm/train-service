@@ -77,9 +77,9 @@ services:
                 done;
 
                 echo "Checking if replica set is already initialized...";
-                IS_INIT=$(mongosh --host mongodb --quiet --eval "try { rs.status().ok } catch (e) { if (e.codeName === \"NotYetInitialized\") { print(\"0\"); } else { throw e; } }")
+                IS_INITIALIZED=$(mongosh --host mongodb --quiet --eval "try { rs.status().ok } catch (e) { if (e.codeName === \"NotYetInitialized\") { print(\"0\"); } else { throw e; } }")
 
-                if [ \"$IS_INIT\" = \"0\" ]; then
+                if [ "$$IS_INITIALIZED" = "0" ]; then
                 echo "Initiating replica set...";
                 mongosh --host mongodb --eval "
                     rs.initiate({
