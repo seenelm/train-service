@@ -103,6 +103,7 @@ jobs:
         run: docker compose up train-test
         env:
           NODE_ENV: test
+          MONGO_URI: mongodb://mongodb:27017/?replicaSet=rs0&directConnection=true
           SECRET_CODE: ${{ steps.get_secrets.outputs.SECRET_CODE }}
           SMTP_HOST: ${{ steps.get_secrets.outputs.SMTP_HOST }}
           SMTP_PORT: ${{ steps.get_secrets.outputs.SMTP_PORT }}
