@@ -18,7 +18,7 @@ services:
             - SMTP_USER=${SMTP_USER}
             - SMTP_PASS=${SMTP_PASS}
             - EMAIL_FROM=${EMAIL_FROM}
-            - SMTP_SECURE=false
+            - SMTP_SECURE=${SMTP_SECURE}
             - REFRESH_TOKEN_EXPIRY=${REFRESH_TOKEN_EXPIRY}
             - ACCESS_TOKEN_EXPIRY=${ACCESS_TOKEN_EXPIRY}
         ports:
@@ -31,7 +31,7 @@ services:
             dockerfile: Dockerfile
             target: test
         environment:
-            - MONGO_URI=mongodb://mongodb:27017/?replicaSet=rs0&directConnection=true
+            - MONGO_URI=${MONGO_URI}
             - NODE_ENV=test
             - SECRET_CODE=${SECRET_CODE}
             - SMTP_HOST=${SMTP_HOST}
@@ -39,7 +39,7 @@ services:
             - SMTP_USER=${SMTP_USER}
             - SMTP_PASS=${SMTP_PASS}
             - EMAIL_FROM=${EMAIL_FROM}
-            - SMTP_SECURE=false
+            - SMTP_SECURE=${SMTP_SECURE}
             - REFRESH_TOKEN_EXPIRY=${REFRESH_TOKEN_EXPIRY}
             - ACCESS_TOKEN_EXPIRY=${ACCESS_TOKEN_EXPIRY}
         ports:
