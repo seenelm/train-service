@@ -40,6 +40,9 @@ jobs:
           workload_identity_provider: "projects/747563489918/locations/global/workloadIdentityPools/github-train-service-pool/providers/github"
           service_account: "github-wif@train-service-staging.iam.gserviceaccount.com"
 
+      - name: Install jq
+        run: apk add --no-cache jq
+
       - name: Retrieve Secrets from GCP Secret Manager
         id: get_secrets
         run: |
