@@ -1,0 +1,192 @@
+name: Train Service CI
+
+on:
+  pull_request:
+    types: [closed]
+    branches:
+      - develop
+
+env:
+  APP_NAME: train-service
+  APP_VERSION: 0.0.${{ github.run_number }}
+  GCP_REGION: us-east1
+  ARTIFACT_REGISTRY: "${GCP_REGION}-docker.pkg.dev/train-service-staging/container-registry/${APP_NAME}"
+  DOCKER_BUILDKIT: 1
+
+jobs:
+  test:
+    if: github.event.pull_request.merged == true
+    runs-on: ubuntu-latest
+    name: Run Tests
+    container:
+      image: google/cloud-sdk:517.0.0
+      options: --user root
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Set up Google Cloud SDK
+        uses: google-github-actions/auth@v2
+        with:
+          project_id: train-service-staging
+          workload_identity_provider: "pprojects/747563489918/locations/global/workloadIdentityPools/github-train-service-pool/providers/github"
+          service_account: "github-wif@train-service-staging.iam.gserviceaccount.com"
+
+      - name: Retrieve Secrets from GCP Secret Manager
+        id: get_secrets
+        run: |
+          # Get MongoDB secrets
+          SECRET_DATA=$(gcloud secrets versions access latest --secret="smtp-secret")
+          SMTP_HOST=$(echo $SECRET_DATA | jq -r '.smtp_host')
+          SMTP_PORT=$(echo $SECRET_DATA | jq -r '.smtp_port')
+          SMTP_USER=$(echo $SECRET_DATA | jq -r '.smtp_user')
+          SMTP_PASS=$(echo $SECRET_DATA | jq -r '.smtp_pass')
+          SMTP_SECURE=$(echo $SECRET_DATA | jq -r '.smtp_secure')
+          EMAIL_FROM=$(echo $SECRET_DATA | jq -r '.email_from')
+
+          echo "SMTP_HOST=${SMTP_HOST}" >> $GITHUB_OUTPUT
+          echo "SMTP_PORT=${SMTP_PORT}" >> $GITHUB_OUTPUT
+          echo "SMTP_USER=${SMTP_USER}" >> $GITHUB_OUTPUT
+          echo "SMTP_PASS=${SMTP_PASS}" >> $GITHUB_OUTPUT
+          echo "SMTP_SECURE=${SMTP_SECURE}" >> $GITHUB_OUTPUT
+          echo "EMAIL_FROM=${EMAIL_FROM}" >> $GITHUB_OUTPUT
+
+          # Get JWT secret
+          JWT_DATA=$(gcloud secrets versions access latest --secret="jwt-secret")
+          SECRET_CODE=$(echo $JWT_DATA | jq -r '.secret_code')
+          REFRESH_TOKEN_EXPIRY=$(echo $JWT_DATA | jq -r '.refresh_token_expiry')
+          ACCESS_TOKEN_EXPIRY=$(echo $JWT_DATA | jq -r '.access_token_expiry')
+          echo "SECRET_CODE=${SECRET_CODE}" >> $GITHUB_OUTPUT
+          echo "REFRESH_TOKEN_EXPIRY=${REFRESH_TOKEN_EXPIRY}" >> $GITHUB_OUTPUT
+          echo "ACCESS_TOKEN_EXPIRY=${ACCESS_TOKEN_EXPIRY}" >> $GITHUB_OUTPUT
+
+      - name: Run unit tests
+        run: npm run test:unit
+
+      - name: Run integration tests
+        run: docker compose up train-test
+        env:
+          NODE_ENV: test
+          SECRET_CODE: ${{ steps.get_secrets.outputs.SECRET_CODE }}
+          SMTP_HOST: ${{ steps.get_secrets.outputs.SMTP_HOST }}
+          SMTP_PORT: ${{ steps.get_secrets.outputs.SMTP_PORT }}
+          SMTP_USER: ${{ steps.get_secrets.outputs.SMTP_USER }}
+          SMTP_PASS: ${{ steps.get_secrets.outputs.SMTP_PASS }}
+          SMTP_FROM: ${{ steps.get_secrets.outputs.EMAIL_FROM }}
+          SMTP_SECURE: ${{ steps.get_secrets.outputs.SMTP_SECURE }}
+          REFRESH_TOKEN_EXPIRY: ${{ steps.get_secrets.outputs.REFRESH_TOKEN_EXPIRY }}
+          ACCESS_TOKEN_EXPIRY: ${{ steps.get_secrets.outputs.ACCESS_TOKEN_EXPIRY }}
+
+  deploy-stage:
+    if: github.event.pull_request.merged == true
+    needs: test
+    name: Build
+    runs-on: ubuntu-latest
+
+    permissions:
+      contents: read
+      id-token: write
+
+    container:
+      image: google/cloud-sdk:517.0.0
+      options: --user root
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install Docker
+        run: |
+          apt-get update
+          apt-get install -y ca-certificates curl
+
+          # Add Docker's official GPG key with new method
+          install -m 0755 -d /etc/apt/keyrings
+          curl -fsSL https://download.docker.com/linux/debian/gpg -o /etc/apt/keyrings/docker.asc
+          chmod a+r /etc/apt/keyrings/docker.asc
+
+
+          # Add the repository to Apt sources
+          echo \
+            "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.asc] https://download.docker.com/linux/debian \
+            $(. /etc/os-release && echo "$VERSION_CODENAME") stable" | \
+            tee /etc/apt/sources.list.d/docker.list > /dev/null
+          apt-get update
+
+          apt-get install -y docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin jq
+          docker --version
+          docker compose version
+
+      - uses: google-github-actions/auth@v2
+        with:
+          project_id: train-service-staging
+          workload_identity_provider: "pprojects/747563489918/locations/global/workloadIdentityPools/github-train-service-pool/providers/github"
+          service_account: "github-wif@train-service-staging.iam.gserviceaccount.com"
+
+      - name: Retrieve Secrets from GCP Secret Manager
+        id: get_secrets
+        run: |
+          # Get MongoDB secrets
+          SECRET_DATA=$(gcloud secrets versions access latest --secret="mongo-secrets")
+          MONGO_USER=$(echo $SECRET_DATA | jq -r '.username')
+          MONGO_PASS=$(echo $SECRET_DATA | jq -r '.password')
+          MONGO_CLUSTER=$(echo $SECRET_DATA | jq -r '.cluster')
+          MONGO_DB=$(echo $SECRET_DATA | jq -r '.database')
+          MONGO_PARAMS=$(echo $SECRET_DATA | jq -r '.params')
+          MONGO_URI="mongodb+srv://${MONGO_USER}:${MONGO_PASS}@${MONGO_CLUSTER}/${MONGO_DB}?${MONGO_PARAMS}"
+          echo "MONGO_URI=${MONGO_URI}" >> $GITHUB_OUTPUT
+
+          SECRET_DATA=$(gcloud secrets versions access latest --secret="smtp-secret")
+          SMTP_HOST=$(echo $SECRET_DATA | jq -r '.smtp_host')
+          SMTP_PORT=$(echo $SECRET_DATA | jq -r '.smtp_port')
+          SMTP_USER=$(echo $SECRET_DATA | jq -r '.smtp_user')
+          SMTP_PASS=$(echo $SECRET_DATA | jq -r '.smtp_pass')
+          SMTP_SECURE=$(echo $SECRET_DATA | jq -r '.smtp_secure')
+          EMAIL_FROM=$(echo $SECRET_DATA | jq -r '.email_from')
+
+          echo "SMTP_HOST=${SMTP_HOST}" >> $GITHUB_OUTPUT
+          echo "SMTP_PORT=${SMTP_PORT}" >> $GITHUB_OUTPUT
+          echo "SMTP_USER=${SMTP_USER}" >> $GITHUB_OUTPUT
+          echo "SMTP_PASS=${SMTP_PASS}" >> $GITHUB_OUTPUT
+          echo "SMTP_SECURE=${SMTP_SECURE}" >> $GITHUB_OUTPUT
+          echo "EMAIL_FROM=${EMAIL_FROM}" >> $GITHUB_OUTPUT
+
+          # Get JWT secret
+          JWT_DATA=$(gcloud secrets versions access latest --secret="jwt-secret")
+          SECRET_CODE=$(echo $JWT_DATA | jq -r '.secret_code')
+          REFRESH_TOKEN_EXPIRY=$(echo $JWT_DATA | jq -r '.refresh_token_expiry')
+          ACCESS_TOKEN_EXPIRY=$(echo $JWT_DATA | jq -r '.access_token_expiry')
+          echo "SECRET_CODE=${SECRET_CODE}" >> $GITHUB_OUTPUT
+          echo "REFRESH_TOKEN_EXPIRY=${REFRESH_TOKEN_EXPIRY}" >> $GITHUB_OUTPUT
+          echo "ACCESS_TOKEN_EXPIRY=${ACCESS_TOKEN_EXPIRY}" >> $GITHUB_OUTPUT
+
+      - name: Build Docker Image
+        env:
+          MONGO_URI: ${{ steps.get_secrets.outputs.MONGO_URI }}
+          SECRET_CODE: ${{ steps.get_secrets.outputs.JWT_SECRET }}
+          NODE_ENV: stage
+        run: |
+          docker compose build \
+            --build-arg APP_NAME=$APP_NAME \
+            --build-arg APP_VERSION=$APP_VERSION \
+            --build-arg MONGO_URI=$MONGO_URI \
+            --build-arg SECRET_CODE=$SECRET_CODE \
+            --build-arg SMTP_HOST=$SMTP_HOST \
+            --build-arg SMTP_PORT=$SMTP_PORT \
+            --build-arg SMTP_USER=$SMTP_USER \
+            --build-arg SMTP_PASS=$SMTP_PASS \
+            --build-arg SMTP_SECURE=$SMTP_SECURE \
+            --build-arg EMAIL_FROM=$EMAIL_FROM \
+            --build-arg REFRESH_TOKEN_EXPIRY=$REFRESH_TOKEN_EXPIRY \
+            --build-arg ACCESS_TOKEN_EXPIRY=$ACCESS_TOKEN_EXPIRY train-service
+
+      - name: Configure Docker for GCR
+        run: gcloud auth configure-docker ${{ env.GCP_REGION}}-docker.pkg.dev
+
+      - name: Tag Docker Image
+        run: docker tag ${{ env.APP_NAME }}:${{ env.APP_VERSION }} ${{ env.ARTIFACT_REGISTRY }}:${{ env.APP_VERSION }}
+
+      - name: Push Docker Image to Artifact Registry
+        run: docker push ${{ env.ARTIFACT_REGISTRY }}:${{ env.APP_VERSION }}

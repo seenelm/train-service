@@ -1,0 +1,100 @@
+services:
+    train-service:
+        build:
+            context: .
+            dockerfile: Dockerfile
+            target: runtime
+            args:
+                - APP_NAME=${APP_NAME}
+                - APP_VERSION=${APP_VERSION}
+                - NODE_ENV=${NODE_ENV}
+        image: ${APP_NAME}:${APP_VERSION}
+        environment:
+            - MONGO_URI=${MONGO_URI}
+            - NODE_ENV=${NODE_ENV}
+            - SECRET_CODE=${SECRET_CODE}
+            - SMTP_HOST=${SMTP_HOST}
+            - SMTP_PORT=${SMTP_PORT}
+            - SMTP_USER=${SMTP_USER}
+            - SMTP_PASS=${SMTP_PASS}
+            - EMAIL_FROM=${EMAIL_FROM}
+            - SMTP_SECURE=false
+            - REFRESH_TOKEN_EXPIRY=${REFRESH_TOKEN_EXPIRY}
+            - ACCESS_TOKEN_EXPIRY=${ACCESS_TOKEN_EXPIRY}
+        ports:
+            - 3000:3000
+
+    train-test:
+        container_name: train-test
+        build:
+            context: .
+            dockerfile: Dockerfile
+            target: test
+        environment:
+            - MONGO_URI=mongodb://mongodb:27017/?replicaSet=rs0&directConnection=true
+            - NODE_ENV=test
+            - SECRET_CODE=${SECRET_CODE}
+            - SMTP_HOST=${SMTP_HOST}
+            - SMTP_PORT=${SMTP_PORT}
+            - SMTP_USER=${SMTP_USER}
+            - SMTP_PASS=${SMTP_PASS}
+            - EMAIL_FROM=${EMAIL_FROM}
+            - SMTP_SECURE=false
+            - REFRESH_TOKEN_EXPIRY=${REFRESH_TOKEN_EXPIRY}
+            - ACCESS_TOKEN_EXPIRY=${ACCESS_TOKEN_EXPIRY}
+        ports:
+            - "3000:3000"
+        depends_on:
+            mongo-init:
+                condition: service_completed_successfully
+
+    mongodb:
+        image: mongo:8.0.9
+        container_name: mongodb
+        ports:
+            - "27017:27017"
+        command: --replSet rs0 --bind_ip_all
+        healthcheck:
+            test: echo "db.adminCommand('ping').ok" | mongosh --quiet
+            interval: 10s
+            timeout: 5s
+            retries: 5
+            start_period: 20s
+        volumes:
+            - mongodb_data:/data/db
+
+    mongo-init:
+        image: mongo:8.0.9
+        container_name: mongo-init
+        depends_on:
+            mongodb:
+                condition: service_healthy
+        entrypoint: >
+            bash -c '
+                echo "Waiting for MongoDB to be ready...";
+                until mongosh --host mongodb --eval "db.adminCommand(\"ping\")" > /dev/null 2>&1; do
+                sleep 2;
+                done;
+
+                echo "Checking if replica set is already initialized...";
+                IS_INIT=$(mongosh --host mongodb --quiet --eval "try { rs.status().ok } catch (e) { if (e.codeName === \"NotYetInitialized\") { print(\"0\"); } else { throw e; } }")
+
+                if [ \"$IS_INIT\" = \"0\" ]; then
+                echo "Initiating replica set...";
+                mongosh --host mongodb --eval "
+                    rs.initiate({
+                    _id: \"rs0\",
+                    members: [{ _id: 0, host: \"mongodb:27017\" }]
+                    })
+                ";
+                else
+                echo "Replica set already initialized.";
+                fi
+            '
+
+    
+
+volumes:
+   mongodb_data:
+    
+        
