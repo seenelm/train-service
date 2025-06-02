@@ -3,6 +3,7 @@ import { Application } from "express";
 // import mongoose from "mongoose";
 // import envConfig from "./common/config/envConfig.js";
 import { Logger } from "./common/logger.js";
+import "dotenv/config";
 
 let server: any = null;
 const port = process.env.PORT || 3000;
