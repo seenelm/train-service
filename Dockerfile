@@ -1,28 +1,4 @@
 # syntax=docker/dockerfile:1.4
-# FROM node:23-alpine
-
-# WORKDIR /app
-
-# COPY package*.json ./
-# RUN npm install
-
-# COPY . .
-
-# ARG APP_VERSION
-# ARG NODE_ENV=$NODE_ENV
-# ARG MONGO_URI
-# ARG SECRET_CODE
-# LABEL train.api.version="$APP_VERSION"
-# LABEL train.api.build.timestamp="$(date -u +'%Y-%m-%dT%H:%M:%SZ')"
-
-# # Build api
-# RUN npm run build
-
-# # Set environment variables
-# ENV NODE_ENV=$NODE_ENV
-# ENV MONGO_URI=$MONGO_URI
-# ENV SECRET_CODE=$SECRET_CODE
-# CMD ["node", "./dist/src/server.js"]
 
 # ========== BUILD STAGE ==============
 FROM node:23-alpine AS builder
@@ -44,6 +20,16 @@ COPY --from=builder /app /app
 
 ARG APP_VERSION
 ARG NODE_ENV=$NODE_ENV
+ARG MONGO_URI
+ARG SECRET_CODE
+ARG SMTP_HOST
+ARG SMTP_PORT
+ARG SMTP_USER
+ARG SMTP_PASS
+ARG EMAIL_FROM
+ARG SMTP_SECURE
+ARG REFRESH_TOKEN_EXPIRY
+ARG ACCESS_TOKEN_EXPIRY
 
 LABEL train.api.version="$APP_VERSION"
 LABEL train.api.build.timestamp="$(date -u +'%Y-%m-%dT%H:%M:%SZ')"

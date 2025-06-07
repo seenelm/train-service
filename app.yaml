@@ -1,0 +1,12 @@
+runtime: custom
+env: flex
+
+service: default
+
+manual_scaling:
+  instances: 1
+
+resources:
+  cpu: 1
+  memory_gb: 1 # Increased memory to 1 GB
+  disk_size_gb: 10

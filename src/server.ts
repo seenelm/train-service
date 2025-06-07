@@ -1,7 +1,5 @@
 import TrainService from "./app.js";
 import { Application } from "express";
-// import mongoose from "mongoose";
-// import envConfig from "./common/config/envConfig.js";
 import { Logger } from "./common/logger.js";
 import "dotenv/config";
 
@@ -15,10 +13,6 @@ async function startServer() {
   try {
     // Initialize the application
     await trainService.initializeDB();
-
-    // Configure mongoose
-    // mongoose.set("debug", process.env.NODE_ENV !== "production");
-
     // Start the Express server
     server = app.listen(port, () => {
       logger.info(`Server is running on port ${port}`);

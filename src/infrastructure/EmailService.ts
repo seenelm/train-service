@@ -1,6 +1,7 @@
 import nodemailer, { Transporter } from "nodemailer";
 import { Logger } from "../common/logger.js";
 import { APIError } from "../common/errors/APIError.js";
+import "dotenv/config";
 
 export interface IEmailService {
   sendPasswordResetCode(
