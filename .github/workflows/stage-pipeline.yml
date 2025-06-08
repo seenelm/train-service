@@ -212,8 +212,9 @@ jobs:
         run: |
           docker compose build \
             --build-arg APP_NAME=$APP_NAME \
-            --build-arg APP_VERSION=$APP_VERSION train-service
+            --build-arg APP_VERSION=$APP_VERSION \
             --build-arg MONGO_URI=$MONGO_URI \
+            train-service
 
       - name: Configure Docker for GCR
         run: gcloud auth configure-docker ${{ env.GCP_REGION}}-docker.pkg.dev
@@ -223,3 +224,6 @@ jobs:
 
       - name: Push Docker Image to Artifact Registry
         run: docker push ${{ env.ARTIFACT_REGISTRY }}:${{ env.APP_VERSION }}
+
+      - name: Deploy to App Engine
+        run: gcloud app deploy --image-url=${{ env.ARTIFACT_REGISTRY }}:${{ env.APP_VERSION }} --quiet
