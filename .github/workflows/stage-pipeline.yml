@@ -214,6 +214,16 @@ jobs:
             --build-arg APP_NAME=$APP_NAME \
             --build-arg APP_VERSION=$APP_VERSION \
             --build-arg MONGO_URI=$MONGO_URI \
+            --build-arg SECRET_CODE=$SECRET_CODE \
+            --build-arg NODE_ENV=$NODE_ENV \
+            --build-arg SMTP_HOST=$SMTP_HOST \
+            --build-arg SMTP_PORT=$SMTP_PORT \
+            --build-arg SMTP_USER=$SMTP_USER \
+            --build-arg SMTP_PASS=$SMTP_PASS \
+            --build-arg EMAIL_FROM=$EMAIL_FROM \
+            --build-arg SMTP_SECURE=$SMTP_SECURE \
+            --build-arg REFRESH_TOKEN_EXPIRY=$REFRESH_TOKEN_EXPIRY \
+            --build-arg ACCESS_TOKEN_EXPIRY=$ACCESS_TOKEN_EXPIRY \
             train-service
 
       - name: Configure Docker for GCR

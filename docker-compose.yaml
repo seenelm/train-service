@@ -9,6 +9,15 @@ services:
                 - APP_VERSION=${APP_VERSION}
                 - NODE_ENV=${NODE_ENV}
                 - MONGO_URI=${MONGO_URI}
+                - SECRET_CODE=${SECRET_CODE}
+                - SMTP_HOST=${SMTP_HOST}
+                - SMTP_PORT=${SMTP_PORT}
+                - SMTP_USER=${SMTP_USER}
+                - SMTP_PASS=${SMTP_PASS}
+                - EMAIL_FROM=${EMAIL_FROM}
+                - SMTP_SECURE=${SMTP_SECURE}
+                - REFRESH_TOKEN_EXPIRY=${REFRESH_TOKEN_EXPIRY}
+                - ACCESS_TOKEN_EXPIRY=${ACCESS_TOKEN_EXPIRY}
         image: ${APP_NAME}:${APP_VERSION}
         environment:
             - MONGO_URI=${MONGO_URI}
