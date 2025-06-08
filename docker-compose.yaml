@@ -8,6 +8,7 @@ services:
                 - APP_NAME=${APP_NAME}
                 - APP_VERSION=${APP_VERSION}
                 - NODE_ENV=${NODE_ENV}
+                - MONGO_URI=${MONGO_URI}
         image: ${APP_NAME}:${APP_VERSION}
         environment:
             - MONGO_URI=${MONGO_URI}
