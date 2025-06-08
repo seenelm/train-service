@@ -213,6 +213,7 @@ jobs:
           docker compose build \
             --build-arg APP_NAME=$APP_NAME \
             --build-arg APP_VERSION=$APP_VERSION train-service
+            --build-arg MONGO_URI=$MONGO_URI \
 
       - name: Configure Docker for GCR
         run: gcloud auth configure-docker ${{ env.GCP_REGION}}-docker.pkg.dev
