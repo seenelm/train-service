@@ -17,6 +17,7 @@
   "description": "",
   "dependencies": {
     "@google-cloud/logging-winston": "^6.0.0",
+    "@seenelm/train-core": "^1.0.4",
     "axios": "^1.9.0",
     "bcryptjs": "^3.0.2",
     "cors": "^2.8.5",
