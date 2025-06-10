@@ -72,4 +72,17 @@ export default class UserProfileTestFixture {
       ...updatedData,
     };
   }
+
+  public static createUserProfileEntity(): UserProfile {
+    return UserProfile.builder()
+      .setUserId(this.USER_ID)
+      .setUsername(this.USERNAME)
+      .setName(this.NAME)
+      .setBio(this.BIO)
+      .setAccountType(this.ACCOUNT_TYPE)
+      .setProfilePicture(this.PROFILE_PICTURE)
+      .setRole(this.ROLE)
+      .setSocialLinks(this.SOCIAL_LINKS)
+      .build();
+  }
 }

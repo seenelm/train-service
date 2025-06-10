@@ -6,6 +6,7 @@ import { MongooseError } from "mongoose";
 import { MongoServerError } from "mongodb";
 import { DatabaseError } from "../../common/errors/DatabaseError.js";
 import { Logger } from "../../common/logger.js";
+import { Types } from "mongoose";
 
 export interface IUserProfileService {
   updateUserProfile(userProfileRequest: UserProfileRequest): Promise<void>;
@@ -29,8 +30,9 @@ export default class UserProfileService implements IUserProfileService {
     userProfileRequest: UserProfileRequest
   ): Promise<void> {
     try {
+      const userId = new Types.ObjectId(userProfileRequest.userId);
       const userProfile = await this.userProfileRepository.findOne({
-        userId: userProfileRequest.userId,
+        userId,
       });
 
       if (!userProfile) {
@@ -44,9 +46,13 @@ export default class UserProfileService implements IUserProfileService {
         this.userProfileRepository.toDocument(userProfileRequest);
 
       await this.userProfileRepository.updateOne(
-        { userId: userProfileRequest.userId },
+        { userId },
         userProfileDocument
       );
+
+      this.logger.info("User profile updated successfully", {
+        userId,
+      });
     } catch (error) {
       this.logger.error("Failed to update user profile", {
         error,

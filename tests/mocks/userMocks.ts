@@ -36,6 +36,7 @@ export const mockUserProfileRepository: IUserProfileRepository = {
   updateMany: vi.fn(),
   findByIdAndDelete: vi.fn(),
   deleteMany: vi.fn(),
+  toDocument: vi.fn(),
 };
 
 export const mockUserGroupsRepository: IUserGroupsRepository = {
