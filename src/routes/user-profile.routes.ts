@@ -3,7 +3,7 @@ import UserProfileController from "../app/userProfile/UserProfileController.js";
 import UserProfileService from "../app/userProfile/UserProfileService.js";
 import UserProfileRepository from "../infrastructure/database/repositories/user/UserProfileRepository.js";
 import FollowRepository from "../infrastructure/database/repositories/user/FollowRepository.js";
-import { UserProfileModel } from "../infrastructure/database/models/user/userProfileModel.js";
+import { UserProfileModel } from "../infrastructure/database/models/userProfile/userProfileModel.js";
 import { FollowModel } from "../infrastructure/database/models/user/followModel.js";
 
 const router = Router();

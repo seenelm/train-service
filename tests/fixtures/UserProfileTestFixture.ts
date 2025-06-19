@@ -1,16 +1,21 @@
 import { Types } from "mongoose";
 import { ProfileAccess } from "../../src/common/enums.js";
-import { UserProfileDocument } from "../../src/infrastructure/database/models/user/userProfileModel.js";
+import { UserProfileDocument } from "../../src/infrastructure/database/models/userProfile/userProfileModel.js";
 import UserProfile from "../../src/infrastructure/database/entity/user/UserProfile.js";
 import {
   UserProfileRequest,
-  UserProfileRole,
   SocialLinkRequest,
+  SocialPlatform,
+  CustomSectionType,
+  CustomSectionRequest,
 } from "@seenelm/train-core";
 import {
   SocialLink,
-  SocialPlatform,
-} from "../../src/infrastructure/database/models/user/userProfileModel.js";
+  Certification,
+  GenericItem,
+  CustomSection,
+  AchievementItem,
+} from "../../src/infrastructure/database/models/userProfile/userProfileModel.js";
 
 export default class UserProfileTestFixture {
   public static ID: Types.ObjectId = new Types.ObjectId();
@@ -18,11 +23,16 @@ export default class UserProfileTestFixture {
   public static USERNAME: string = "testUser";
   public static NAME: string = "testName";
   public static BIO: string = "testBio";
-  public static ACCOUNT_TYPE: number = ProfileAccess.Public;
+  public static ACCOUNT_TYPE: ProfileAccess = ProfileAccess.Public;
   public static PROFILE_PICTURE: string = "testProfilePicture";
-  public static ROLE: UserProfileRole[] = [
-    UserProfileRole.COACH,
-    UserProfileRole.TRAINER,
+  public static ROLE: string = "Coach";
+  public static LOCATION: string = "testLocation";
+
+  public static CERTIFICATIONS: Certification[] = [
+    {
+      certification: new Types.ObjectId(),
+      specializations: ["testSpecialization"],
+    },
   ];
   public static SOCIAL_LINKS: SocialLink[] = [
     {
@@ -50,9 +60,42 @@ export default class UserProfileTestFixture {
       accountType: this.ACCOUNT_TYPE,
       profilePicture: this.PROFILE_PICTURE,
       role: this.ROLE,
+      location: this.LOCATION,
       socialLinks: this.SOCIAL_LINKS,
+      certifications: this.CERTIFICATIONS,
+      customSections: [this.createCustomSection()],
       createdAt: this.CREATED_AT,
       updatedAt: this.UPDATED_AT,
+      ...updatedData,
+    };
+  }
+
+  public static createCustomSection(
+    updatedData?: Partial<CustomSection>
+  ): CustomSection {
+    return {
+      title: CustomSectionType.ACHIEVEMENTS,
+      details: [this.createAchievementItem()],
+      ...updatedData,
+    };
+  }
+
+  public static createGenericItem(
+    updatedData?: Partial<GenericItem>
+  ): GenericItem {
+    return {
+      philosophy: "testPhilosophy",
+      ...updatedData,
+    };
+  }
+
+  public static createAchievementItem(
+    updatedData?: Partial<AchievementItem>
+  ): AchievementItem {
+    return {
+      title: "testTitle",
+      date: "2024-03-20",
+      description: "testDescription",
       ...updatedData,
     };
   }
@@ -69,6 +112,16 @@ export default class UserProfileTestFixture {
       profilePicture: this.PROFILE_PICTURE,
       role: this.ROLE,
       socialLinks: this.SOCIAL_LINKS_REQUEST,
+      ...updatedData,
+    };
+  }
+
+  public static createCustomSectionRequest(
+    updatedData?: Partial<CustomSectionRequest>
+  ): CustomSectionRequest {
+    return {
+      title: CustomSectionType.ACHIEVEMENTS,
+      details: [this.createAchievementItem()],
       ...updatedData,
     };
   }

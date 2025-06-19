@@ -1,7 +1,10 @@
 import { Types } from "mongoose";
-import { ProfileAccess } from "../../../../common/enums.js";
-import { UserProfileRole } from "@seenelm/train-core";
-import { SocialLink } from "../../models/user/userProfileModel.js";
+import {
+  SocialLink,
+  Certification,
+  CustomSection,
+} from "../../models/userProfile/userProfileModel.js";
+import { ProfileAccess } from "@seenelm/train-core";
 
 export default class UserProfile {
   private id: Types.ObjectId;
@@ -9,10 +12,13 @@ export default class UserProfile {
   private username: string;
   private name: string;
   private bio?: string;
-  private accountType: number;
+  private accountType: ProfileAccess;
   private profilePicture?: string;
-  private role?: UserProfileRole[];
+  private role?: string;
+  private location?: string;
   private socialLinks?: SocialLink[];
+  private certifications?: Certification[];
+  private customSections?: CustomSection[];
   private createdAt?: Date;
   private updatedAt?: Date;
 
@@ -25,7 +31,10 @@ export default class UserProfile {
     this.accountType = builder.accountType;
     this.profilePicture = builder.profilePicture;
     this.role = builder.role;
+    this.location = builder.location;
     this.socialLinks = builder.socialLinks;
+    this.certifications = builder.certifications;
+    this.customSections = builder.customSections;
     this.createdAt = builder.createdAt;
     this.updatedAt = builder.updatedAt;
   }
@@ -54,7 +63,7 @@ export default class UserProfile {
     return this.bio;
   }
 
-  public getAccountType(): number {
+  public getAccountType(): ProfileAccess {
     return this.accountType;
   }
 
@@ -62,12 +71,24 @@ export default class UserProfile {
     return this.profilePicture;
   }
 
-  public getRole(): UserProfileRole[] | undefined {
+  public getRole(): string | undefined {
     return this.role;
+  }
+
+  public getLocation(): string | undefined {
+    return this.location;
   }
 
   public getSocialLinks(): SocialLink[] | undefined {
     return this.socialLinks;
+  }
+
+  public getCertifications(): Certification[] | undefined {
+    return this.certifications;
+  }
+
+  public getCustomSections(): CustomSection[] | undefined {
+    return this.customSections;
   }
 
   public getCreatedAt(): Date | undefined {
@@ -109,10 +130,13 @@ class UserProfileBuilder {
   username: string = "";
   name: string = "";
   bio?: string;
-  accountType: number = ProfileAccess.Public;
+  accountType: ProfileAccess = ProfileAccess.Public;
   profilePicture?: string;
-  role?: UserProfileRole[];
+  role?: string;
+  location?: string;
   socialLinks?: SocialLink[];
+  certifications?: Certification[];
+  customSections?: CustomSection[];
   createdAt?: Date;
   updatedAt?: Date;
 
@@ -141,7 +165,7 @@ class UserProfileBuilder {
     return this;
   }
 
-  public setAccountType(accountType: number): this {
+  public setAccountType(accountType: ProfileAccess): this {
     this.accountType = accountType;
     return this;
   }
@@ -151,13 +175,28 @@ class UserProfileBuilder {
     return this;
   }
 
-  public setRole(role?: UserProfileRole[]): this {
+  public setRole(role?: string): this {
     this.role = role;
+    return this;
+  }
+
+  public setLocation(location?: string): this {
+    this.location = location;
     return this;
   }
 
   public setSocialLinks(socialLinks?: SocialLink[]): this {
     this.socialLinks = socialLinks;
+    return this;
+  }
+
+  public setCertifications(certifications?: Certification[]): this {
+    this.certifications = certifications;
+    return this;
+  }
+
+  public setCustomSections(customSections?: CustomSection[]): this {
+    this.customSections = customSections;
     return this;
   }
 

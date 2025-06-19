@@ -84,10 +84,14 @@ describe("UserProfileService", () => {
             userProfileService.updateUserProfile(request)
           ).rejects.toThrowError(error);
 
-          //   if (error instanceof APIError || error instanceof DatabaseError) {
-          //     expect(error.message).toBe(expectedErrorResponse.message);
-          //     expect(error.errorCode).toBe(expectedErrorResponse.errorCode);
-          //   }
+          if (
+            error instanceof MongoServerError ||
+            error instanceof MongooseError
+          ) {
+            await expect(
+              userProfileService.updateUserProfile(request)
+            ).rejects.toThrowError(DatabaseError);
+          }
         }
       );
     });

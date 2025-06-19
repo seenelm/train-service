@@ -5,7 +5,7 @@ import UserProfileRepository from "../infrastructure/database/repositories/user/
 import UserGroupsRepository from "../infrastructure/database/repositories/user/UserGroupsRepository.js";
 import FollowRepository from "../infrastructure/database/repositories/user/FollowRepository.js";
 import { UserModel } from "../infrastructure/database/models/user/userModel.js";
-import { UserProfileModel } from "../infrastructure/database/models/user/userProfileModel.js";
+import { UserProfileModel } from "../infrastructure/database/models/userProfile/userProfileModel.js";
 import { UserGroupsModel } from "../infrastructure/database/models/user/userGroupsModel.js";
 import { FollowModel } from "../infrastructure/database/models/user/followModel.js";
 import UserController from "../app/user/UserController.js";

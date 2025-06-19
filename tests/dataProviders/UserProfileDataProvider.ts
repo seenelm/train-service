@@ -4,10 +4,11 @@ import { ErrorResponse } from "../../src/common/errors/types.js";
 import { Types } from "mongoose";
 import { APIErrorType } from "../../src/common/enums.js";
 import UserProfile from "../../src/infrastructure/database/entity/user/UserProfile.js";
-import { UserProfileDocument } from "../../src/infrastructure/database/models/user/userProfileModel.js";
+import { UserProfileDocument } from "../../src/infrastructure/database/models/userProfile/userProfileModel.js";
 import { APIError } from "../../src/common/errors/APIError.js";
 import { Error as MongooseError } from "mongoose";
-import { SocialPlatform } from "@seenelm/train-core";
+import { SocialPlatform, CustomSectionType } from "@seenelm/train-core";
+import { CustomSectionRequest } from "@seenelm/train-core";
 
 interface ErrorTestCase<T> {
   description: string;
@@ -38,15 +39,15 @@ export default class UserProfileDataProvider {
           errorCode: "NOT_FOUND",
         },
       },
-      //   {
-      //     description: "should handle DatabaseError",
-      //     request: UserProfileTestFixture.createUserProfileRequest(),
-      //     error: new MongooseError("Connection failed"),
-      //     expectedErrorResponse: {
-      //       message: "Database error occurred",
-      //       errorCode: "DATABASE_ERROR",
-      //     },
-      //   },
+      {
+        description: "should handle DatabaseError",
+        request: UserProfileTestFixture.createUserProfileRequest(),
+        error: new MongooseError("Connection failed"),
+        expectedErrorResponse: {
+          message: "Database error occurred",
+          errorCode: "DATABASE_ERROR",
+        },
+      },
       {
         description: "should throw InternalServerError for unknown errors",
         request: UserProfileTestFixture.createUserProfileRequest(),
@@ -90,6 +91,29 @@ export default class UserProfileDataProvider {
             },
           ],
         }),
+      },
+    ];
+  }
+
+  static createCustomSectionErrorCases(): ErrorTestCase<CustomSectionRequest>[] {
+    return [
+      {
+        description: "should throw NotFound error when user profile not found",
+        request: UserProfileTestFixture.createCustomSectionRequest({
+          title: CustomSectionType.ACHIEVEMENTS,
+          details: [
+            {
+              title: "Test Achievement",
+              date: "2024-03-20",
+              description: "Test description",
+            },
+          ],
+        }),
+        error: APIError.NotFound("User profile not found"),
+        expectedErrorResponse: {
+          message: "User profile not found",
+          errorCode: "NOT_FOUND",
+        },
       },
     ];
   }

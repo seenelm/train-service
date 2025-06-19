@@ -1,12 +1,8 @@
-import { UserProfileDocument } from "../../models/user/userProfileModel.js";
+import { UserProfileDocument } from "../../models/userProfile/userProfileModel.js";
 import UserProfile from "../../entity/user/UserProfile.js";
 import { IBaseRepository, BaseRepository } from "../BaseRepository.js";
 import { Model, Types } from "mongoose";
-import {
-  UserProfileRequest,
-  UserProfileRole,
-  SocialPlatform,
-} from "@seenelm/train-core";
+import { UserProfileRequest, SocialPlatform } from "@seenelm/train-core";
 
 export interface IUserProfileRepository
   extends IBaseRepository<UserProfile, UserProfileDocument> {
@@ -32,6 +28,11 @@ export default class UserProfileRepository
       .setName(doc.name)
       .setBio(doc.bio ?? "")
       .setAccountType(doc.accountType)
+      .setLocation(doc.location)
+      .setRole(doc.role)
+      .setSocialLinks(doc.socialLinks)
+      .setCertifications(doc.certifications)
+      .setCustomSections(doc.customSections)
       .setCreatedAt(doc.createdAt)
       .setUpdatedAt(doc.updatedAt)
       .build();
@@ -45,11 +46,14 @@ export default class UserProfileRepository
       bio: request.bio,
       accountType: request.accountType,
       profilePicture: request.profilePicture,
-      role: request.role as UserProfileRole[],
-      socialLinks: request.socialLinks?.map((link) => ({
-        platform: link.platform as SocialPlatform,
-        url: link.url,
+      role: request.role,
+      location: request.location,
+      socialLinks: request.socialLinks,
+      certifications: request.certifications?.map((certification) => ({
+        certification: new Types.ObjectId(certification.certification),
+        specializations: certification.specializations,
       })),
+      customSections: request.customSections,
     };
   }
 }

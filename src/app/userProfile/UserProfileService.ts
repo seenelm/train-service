@@ -7,9 +7,18 @@ import { MongoServerError } from "mongodb";
 import { DatabaseError } from "../../common/errors/DatabaseError.js";
 import { Logger } from "../../common/logger.js";
 import { Types } from "mongoose";
+import { CustomSectionRequest } from "@seenelm/train-core";
 
 export interface IUserProfileService {
   updateUserProfile(userProfileRequest: UserProfileRequest): Promise<void>;
+  updateCustomSection(
+    userId: Types.ObjectId,
+    customSectionRequest: CustomSectionRequest
+  ): Promise<void>;
+  createCustomSection(
+    userId: Types.ObjectId,
+    customSectionRequest: CustomSectionRequest
+  ): Promise<void>;
 }
 
 export default class UserProfileService implements IUserProfileService {
@@ -63,6 +72,121 @@ export default class UserProfileService implements IUserProfileService {
         throw error;
       } else {
         throw APIError.InternalServerError("Failed to update user profile");
+      }
+    }
+  }
+
+  public async createCustomSection(
+    userId: Types.ObjectId,
+    customSectionRequest: CustomSectionRequest
+  ): Promise<void> {
+    try {
+      const userProfile = await this.userProfileRepository.findOne({
+        userId: new Types.ObjectId(userId),
+      });
+
+      if (!userProfile) {
+        this.logger.warn("User profile not found", { userId });
+        throw APIError.NotFound("User profile not found");
+      }
+
+      const existingSections = userProfile.getCustomSections() || [];
+      const sectionExists = existingSections.some(
+        (section) => section.title === customSectionRequest.title
+      );
+
+      if (sectionExists) {
+        this.logger.warn("Custom section already exists", {
+          userId,
+          sectionTitle: customSectionRequest.title,
+        });
+        throw APIError.Conflict("Custom section already exists");
+      }
+
+      await this.userProfileRepository.updateOne(
+        { userId },
+        {
+          $push: {
+            customSections: {
+              title: customSectionRequest.title,
+              details: customSectionRequest.details,
+            },
+          },
+        }
+      );
+
+      this.logger.info("Custom section created successfully", {
+        userId,
+        sectionTitle: customSectionRequest.title,
+      });
+    } catch (error) {
+      this.logger.error("Failed to create custom section", {
+        error,
+        userId,
+        sectionTitle: customSectionRequest.title,
+      });
+
+      if (error instanceof MongooseError || error instanceof MongoServerError) {
+        throw DatabaseError.handleMongoDBError(error);
+      } else if (error instanceof APIError) {
+        throw error;
+      } else {
+        throw APIError.InternalServerError("Failed to create custom section");
+      }
+    }
+  }
+
+  public async updateCustomSection(
+    userId: Types.ObjectId,
+    customSectionRequest: CustomSectionRequest
+  ): Promise<void> {
+    try {
+      const userProfile = await this.userProfileRepository.findOne({
+        userId: new Types.ObjectId(userId),
+      });
+
+      if (!userProfile) {
+        this.logger.warn("User profile not found", { userId });
+        throw APIError.NotFound("User profile not found");
+      }
+
+      const existingSections = userProfile.getCustomSections() || [];
+      const sectionExists = existingSections.some(
+        (section) => section.title === customSectionRequest.title
+      );
+
+      if (!sectionExists) {
+        this.logger.warn("Custom section not found", {
+          userId,
+          sectionTitle: customSectionRequest.title,
+        });
+        throw APIError.NotFound("Custom section not found");
+      }
+
+      await this.userProfileRepository.updateOne(
+        {
+          userId,
+          "customSections.title": customSectionRequest.title,
+        },
+        {
+          $set: {
+            "customSections.$.details": customSectionRequest.details,
+          },
+        }
+      );
+    } catch (error) {
+      this.logger.error("Failed to update custom section", {
+        error,
+        userId,
+        sectionTitle: customSectionRequest.title,
+      });
+
+      if (error instanceof MongooseError || error instanceof MongoServerError) {
+        throw DatabaseError.handleMongoDBError(error);
+      } else if (error instanceof APIError) {
+        throw error;
+      } else {
+        throw APIError.InternalServerError("Failed to update custom section");
       }
     }
   }
