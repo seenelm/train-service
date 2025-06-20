@@ -115,6 +115,61 @@ export default class UserProfileDataProvider {
           errorCode: "NOT_FOUND",
         },
       },
+      {
+        description:
+          "should throw Conflict error when custom section already exists",
+        request: UserProfileTestFixture.createCustomSectionRequest({
+          title: CustomSectionType.ACHIEVEMENTS,
+          details: [
+            {
+              title: "Test Achievement",
+              date: "2024-03-20",
+              description: "Test description",
+            },
+          ],
+        }),
+        error: APIError.Conflict("Custom section already exists"),
+        expectedErrorResponse: {
+          message: "Custom section already exists",
+          errorCode: "CONFLICT",
+        },
+      },
+      {
+        description: "should handle DatabaseError for custom section creation",
+        request: UserProfileTestFixture.createCustomSectionRequest({
+          title: CustomSectionType.IDENTITY,
+          details: [
+            {
+              role: "Fitness Enthusiast",
+              experience: 5,
+              isCertified: true,
+            },
+          ],
+        }),
+        error: new MongooseError("Connection failed"),
+        expectedErrorResponse: {
+          message: "Database error occurred",
+          errorCode: "DATABASE_ERROR",
+        },
+      },
+      {
+        description:
+          "should throw InternalServerError for unknown errors in custom section creation",
+        request: UserProfileTestFixture.createCustomSectionRequest({
+          title: CustomSectionType.SPECIALIZATION,
+          details: [
+            {
+              specialization: "Weight Training",
+              level: "Advanced",
+            },
+          ],
+        }),
+        error: APIError.InternalServerError("Failed to create custom section"),
+        expectedErrorResponse: {
+          message: "Failed to create custom section",
+          errorCode: "INTERNAL_SERVER_ERROR",
+        },
+      },
     ];
   }
 }

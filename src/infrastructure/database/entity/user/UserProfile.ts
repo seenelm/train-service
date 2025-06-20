@@ -124,7 +124,7 @@ export default class UserProfile {
   }
 }
 
-class UserProfileBuilder {
+export class UserProfileBuilder {
   id: Types.ObjectId = new Types.ObjectId();
   userId: Types.ObjectId = new Types.ObjectId();
   username: string = "";

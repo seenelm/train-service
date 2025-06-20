@@ -1,7 +1,9 @@
 import { Types } from "mongoose";
 import { ProfileAccess } from "../../src/common/enums.js";
 import { UserProfileDocument } from "../../src/infrastructure/database/models/userProfile/userProfileModel.js";
-import UserProfile from "../../src/infrastructure/database/entity/user/UserProfile.js";
+import UserProfile, {
+  UserProfileBuilder,
+} from "../../src/infrastructure/database/entity/user/UserProfile.js";
 import {
   UserProfileRequest,
   SocialLinkRequest,
@@ -126,8 +128,10 @@ export default class UserProfileTestFixture {
     };
   }
 
-  public static createUserProfileEntity(): UserProfile {
-    return UserProfile.builder()
+  public static createUserProfileEntity(
+    builderFn?: (builder: UserProfileBuilder) => UserProfileBuilder
+  ): UserProfile {
+    const baseBuilder = UserProfile.builder()
       .setUserId(this.USER_ID)
       .setUsername(this.USERNAME)
       .setName(this.NAME)
@@ -135,7 +139,12 @@ export default class UserProfileTestFixture {
       .setAccountType(this.ACCOUNT_TYPE)
       .setProfilePicture(this.PROFILE_PICTURE)
       .setRole(this.ROLE)
+      .setLocation(this.LOCATION)
       .setSocialLinks(this.SOCIAL_LINKS)
-      .build();
+      .setCertifications(this.CERTIFICATIONS)
+      .setCustomSections([this.createCustomSection()]);
+
+    const finalBuilder = builderFn ? builderFn(baseBuilder) : baseBuilder;
+    return finalBuilder.build();
   }
 }
