@@ -4,7 +4,7 @@ import {
   mockUserProfileRepository,
   mockFollowRepository,
 } from "../../../mocks/userMocks.js";
-import UserProfileServiceDataProvider from "../../dataProviders/UserProfileServiceDataProvider.js";
+import UserProfileServiceDataProvider from "./dataProviders/UserProfileServiceDataProvider.js";
 import { Types } from "mongoose";
 import { APIError } from "../../../../src/common/errors/APIError.js";
 import { MongooseError } from "mongoose";
@@ -12,6 +12,7 @@ import { MongoServerError } from "mongodb";
 import UserProfileTestFixture from "../../../fixtures/UserProfileTestFixture.js";
 import { DatabaseError } from "../../../../src/common/errors/DatabaseError.js";
 import { CustomSectionType } from "@seenelm/train-core";
+import { ErrorMessage } from "../../../../src/common/enums.js";
 
 describe("UserProfileService", () => {
   let userProfileService: UserProfileService;
@@ -215,6 +216,137 @@ describe("UserProfileService", () => {
             });
             expect(mockUserProfileRepository.updateOne).not.toHaveBeenCalled();
           } else if (error.message === "Custom section already exists") {
+            expect(mockUserProfileRepository.findOne).toHaveBeenCalledWith({
+              userId: new Types.ObjectId(userId),
+            });
+            expect(mockUserProfileRepository.updateOne).not.toHaveBeenCalled();
+          } else {
+            expect(mockUserProfileRepository.updateOne).toHaveBeenCalled();
+          }
+        }
+      );
+    });
+  });
+
+  describe("updateCustomSection", () => {
+    it("should successfully update a custom section", async () => {
+      // Arrange
+      const userId = new Types.ObjectId();
+      const request = UserProfileTestFixture.createCustomSectionRequest({
+        title: CustomSectionType.ACHIEVEMENTS,
+        details: [
+          {
+            title: "First Place",
+            date: "2025-03-20",
+            description: "Won first place in competition",
+          },
+        ],
+      });
+
+      const userProfileEntity = UserProfileTestFixture.createUserProfileEntity(
+        (builder) =>
+          builder.setCustomSections([
+            {
+              title: CustomSectionType.ACHIEVEMENTS,
+              details: [
+                {
+                  title: "Second Place",
+                  date: "2024-03-20",
+                  description: "Won first place in competition",
+                },
+              ],
+            },
+          ])
+      );
+
+      vi.spyOn(mockUserProfileRepository, "findOne").mockResolvedValue(
+        userProfileEntity
+      );
+      vi.spyOn(mockUserProfileRepository, "updateOne").mockResolvedValue();
+
+      // Act
+      await userProfileService.updateCustomSection(userId, request);
+
+      // Assert
+      expect(mockUserProfileRepository.findOne).toHaveBeenCalledWith({
+        userId: new Types.ObjectId(userId),
+      });
+      expect(mockUserProfileRepository.updateOne).toHaveBeenCalled();
+    });
+    describe("error cases", () => {
+      it.each(UserProfileServiceDataProvider.updateCustomSectionErrorCases())(
+        "$description",
+        async ({ request, error, expectedErrorResponse }) => {
+          // Arrange
+          const userId = new Types.ObjectId();
+
+          if (error.message === ErrorMessage.USER_PROFILE_NOT_FOUND) {
+            vi.spyOn(mockUserProfileRepository, "findOne").mockResolvedValue(
+              null
+            );
+          } else if (error.message === ErrorMessage.CUSTOM_SECTION_NOT_FOUND) {
+            const entity = UserProfileTestFixture.createUserProfileEntity(
+              (builder) => builder.setCustomSections([]) // Empty array = no sections exist
+            );
+
+            vi.spyOn(mockUserProfileRepository, "findOne").mockResolvedValue(
+              entity
+            );
+          } else if (error instanceof MongooseError) {
+            const entity = UserProfileTestFixture.createUserProfileEntity(
+              (builder) =>
+                builder.setCustomSections([
+                  {
+                    title: request.title,
+                    details: request.details,
+                  },
+                ])
+            );
+
+            vi.spyOn(mockUserProfileRepository, "findOne").mockResolvedValue(
+              entity
+            );
+            vi.spyOn(mockUserProfileRepository, "updateOne").mockRejectedValue(
+              error
+            );
+          } else {
+            const entity = UserProfileTestFixture.createUserProfileEntity(
+              (builder) =>
+                builder.setCustomSections([
+                  {
+                    title: request.title,
+                    details: request.details,
+                  },
+                ])
+            );
+            vi.spyOn(mockUserProfileRepository, "findOne").mockResolvedValue(
+              entity
+            );
+            vi.spyOn(mockUserProfileRepository, "updateOne").mockRejectedValue(
+              error
+            );
+          }
+
+          // Act & Assert
+          if (
+            error instanceof MongooseError ||
+            error instanceof MongoServerError
+          ) {
+            await expect(
+              userProfileService.updateCustomSection(userId, request)
+            ).rejects.toThrowError(DatabaseError);
+          } else {
+            await expect(
+              userProfileService.updateCustomSection(userId, request)
+            ).rejects.toThrowError(error);
+          }
+
+          if (error.message === ErrorMessage.USER_PROFILE_NOT_FOUND) {
+            expect(mockUserProfileRepository.findOne).toHaveBeenCalledWith({
+              userId: new Types.ObjectId(userId),
+            });
+            expect(mockUserProfileRepository.updateOne).not.toHaveBeenCalled();
+          } else if (error.message === ErrorMessage.CUSTOM_SECTION_NOT_FOUND) {
             expect(mockUserProfileRepository.findOne).toHaveBeenCalledWith({
               userId: new Types.ObjectId(userId),
             });

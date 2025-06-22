@@ -1,5 +1,5 @@
 import { Types } from "mongoose";
-import { ProfileAccess } from "../../src/common/enums.js";
+import { ProfileAccess } from "@seenelm/train-core";
 import { UserProfileDocument } from "../../src/infrastructure/database/models/userProfile/userProfileModel.js";
 import UserProfile, {
   UserProfileBuilder,

@@ -1,8 +1,9 @@
-import UserProfileTestFixture from "../../fixtures/UserProfileTestFixture.js";
+import UserProfileTestFixture from "../../../../fixtures/UserProfileTestFixture.js";
 import { CustomSectionType, CustomSectionRequest } from "@seenelm/train-core";
-import { APIError } from "../../../src/common/errors/APIError.js";
+import { APIError } from "../../../../../src/common/errors/APIError.js";
 import { Types } from "mongoose";
-import { ErrorResponse } from "../../../src/common/errors/types.js";
+import { ErrorResponse } from "../../../../../src/common/errors/types.js";
+import { ValidationErrorMessage } from "../../../../../src/common/enums.js";
 
 interface ErrorTestCase {
   description: string;
@@ -85,14 +86,9 @@ export default class UserProfileMiddlewareDataProvider {
           body: UserProfileTestFixture.createCustomSectionRequest(),
         },
         error: APIError.BadRequest("Validation failed", [
-          "User ID is required",
+          ValidationErrorMessage.USER_ID_REQUIRED,
         ]),
-        validationErrors: ["User ID is required"],
-        expectedErrorResponse: {
-          message: "Validation failed",
-          errorCode: "BAD_REQUEST",
-          details: ["User ID is required"],
-        },
+        validationErrors: [ValidationErrorMessage.USER_ID_REQUIRED],
       },
       {
         description: "should throw BadRequest when userId is invalid ObjectId",
@@ -101,9 +97,9 @@ export default class UserProfileMiddlewareDataProvider {
           body: UserProfileTestFixture.createCustomSectionRequest(),
         },
         error: APIError.BadRequest("Validation failed", [
-          "Invalid user ID format",
+          ValidationErrorMessage.USER_ID_INVALID_FORMAT,
         ]),
-        validationErrors: ["Invalid user ID format"],
+        validationErrors: [ValidationErrorMessage.USER_ID_INVALID_FORMAT],
       },
       {
         description: "should throw BadRequest when section title is missing",
@@ -114,9 +110,9 @@ export default class UserProfileMiddlewareDataProvider {
           }),
         },
         error: APIError.BadRequest("Validation failed", [
-          "Invalid custom section title",
+          ValidationErrorMessage.CUSTOM_SECTION_TITLE_INVALID,
         ]),
-        validationErrors: ["Invalid custom section title"],
+        validationErrors: [ValidationErrorMessage.CUSTOM_SECTION_TITLE_INVALID],
       },
       {
         description: "should throw BadRequest when details is empty array",
@@ -128,9 +124,11 @@ export default class UserProfileMiddlewareDataProvider {
           }),
         },
         error: APIError.BadRequest("Validation failed", [
-          "Invalid custom section details",
+          ValidationErrorMessage.CUSTOM_SECTION_DETAILS_INVALID,
         ]),
-        validationErrors: ["Invalid custom section details"],
+        validationErrors: [
+          ValidationErrorMessage.CUSTOM_SECTION_DETAILS_INVALID,
+        ],
       },
       {
         description: "should throw BadRequest when details is undefined",
@@ -142,9 +140,11 @@ export default class UserProfileMiddlewareDataProvider {
           }),
         },
         error: APIError.BadRequest("Validation failed", [
-          "Invalid custom section details",
+          ValidationErrorMessage.CUSTOM_SECTION_DETAILS_INVALID,
         ]),
-        validationErrors: ["Invalid custom section details"],
+        validationErrors: [
+          ValidationErrorMessage.CUSTOM_SECTION_DETAILS_INVALID,
+        ],
       },
       {
         description:
@@ -163,9 +163,11 @@ export default class UserProfileMiddlewareDataProvider {
           },
         },
         error: APIError.BadRequest("Validation failed", [
-          "Invalid achievement item",
+          ValidationErrorMessage.ACHIEVEMENT_ITEM_INVALID_FORMAT,
         ]),
-        validationErrors: ["Invalid achievement item"],
+        validationErrors: [
+          ValidationErrorMessage.ACHIEVEMENT_ITEM_INVALID_FORMAT,
+        ],
       },
     ];
   }

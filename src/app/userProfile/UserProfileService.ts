@@ -8,6 +8,7 @@ import { DatabaseError } from "../../common/errors/DatabaseError.js";
 import { Logger } from "../../common/logger.js";
 import { Types } from "mongoose";
 import { CustomSectionRequest } from "@seenelm/train-core";
+import { ErrorMessage } from "../../common/enums.js";
 
 export interface IUserProfileService {
   updateUserProfile(userProfileRequest: UserProfileRequest): Promise<void>;
@@ -45,10 +46,10 @@ export default class UserProfileService implements IUserProfileService {
       });
 
       if (!userProfile) {
-        this.logger.warn("User profile not found", {
+        this.logger.warn(ErrorMessage.USER_PROFILE_NOT_FOUND, {
           userId: userProfileRequest.userId,
         });
-        throw APIError.NotFound("User profile not found");
+        throw APIError.NotFound(ErrorMessage.USER_PROFILE_NOT_FOUND);
       }
 
       const userProfileDocument =
@@ -86,8 +87,8 @@ export default class UserProfileService implements IUserProfileService {
       });
 
       if (!userProfile) {
-        this.logger.warn("User profile not found", { userId });
-        throw APIError.NotFound("User profile not found");
+        this.logger.warn(ErrorMessage.USER_PROFILE_NOT_FOUND, { userId });
+        throw APIError.NotFound(ErrorMessage.USER_PROFILE_NOT_FOUND);
       }
 
       const existingSections = userProfile.getCustomSections() || [];
@@ -96,11 +97,11 @@ export default class UserProfileService implements IUserProfileService {
       );
 
       if (sectionExists) {
-        this.logger.warn("Custom section already exists", {
+        this.logger.warn(ErrorMessage.CUSTOM_SECTION_ALREADY_EXISTS, {
           userId,
           sectionTitle: customSectionRequest.title,
         });
-        throw APIError.Conflict("Custom section already exists");
+        throw APIError.Conflict(ErrorMessage.CUSTOM_SECTION_ALREADY_EXISTS);
       }
 
       await this.userProfileRepository.updateOne(
@@ -146,8 +147,8 @@ export default class UserProfileService implements IUserProfileService {
       });
 
       if (!userProfile) {
-        this.logger.warn("User profile not found", { userId });
-        throw APIError.NotFound("User profile not found");
+        this.logger.warn(ErrorMessage.USER_PROFILE_NOT_FOUND, { userId });
+        throw APIError.NotFound(ErrorMessage.USER_PROFILE_NOT_FOUND);
       }
 
       const existingSections = userProfile.getCustomSections() || [];
@@ -156,11 +157,11 @@ export default class UserProfileService implements IUserProfileService {
       );
 
       if (!sectionExists) {
-        this.logger.warn("Custom section not found", {
+        this.logger.warn(ErrorMessage.CUSTOM_SECTION_NOT_FOUND, {
           userId,
           sectionTitle: customSectionRequest.title,
         });
-        throw APIError.NotFound("Custom section not found");
+        throw APIError.NotFound(ErrorMessage.CUSTOM_SECTION_NOT_FOUND);
       }
 
       await this.userProfileRepository.updateOne(

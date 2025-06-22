@@ -1,14 +1,15 @@
 import { UserProfileRequest } from "@seenelm/train-core";
-import UserProfileTestFixture from "../../fixtures/UserProfileTestFixture.js";
-import { ErrorResponse } from "../../../src/common/errors/types.js";
+import UserProfileTestFixture from "../../../../fixtures/UserProfileTestFixture.js";
+import { ErrorResponse } from "../../../../../src/common/errors/types.js";
 import { Types } from "mongoose";
-import { APIErrorType } from "../../../src/common/enums.js";
-import UserProfile from "../../../src/infrastructure/database/entity/user/UserProfile.js";
-import { UserProfileDocument } from "../../../src/infrastructure/database/models/userProfile/userProfileModel.js";
-import { APIError } from "../../../src/common/errors/APIError.js";
+import { APIErrorType } from "../../../../../src/common/enums.js";
+import UserProfile from "../../../../../src/infrastructure/database/entity/user/UserProfile.js";
+import { UserProfileDocument } from "../../../../../src/infrastructure/database/models/userProfile/userProfileModel.js";
+import { APIError } from "../../../../../src/common/errors/APIError.js";
 import { Error as MongooseError } from "mongoose";
 import { SocialPlatform, CustomSectionType } from "@seenelm/train-core";
 import { CustomSectionRequest } from "@seenelm/train-core";
+import { ErrorMessage } from "../../../../../src/common/enums.js";
 
 interface ErrorTestCase<T> {
   description: string;
@@ -109,9 +110,9 @@ export default class UserProfileServiceDataProvider {
             },
           ],
         }),
-        error: APIError.NotFound("User profile not found"),
+        error: APIError.NotFound(ErrorMessage.USER_PROFILE_NOT_FOUND),
         expectedErrorResponse: {
-          message: "User profile not found",
+          message: ErrorMessage.USER_PROFILE_NOT_FOUND,
           errorCode: "NOT_FOUND",
         },
       },
@@ -128,9 +129,9 @@ export default class UserProfileServiceDataProvider {
             },
           ],
         }),
-        error: APIError.Conflict("Custom section already exists"),
+        error: APIError.Conflict(ErrorMessage.CUSTOM_SECTION_ALREADY_EXISTS),
         expectedErrorResponse: {
-          message: "Custom section already exists",
+          message: ErrorMessage.CUSTOM_SECTION_ALREADY_EXISTS,
           errorCode: "CONFLICT",
         },
       },
@@ -167,6 +168,84 @@ export default class UserProfileServiceDataProvider {
         error: APIError.InternalServerError("Failed to create custom section"),
         expectedErrorResponse: {
           message: "Failed to create custom section",
+          errorCode: "INTERNAL_SERVER_ERROR",
+        },
+      },
+    ];
+  }
+
+  static updateCustomSectionErrorCases(): ErrorTestCase<CustomSectionRequest>[] {
+    return [
+      {
+        description: "should throw NotFound error when user profile not found",
+        request: UserProfileTestFixture.createCustomSectionRequest({
+          title: CustomSectionType.ACHIEVEMENTS,
+          details: [
+            {
+              title: "Test Achievement",
+              date: "2024-03-20",
+              description: "Test description",
+            },
+          ],
+        }),
+        error: APIError.NotFound(ErrorMessage.USER_PROFILE_NOT_FOUND),
+        expectedErrorResponse: {
+          message: ErrorMessage.USER_PROFILE_NOT_FOUND,
+          errorCode: "NOT_FOUND",
+        },
+      },
+      {
+        description:
+          "should throw NotFound error when custom section not found",
+        request: UserProfileTestFixture.createCustomSectionRequest({
+          title: CustomSectionType.SPECIALIZATION,
+          details: [
+            {
+              specialization: "Weight Training",
+              level: "Advanced",
+              yearsOfExperience: 3,
+            },
+          ],
+        }),
+        error: APIError.NotFound(ErrorMessage.CUSTOM_SECTION_NOT_FOUND),
+        expectedErrorResponse: {
+          message: ErrorMessage.CUSTOM_SECTION_NOT_FOUND,
+          errorCode: "NOT_FOUND",
+        },
+      },
+      {
+        description: "should handle DatabaseError for custom section update",
+        request: UserProfileTestFixture.createCustomSectionRequest({
+          title: CustomSectionType.IDENTITY,
+          details: [
+            {
+              role: "Fitness Enthusiast",
+              experience: 5,
+              isCertified: true,
+            },
+          ],
+        }),
+        error: new MongooseError("Connection failed"),
+        expectedErrorResponse: {
+          message: "Database error occurred",
+          errorCode: "DATABASE_ERROR",
+        },
+      },
+      {
+        description:
+          "should throw InternalServerError for unknown errors in custom section update",
+        request: UserProfileTestFixture.createCustomSectionRequest({
+          title: CustomSectionType.PHILOSOPHY,
+          details: [
+            {
+              philosophy: "Consistency over perfection",
+              approach: "Progressive overload",
+            },
+          ],
+        }),
+        error: APIError.InternalServerError("Failed to update custom section"),
+        expectedErrorResponse: {
+          message: "Failed to update custom section",
           errorCode: "INTERNAL_SERVER_ERROR",
         },
       },

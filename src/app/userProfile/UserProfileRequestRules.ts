@@ -2,6 +2,7 @@ import { RuleSet } from "../../common/utils/requestValidation.js";
 import { CustomSectionType, CustomSectionRequest } from "@seenelm/train-core";
 import { Request } from "express";
 import { Types } from "mongoose";
+import { ValidationErrorMessage } from "../../common/enums.js";
 
 export default class UserProfileRequestRules {
   public static createCustomSectionRules: RuleSet<
@@ -9,22 +10,22 @@ export default class UserProfileRequestRules {
   > = {
     userId: {
       hasError: (req) => !!req.params.userId,
-      message: "User ID is required",
+      message: ValidationErrorMessage.USER_ID_REQUIRED,
     },
     validUserId: {
       hasError: (req) => !Types.ObjectId.isValid(req.params.userId),
-      message: "Invalid user ID format",
+      message: ValidationErrorMessage.USER_ID_INVALID_FORMAT,
     },
     sectionTitle: {
       hasError: (req) =>
         !req.body.title ||
         !Object.values(CustomSectionType).includes(req.body.title),
-      message: "Invalid custom section title",
+      message: ValidationErrorMessage.CUSTOM_SECTION_TITLE_INVALID,
     },
     sectionDetails: {
       hasError: (req) =>
         !Array.isArray(req.body.details) || req.body.details.length === 0,
-      message: "Invalid custom section details",
+      message: ValidationErrorMessage.CUSTOM_SECTION_DETAILS_INVALID,
     },
     achievementItems: {
       hasError: (req) => {
@@ -39,7 +40,7 @@ export default class UserProfileRequestRules {
               typeof item.description !== "string")
         );
       },
-      message: "Invalid achievement item format",
+      message: ValidationErrorMessage.ACHIEVEMENT_ITEM_INVALID_FORMAT,
     },
     genericItems: {
       hasError: (req) => {
@@ -57,7 +58,7 @@ export default class UserProfileRequestRules {
             )
         );
       },
-      message: "Invalid generic item format",
+      message: ValidationErrorMessage.GENERIC_ITEM_INVALID_FORMAT,
     },
   };
 

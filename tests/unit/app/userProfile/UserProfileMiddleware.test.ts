@@ -9,7 +9,7 @@ import {
 } from "vitest";
 import { NextFunction, Request, Response } from "express";
 import UserProfileMiddleware from "../../../../src/app/userProfile/UserProfileMiddleware.js";
-import UserProfileMiddlewareDataProvider from "../../dataProviders/UserProfileMiddlewareDataProvider.js";
+import UserProfileMiddlewareDataProvider from "./dataProviders/UserProfileMiddlewareDataProvider.js";
 import { CustomSectionRequest } from "@seenelm/train-core";
 import { CreateValidator } from "../../../../src/common/utils/requestValidation.js";
 import UserProfileRequestRules from "../../../../src/app/userProfile/UserProfileRequestRules.js";

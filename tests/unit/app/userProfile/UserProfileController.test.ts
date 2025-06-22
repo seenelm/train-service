@@ -13,7 +13,7 @@ import UserProfileController from "../../../../src/app/userProfile/UserProfileCo
 import UserProfileTestFixture from "../../../fixtures/UserProfileTestFixture.js";
 import { Types } from "mongoose";
 import { StatusCodes as HttpStatusCode } from "http-status-codes";
-import UserProfileControllerDataProvider from "../../dataProviders/UserProfileControllerDataProvider.js";
+import UserProfileControllerDataProvider from "./dataProviders/UserProfileControllerDataProvider.js";
 
 describe("UserProfileController", () => {
   let userProfileController: UserProfileController;
@@ -99,6 +99,38 @@ describe("UserProfileController", () => {
         expect(mockResponse.json).not.toHaveBeenCalled();
         expect(mockNext).toHaveBeenCalledWith(error);
       });
+    });
+  });
+
+  describe("updateCustomSection", () => {
+    it("should update a custom section successfully and return 201 status", async () => {
+      // Arrange
+      const userId = new Types.ObjectId().toString();
+      const request = UserProfileTestFixture.createCustomSectionRequest();
+
+      mockRequest.params = { userId };
+      mockRequest.body = request;
+
+      vi.spyOn(
+        mockUserProfileService,
+        "updateCustomSection"
+      ).mockResolvedValue();
+
+      // Act
+      await userProfileController.updateCustomSection(
+        mockRequest as Request,
+        mockResponse as Response,
+        mockNext as NextFunction
+      );
+
+      // Assert
+      expect(mockUserProfileService.updateCustomSection).toHaveBeenCalledWith(
+        new Types.ObjectId(userId),
+        request
+      );
+      expect(mockResponse.status).toHaveBeenCalledWith(HttpStatusCode.OK);
+      expect(mockResponse.json).toHaveBeenCalledWith({ success: true });
+      expect(mockNext).not.toHaveBeenCalled();
     });
   });
 });

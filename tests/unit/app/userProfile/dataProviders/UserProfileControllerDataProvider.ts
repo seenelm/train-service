@@ -1,10 +1,9 @@
-import { ErrorResponse } from "../../../src/common/errors/types.js";
 import { CustomSectionRequest } from "@seenelm/train-core";
 import { Types } from "mongoose";
-import UserProfileTestFixture from "../../fixtures/UserProfileTestFixture.js";
-import { APIError } from "../../../src/common/errors/APIError.js";
+import UserProfileTestFixture from "../../../../fixtures/UserProfileTestFixture.js";
+import { APIError } from "../../../../../src/common/errors/APIError.js";
 import { CustomSectionType } from "@seenelm/train-core";
-import { DatabaseError } from "../../../src/common/errors/DatabaseError.js";
+import { DatabaseError } from "../../../../../src/common/errors/DatabaseError.js";
 
 interface ErrorTestCase<T> {
   description: string;
