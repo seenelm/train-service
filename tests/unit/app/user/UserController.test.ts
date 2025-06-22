@@ -9,13 +9,13 @@ import {
 } from "vitest";
 import { NextFunction, Request, Response } from "express";
 
-import UserController from "../../../src/app/user/UserController.js";
-import { mockUserService } from "../../mocks/userMocks.js";
-import UserTestFixture from "../../fixtures/UserTestFixture.js";
+import UserController from "../../../../src/app/user/UserController.js";
+import { mockUserService } from "../../../mocks/userMocks.js";
+import UserTestFixture from "../../../fixtures/UserTestFixture.js";
 import { StatusCodes as HttpStatusCode } from "http-status-codes";
-import { DatabaseError } from "../../../src/common/errors/DatabaseError.js";
+import { DatabaseError } from "../../../../src/common/errors/DatabaseError.js";
 import { DecodedIdToken } from "firebase-admin/auth";
-import { GoogleAuthRequest } from "../../../src/app/user/userDto.js";
+import { GoogleAuthRequest } from "../../../../src/app/user/userDto.js";
 
 describe("UserController", () => {
   let userController: UserController;

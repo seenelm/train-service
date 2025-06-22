@@ -1,11 +1,11 @@
 import { UserProfileRequest } from "@seenelm/train-core";
-import UserProfileTestFixture from "../fixtures/UserProfileTestFixture.js";
-import { ErrorResponse } from "../../src/common/errors/types.js";
+import UserProfileTestFixture from "../../fixtures/UserProfileTestFixture.js";
+import { ErrorResponse } from "../../../src/common/errors/types.js";
 import { Types } from "mongoose";
-import { APIErrorType } from "../../src/common/enums.js";
-import UserProfile from "../../src/infrastructure/database/entity/user/UserProfile.js";
-import { UserProfileDocument } from "../../src/infrastructure/database/models/userProfile/userProfileModel.js";
-import { APIError } from "../../src/common/errors/APIError.js";
+import { APIErrorType } from "../../../src/common/enums.js";
+import UserProfile from "../../../src/infrastructure/database/entity/user/UserProfile.js";
+import { UserProfileDocument } from "../../../src/infrastructure/database/models/userProfile/userProfileModel.js";
+import { APIError } from "../../../src/common/errors/APIError.js";
 import { Error as MongooseError } from "mongoose";
 import { SocialPlatform, CustomSectionType } from "@seenelm/train-core";
 import { CustomSectionRequest } from "@seenelm/train-core";
@@ -25,7 +25,7 @@ interface SuccessTestCase<T, E, D> {
   expectedResponse?: Partial<T>;
 }
 
-export default class UserProfileDataProvider {
+export default class UserProfileServiceDataProvider {
   static updateUserProfileErrorCases(): ErrorTestCase<UserProfileRequest>[] {
     return [
       {

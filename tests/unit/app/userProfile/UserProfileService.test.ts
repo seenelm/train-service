@@ -4,7 +4,7 @@ import {
   mockUserProfileRepository,
   mockFollowRepository,
 } from "../../../mocks/userMocks.js";
-import UserProfileDataProvider from "../../../dataProviders/UserProfileDataProvider.js";
+import UserProfileServiceDataProvider from "../../dataProviders/UserProfileServiceDataProvider.js";
 import { Types } from "mongoose";
 import { APIError } from "../../../../src/common/errors/APIError.js";
 import { MongooseError } from "mongoose";
@@ -148,7 +148,7 @@ describe("UserProfileService", () => {
     });
 
     describe("error cases", () => {
-      it.each(UserProfileDataProvider.createCustomSectionErrorCases())(
+      it.each(UserProfileServiceDataProvider.createCustomSectionErrorCases())(
         "$description",
         async ({ request, error, expectedErrorResponse }) => {
           // Arrange
