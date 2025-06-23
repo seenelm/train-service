@@ -20,7 +20,7 @@ export class CreateValidator {
 
   public static validate<T>(req: T, rules: RuleSet<T>): string[] {
     const errors = Object.values(rules)
-      .filter((rule) => !rule.hasError(req))
+      .filter((rule) => rule.hasError(req))
       .map((rule) => rule.message);
 
     return errors;

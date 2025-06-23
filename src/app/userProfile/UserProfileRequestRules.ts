@@ -9,7 +9,7 @@ export default class UserProfileRequestRules {
     Request<{ userId: string }, {}, CustomSectionRequest>
   > = {
     userId: {
-      hasError: (req) => !!req.params.userId,
+      hasError: (req) => !req.params.userId,  
       message: ValidationErrorMessage.USER_ID_REQUIRED,
     },
     validUserId: {
@@ -29,7 +29,8 @@ export default class UserProfileRequestRules {
     },
     achievementItems: {
       hasError: (req) => {
-        if (req.body.title !== CustomSectionType.ACHIEVEMENTS) return false;
+        if (!Array.isArray(req.body.details) || req.body.title !== CustomSectionType.ACHIEVEMENTS) return false;
+        
         return req.body.details.some(
           (item: any) =>
             !item ||
@@ -44,7 +45,8 @@ export default class UserProfileRequestRules {
     },
     genericItems: {
       hasError: (req) => {
-        if (req.body.title === CustomSectionType.ACHIEVEMENTS) return false;
+        if (!Array.isArray(req.body.details) || req.body.title === CustomSectionType.ACHIEVEMENTS) return false;
+        
         return req.body.details.some(
           (item: any) =>
             !item ||
@@ -91,7 +93,8 @@ export default class UserProfileRequestRules {
     },
     achievementItems: {
       hasError: (req) => {
-        if (req.body?.title !== CustomSectionType.ACHIEVEMENTS) return false;
+        if (!Array.isArray(req.body?.details) || req.body?.title !== CustomSectionType.ACHIEVEMENTS) return false;
+        
         return req.body.details?.some(
           (item: any) =>
             !item ||
@@ -106,7 +109,8 @@ export default class UserProfileRequestRules {
     },
     genericItems: {
       hasError: (req) => {
-        if (req.body?.title === CustomSectionType.ACHIEVEMENTS) return false;
+        if (!Array.isArray(req.body?.details) || req.body?.title === CustomSectionType.ACHIEVEMENTS) return false;
+        
         return req.body.details?.some(
           (item: any) =>
             !item ||
