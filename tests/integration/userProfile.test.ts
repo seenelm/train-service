@@ -48,19 +48,24 @@ describe("User Profile Integration Tests", () => {
     userResponse = await trainClient.register(userRequest);
   });
 
-  describe("createCustomSection", () => {
+  describe("Custom Section CRUD", () => {
     describe("Success Cases", () => {
       it.each(UserProfileDataProvider.createCustomSectionSuccessCases())(
         "$description",
-        async ({ request, expectedCreateResponse, expectedGetResponse }) => {
+        async ({
+          createRequest,
+          updateRequest,
+          expectedGetResponse,
+          expectedUpdatedGetResponse,
+        }) => {
           // CREATE a custom section
-          const response = await trainClient.createCustomSection(
+          const createResponse = await trainClient.createCustomSection(
             userResponse.userId,
-            request
+            createRequest
           );
 
           // Assert
-          expect(response).toEqual(expectedCreateResponse);
+          expect(createResponse).toEqual({ success: true });
 
           // GET the custom sections
           const customSections = await trainClient.getCustomSections(
@@ -71,8 +76,18 @@ describe("User Profile Integration Tests", () => {
           expect(customSections).toEqual(expectedGetResponse);
 
           // UPDATE the custom section
+          const updateResponse = await trainClient.updateCustomSection(
+            userResponse.userId,
+            updateRequest
+          );
+
+          expect(updateResponse).toEqual({ success: true });
 
           // GET the custom sections
+          const updatedCustomSections = await trainClient.getCustomSections(
+            userResponse.userId
+          );
+          expect(updatedCustomSections).toEqual(expectedUpdatedGetResponse);
 
           // DELETE the custom section
           const deleteResponse = await trainClient.deleteCustomSection(
@@ -81,12 +96,12 @@ describe("User Profile Integration Tests", () => {
           );
 
           // GET the custom sections
-          const updatedCustomSections = await trainClient.getCustomSections(
+          const deletedCustomSections = await trainClient.getCustomSections(
             userResponse.userId
           );
 
           // Assert
-          expect(updatedCustomSections).toEqual([]);
+          expect(deletedCustomSections).toEqual([]);
         }
       );
     });

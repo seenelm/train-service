@@ -180,6 +180,22 @@ export default class TrainClient {
     }
   }
 
+  public async updateCustomSection(
+    userId: string,
+    section: CustomSectionRequest
+  ): Promise<{ success: boolean }> {
+    try {
+      const response = await axios.patch<{ success: boolean }>(
+        `${this.baseUrl}/user-profile/${userId}/custom-section`,
+        section
+      );
+      return response.data;
+    } catch (error) {
+      console.error("Error updating custom section: ", error);
+      throw error;
+    }
+  }
+
   public generateDeviceId(): string {
     return uuidv4();
   }

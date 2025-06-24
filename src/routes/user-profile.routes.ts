@@ -17,12 +17,12 @@ const userProfileController = new UserProfileController(
 );
 
 router.put("/", userProfileController.updateUserProfile);
+
 router.post(
   "/:userId/custom-section",
   UserProfileMiddleware.validateCreateCustomSection,
   userProfileController.createCustomSection
 );
-
 router.get(
   "/:userId/custom-section",
   UserProfileMiddleware.validateGetCustomSections,
@@ -33,11 +33,10 @@ router.delete(
   UserProfileMiddleware.validateDeleteCustomSection,
   userProfileController.deleteCustomSection
 );
-
-// router.patch(
-//   "/:userId/custom-section",
-//   UserProfileMiddleware.validateUpdateCustomSection,
-//   userProfileController.updateCustomSection
-// );
+router.patch(
+  "/:userId/custom-section",
+  UserProfileMiddleware.validateUpdateCustomSection,
+  userProfileController.updateCustomSection
+);
 
 export default router;

@@ -18,9 +18,10 @@ interface ErrorTestCase<T> {
 interface SuccessTestCase<T> {
   description: string;
   userId: string;
-  request: T;
-  expectedCreateResponse: { success: boolean };
+  createRequest: T;
+  updateRequest: T;
   expectedGetResponse: CustomSectionResponse[];
+  expectedUpdatedGetResponse: CustomSectionResponse[];
 }
 
 export default class UserProfileDataProvider {
@@ -29,7 +30,7 @@ export default class UserProfileDataProvider {
       {
         description: "should create achievements section successfully",
         userId: new Types.ObjectId().toString(),
-        request: UserProfileTestFixture.createCustomSectionRequest({
+        createRequest: UserProfileTestFixture.createCustomSectionRequest({
           title: CustomSectionType.ACHIEVEMENTS,
           details: [
             {
@@ -44,7 +45,21 @@ export default class UserProfileDataProvider {
             },
           ],
         }),
-        expectedCreateResponse: { success: true },
+        updateRequest: UserProfileTestFixture.createCustomSectionRequest({
+          title: CustomSectionType.ACHIEVEMENTS,
+          details: [
+            {
+              title: "High School basketball state champion",
+              date: "2025-02-20",
+              description: "Won state championship in high school basketball",
+            },
+            {
+              title: "Bronze medalist in 100m freestyle",
+              date: "2025-01-15",
+              description: "Won bronze medal in 100m freestyle at the Olympics",
+            },
+          ],
+        }),
         expectedGetResponse: [
           UserProfileTestFixture.createCustomSectionResponse({
             title: CustomSectionType.ACHIEVEMENTS,
@@ -58,6 +73,24 @@ export default class UserProfileDataProvider {
                 title: "Certified Personal Trainer",
                 date: "2024-01-15",
                 description: "Obtained NASM certification",
+              },
+            ],
+          }),
+        ],
+        expectedUpdatedGetResponse: [
+          UserProfileTestFixture.createCustomSectionResponse({
+            title: CustomSectionType.ACHIEVEMENTS,
+            details: [
+              {
+                title: "High School basketball state champion",
+                date: "2025-02-20",
+                description: "Won state championship in high school basketball",
+              },
+              {
+                title: "Bronze medalist in 100m freestyle",
+                date: "2025-01-15",
+                description:
+                  "Won bronze medal in 100m freestyle at the Olympics",
               },
             ],
           }),
