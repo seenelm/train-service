@@ -133,6 +133,37 @@ describe("UserProfileController", () => {
       expect(mockResponse.json).toHaveBeenCalledWith({ success: true });
       expect(mockNext).not.toHaveBeenCalled();
     });
+
+    describe("error cases", () => {
+      it.each(
+        UserProfileControllerDataProvider.updateCustomSectionErrorCases()
+      )("$description", async ({ request, error }) => {
+        // Arrange
+        mockRequest.params = request.params;
+        mockRequest.body = request.body;
+
+        vi.spyOn(
+          mockUserProfileService,
+          "updateCustomSection"
+        ).mockRejectedValue(error);
+
+        // Act
+        await userProfileController.updateCustomSection(
+          mockRequest as Request,
+          mockResponse as Response,
+          mockNext as NextFunction
+        );
+
+        // Assert
+        expect(mockUserProfileService.updateCustomSection).toHaveBeenCalledWith(
+          new Types.ObjectId(request.params.userId),
+          request.body
+        );
+        expect(mockResponse.status).not.toHaveBeenCalled();
+        expect(mockResponse.json).not.toHaveBeenCalled();
+        expect(mockNext).toHaveBeenCalledWith(error);
+      });
+    });
   });
 
   describe("getCustomSections", () => {
@@ -202,6 +233,67 @@ describe("UserProfileController", () => {
           expect(mockNext).toHaveBeenCalledWith(error);
         }
       );
+    });
+  });
+
+  describe("deleteCustomSection", () => {
+    it("should delete a custom section successfully and return 200 status", async () => {
+      // Arrange
+      const userId = new Types.ObjectId().toString();
+      const sectionTitle = CustomSectionType.ACHIEVEMENTS;
+
+      mockRequest.params = { userId, sectionTitle };
+
+      vi.spyOn(
+        mockUserProfileService,
+        "deleteCustomSection"
+      ).mockResolvedValue();
+
+      // Act
+      await userProfileController.deleteCustomSection(
+        mockRequest as Request,
+        mockResponse as Response,
+        mockNext as NextFunction
+      );
+
+      // Assert
+      expect(mockUserProfileService.deleteCustomSection).toHaveBeenCalledWith(
+        new Types.ObjectId(userId),
+        sectionTitle
+      );
+      expect(mockResponse.status).toHaveBeenCalledWith(HttpStatusCode.OK);
+      expect(mockResponse.json).toHaveBeenCalledWith({ success: true });
+      expect(mockNext).not.toHaveBeenCalled();
+    });
+
+    describe("error cases", () => {
+      it.each(
+        UserProfileControllerDataProvider.deleteCustomSectionErrorCases()
+      )("$description", async ({ request, error }) => {
+        // Arrange
+        mockRequest.params = request.params;
+
+        vi.spyOn(
+          mockUserProfileService,
+          "deleteCustomSection"
+        ).mockRejectedValue(error);
+
+        // Act
+        await userProfileController.deleteCustomSection(
+          mockRequest as Request,
+          mockResponse as Response,
+          mockNext as NextFunction
+        );
+
+        // Assert
+        expect(mockUserProfileService.deleteCustomSection).toHaveBeenCalledWith(
+          new Types.ObjectId(request.params.userId),
+          request.params.sectionTitle
+        );
+        expect(mockResponse.status).not.toHaveBeenCalled();
+        expect(mockResponse.json).not.toHaveBeenCalled();
+        expect(mockNext).toHaveBeenCalledWith(error);
+      });
     });
   });
 });
