@@ -2,7 +2,7 @@ import { IUserProfileService } from "./UserProfileService.js";
 import { NextFunction, Request, Response } from "express";
 import { UserProfileRequest } from "@seenelm/train-core";
 import { StatusCodes as HttpStatusCode } from "http-status-codes";
-import { CustomSectionRequest } from "@seenelm/train-core";
+import { CustomSectionRequest, CustomSectionType } from "@seenelm/train-core";
 import { Types } from "mongoose";
 
 export default class UserProfileController {
@@ -22,6 +22,24 @@ export default class UserProfileController {
       await this.userProfileService.updateUserProfile(userProfileRequest);
 
       res.status(HttpStatusCode.OK).json({ success: true });
+    } catch (error) {
+      next(error);
+    }
+  };
+
+  public getCustomSections = async (
+    req: Request,
+    res: Response,
+    next: NextFunction
+  ) => {
+    try {
+      const { userId } = req.params;
+
+      const customSections = await this.userProfileService.getCustomSections(
+        new Types.ObjectId(userId)
+      );
+
+      res.status(HttpStatusCode.OK).json(customSections);
     } catch (error) {
       next(error);
     }
@@ -59,6 +77,25 @@ export default class UserProfileController {
       await this.userProfileService.updateCustomSection(
         new Types.ObjectId(userId),
         customSectionRequest
+      );
+
+      res.status(HttpStatusCode.OK).json({ success: true });
+    } catch (error) {
+      next(error);
+    }
+  };
+
+  public deleteCustomSection = async (
+    req: Request,
+    res: Response,
+    next: NextFunction
+  ) => {
+    try {
+      const { userId, sectionTitle } = req.params;
+
+      await this.userProfileService.deleteCustomSection(
+        new Types.ObjectId(userId),
+        sectionTitle as CustomSectionType
       );
 
       res.status(HttpStatusCode.OK).json({ success: true });

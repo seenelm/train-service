@@ -4,12 +4,14 @@ import UserProfileTestFixture from "../../../../fixtures/UserProfileTestFixture.
 import { APIError } from "../../../../../src/common/errors/APIError.js";
 import { CustomSectionType } from "@seenelm/train-core";
 import { DatabaseError } from "../../../../../src/common/errors/DatabaseError.js";
+import { Request } from "express";
+import { ErrorMessage } from "../../../../../src/common/enums.js";
 
 interface ErrorTestCase<T> {
   description: string;
   request: {
     params: Record<string, string>;
-    body: T;
+    body?: T;
   };
   error: Error;
 }
@@ -81,6 +83,32 @@ export default class UserProfileControllerDataProvider {
               },
             ],
           }),
+        },
+        error: APIError.InternalServerError("Internal server error"),
+      },
+    ];
+  }
+
+  static getCustomSectionsErrorCases(): ErrorTestCase<{ userId: string }>[] {
+    return [
+      {
+        description: "should handle NotFound error",
+        request: {
+          params: { userId: new Types.ObjectId().toString() },
+        },
+        error: APIError.NotFound(ErrorMessage.USER_PROFILE_NOT_FOUND),
+      },
+      {
+        description: "should handle DatabaseError",
+        request: {
+          params: { userId: new Types.ObjectId().toString() },
+        },
+        error: new DatabaseError("Database connection failed"),
+      },
+      {
+        description: "should handle InternalServerError",
+        request: {
+          params: { userId: new Types.ObjectId().toString() },
         },
         error: APIError.InternalServerError("Internal server error"),
       },

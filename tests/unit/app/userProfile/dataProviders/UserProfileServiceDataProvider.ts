@@ -7,7 +7,12 @@ import UserProfile from "../../../../../src/infrastructure/database/entity/user/
 import { UserProfileDocument } from "../../../../../src/infrastructure/database/models/userProfile/userProfileModel.js";
 import { APIError } from "../../../../../src/common/errors/APIError.js";
 import { Error as MongooseError } from "mongoose";
-import { SocialPlatform, CustomSectionType } from "@seenelm/train-core";
+import {
+  SocialPlatform,
+  CustomSectionType,
+  CustomSectionResponse,
+  UserProfileResponse,
+} from "@seenelm/train-core";
 import { CustomSectionRequest } from "@seenelm/train-core";
 import { ErrorMessage } from "../../../../../src/common/enums.js";
 
@@ -18,12 +23,19 @@ interface ErrorTestCase<T> {
   expectedErrorResponse: Partial<ErrorResponse>;
 }
 
-interface SuccessTestCase<T, E, D> {
+interface SuccessTestCase<T, E, D, R> {
   description: string;
   request: T;
   entity: E;
-  document: Partial<D>;
-  expectedResponse?: Partial<T>;
+  document?: Partial<D>;
+  expectedResponse?: R;
+}
+
+interface GetCustomSectionsSuccessTestCase {
+  description: string;
+  userId: Types.ObjectId;
+  entity: UserProfile;
+  expectedResponse: CustomSectionResponse[];
 }
 
 export default class UserProfileServiceDataProvider {
@@ -64,7 +76,8 @@ export default class UserProfileServiceDataProvider {
   static updateUserProfileSuccessCases(): SuccessTestCase<
     UserProfileRequest,
     UserProfile,
-    UserProfileDocument
+    UserProfileDocument,
+    void
   >[] {
     return [
       {
@@ -246,6 +259,243 @@ export default class UserProfileServiceDataProvider {
         error: APIError.InternalServerError("Failed to update custom section"),
         expectedErrorResponse: {
           message: "Failed to update custom section",
+          errorCode: "INTERNAL_SERVER_ERROR",
+        },
+      },
+    ];
+  }
+
+  static deleteCustomSectionErrorCases(): ErrorTestCase<{
+    userId: Types.ObjectId;
+    sectionTitle: CustomSectionType;
+  }>[] {
+    return [
+      {
+        description: "should throw NotFound error when user profile not found",
+        request: {
+          userId: new Types.ObjectId(),
+          sectionTitle: CustomSectionType.ACHIEVEMENTS,
+        },
+        error: APIError.NotFound(ErrorMessage.USER_PROFILE_NOT_FOUND),
+        expectedErrorResponse: {
+          message: ErrorMessage.USER_PROFILE_NOT_FOUND,
+          errorCode: "NOT_FOUND",
+        },
+      },
+      {
+        description:
+          "should throw NotFound error when custom section not found",
+        request: {
+          userId: new Types.ObjectId(),
+          sectionTitle: CustomSectionType.SPECIALIZATION,
+        },
+        error: APIError.NotFound(ErrorMessage.CUSTOM_SECTION_NOT_FOUND),
+        expectedErrorResponse: {
+          message: ErrorMessage.CUSTOM_SECTION_NOT_FOUND,
+          errorCode: "NOT_FOUND",
+        },
+      },
+      {
+        description: "should handle DatabaseError for custom section deletion",
+        request: {
+          userId: new Types.ObjectId(),
+          sectionTitle: CustomSectionType.IDENTITY,
+        },
+        error: new MongooseError("Connection failed"),
+        expectedErrorResponse: {
+          message: "Database error occurred",
+          errorCode: "DATABASE_ERROR",
+        },
+      },
+      {
+        description:
+          "should throw InternalServerError for unknown errors in custom section deletion",
+        request: {
+          userId: new Types.ObjectId(),
+          sectionTitle: CustomSectionType.PHILOSOPHY,
+        },
+        error: APIError.InternalServerError("Failed to delete custom section"),
+        expectedErrorResponse: {
+          message: "Failed to delete custom section",
+          errorCode: "INTERNAL_SERVER_ERROR",
+        },
+      },
+    ];
+  }
+
+  static getCustomSectionsSuccessCases(): SuccessTestCase<
+    { userId: Types.ObjectId },
+    UserProfile,
+    UserProfileDocument,
+    CustomSectionResponse[]
+  >[] {
+    return [
+      {
+        description:
+          "should get custom sections successfully when user has multiple sections",
+        request: {
+          userId: new Types.ObjectId(),
+        },
+        entity: UserProfileTestFixture.createUserProfileEntity((builder) =>
+          builder.setCustomSections([
+            {
+              title: CustomSectionType.ACHIEVEMENTS,
+              details: [
+                {
+                  title: "First Place in Competition",
+                  date: "2024-03-20",
+                  description:
+                    "Won first place in regional fitness competition",
+                },
+                {
+                  title: "Certified Personal Trainer",
+                  date: "2024-01-15",
+                  description: "Obtained NASM certification",
+                },
+              ],
+            },
+            {
+              title: CustomSectionType.SPECIALIZATION,
+              details: [
+                {
+                  specialization: "Weight Training",
+                  level: "Advanced",
+                  yearsOfExperience: 5,
+                },
+              ],
+            },
+            {
+              title: CustomSectionType.IDENTITY,
+              details: [
+                {
+                  role: "Fitness Coach",
+                  experience: 7,
+                  isCertified: true,
+                  clientCount: 150,
+                },
+              ],
+            },
+          ])
+        ),
+        expectedResponse: [
+          {
+            title: CustomSectionType.ACHIEVEMENTS,
+            details: [
+              {
+                title: "First Place in Competition",
+                date: "2024-03-20",
+                description: "Won first place in regional fitness competition",
+              },
+              {
+                title: "Certified Personal Trainer",
+                date: "2024-01-15",
+                description: "Obtained NASM certification",
+              },
+            ],
+          },
+          {
+            title: CustomSectionType.SPECIALIZATION,
+            details: [
+              {
+                specialization: "Weight Training",
+                level: "Advanced",
+                yearsOfExperience: 5,
+              },
+            ],
+          },
+          {
+            title: CustomSectionType.IDENTITY,
+            details: [
+              {
+                role: "Fitness Coach",
+                experience: 7,
+                isCertified: true,
+                clientCount: 150,
+              },
+            ],
+          },
+        ],
+      },
+      {
+        description: "should get empty array when user has no custom sections",
+        request: {
+          userId: new Types.ObjectId(),
+        },
+        entity: UserProfileTestFixture.createUserProfileEntity((builder) =>
+          builder.setCustomSections([])
+        ),
+        expectedResponse: [],
+      },
+      {
+        description: "should get single achievement section successfully",
+        request: {
+          userId: new Types.ObjectId(),
+        },
+        entity: UserProfileTestFixture.createUserProfileEntity((builder) =>
+          builder.setCustomSections([
+            {
+              title: CustomSectionType.ACHIEVEMENTS,
+              details: [
+                {
+                  title: "Test Achievement",
+                  date: "2024-03-20",
+                  description: "Test description",
+                },
+              ],
+            },
+          ])
+        ),
+        expectedResponse: [
+          {
+            title: CustomSectionType.ACHIEVEMENTS,
+            details: [
+              {
+                title: "Test Achievement",
+                date: "2024-03-20",
+                description: "Test description",
+              },
+            ],
+          },
+        ],
+      },
+    ];
+  }
+
+  static getCustomSectionsErrorCases(): ErrorTestCase<{
+    userId: Types.ObjectId;
+  }>[] {
+    return [
+      {
+        description: "should throw NotFound error when user profile not found",
+        request: {
+          userId: new Types.ObjectId(),
+        },
+        error: APIError.NotFound(ErrorMessage.USER_PROFILE_NOT_FOUND),
+        expectedErrorResponse: {
+          message: ErrorMessage.USER_PROFILE_NOT_FOUND,
+          errorCode: "NOT_FOUND",
+        },
+      },
+      {
+        description: "should handle DatabaseError for get custom sections",
+        request: {
+          userId: new Types.ObjectId(),
+        },
+        error: new MongooseError("Connection failed"),
+        expectedErrorResponse: {
+          message: "Database error occurred",
+          errorCode: "DATABASE_ERROR",
+        },
+      },
+      {
+        description:
+          "should throw InternalServerError for unknown errors in get custom sections",
+        request: {
+          userId: new Types.ObjectId(),
+        },
+        error: APIError.InternalServerError("Failed to get custom sections"),
+        expectedErrorResponse: {
+          message: "Failed to get custom sections",
           errorCode: "INTERNAL_SERVER_ERROR",
         },
       },

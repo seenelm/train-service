@@ -9,6 +9,8 @@ import { Logger } from "../../common/logger.js";
 import { Types } from "mongoose";
 import { CustomSectionRequest } from "@seenelm/train-core";
 import { ErrorMessage } from "../../common/enums.js";
+import { CustomSection } from "../../infrastructure/database/models/userProfile/userProfileModel.js";
+import { CustomSectionResponse, CustomSectionType } from "@seenelm/train-core";
 
 export interface IUserProfileService {
   updateUserProfile(userProfileRequest: UserProfileRequest): Promise<void>;
@@ -19,6 +21,11 @@ export interface IUserProfileService {
   createCustomSection(
     userId: Types.ObjectId,
     customSectionRequest: CustomSectionRequest
+  ): Promise<void>;
+  getCustomSections(userId: Types.ObjectId): Promise<CustomSectionResponse[]>;
+  deleteCustomSection(
+    userId: Types.ObjectId,
+    sectionTitle: CustomSectionType
   ): Promise<void>;
 }
 
@@ -34,6 +41,52 @@ export default class UserProfileService implements IUserProfileService {
     this.userProfileRepository = userProfileRepository;
     this.followRepository = followRepository;
     this.logger = Logger.getInstance();
+  }
+
+  private toCustomSectionResponse(
+    customSections: CustomSection[]
+  ): CustomSectionResponse[] {
+    return customSections.map((section) => ({
+      title: section.title,
+      details: section.details,
+    }));
+  }
+
+  public async getCustomSections(
+    userId: Types.ObjectId
+  ): Promise<CustomSectionResponse[]> {
+    try {
+      const userProfile = await this.userProfileRepository.findOne({
+        userId,
+      });
+
+      if (!userProfile) {
+        this.logger.warn(ErrorMessage.USER_PROFILE_NOT_FOUND, { userId });
+        throw APIError.NotFound(ErrorMessage.USER_PROFILE_NOT_FOUND);
+      }
+
+      const customSections = userProfile.getCustomSections() || [];
+
+      this.logger.info("Custom sections retrieved successfully", {
+        userId,
+        sectionCount: customSections.length,
+      });
+
+      return this.toCustomSectionResponse(customSections);
+    } catch (error) {
+      this.logger.error("Failed to get custom sections", {
+        error,
+        userId,
+      });
+
+      if (error instanceof MongooseError || error instanceof MongoServerError) {
+        throw DatabaseError.handleMongoDBError(error);
+      } else if (error instanceof APIError) {
+        throw error;
+      } else {
+        throw APIError.InternalServerError("Failed to get custom sections");
+      }
+    }
   }
 
   public async updateUserProfile(
@@ -188,6 +241,65 @@ export default class UserProfileService implements IUserProfileService {
         throw error;
       } else {
         throw APIError.InternalServerError("Failed to update custom section");
+      }
+    }
+  }
+
+  public async deleteCustomSection(
+    userId: Types.ObjectId,
+    sectionTitle: CustomSectionType
+  ): Promise<void> {
+    try {
+      const userProfile = await this.userProfileRepository.findOne({
+        userId,
+      });
+
+      if (!userProfile) {
+        this.logger.warn(ErrorMessage.USER_PROFILE_NOT_FOUND, { userId });
+        throw APIError.NotFound(ErrorMessage.USER_PROFILE_NOT_FOUND);
+      }
+
+      const existingSections = userProfile.getCustomSections() || [];
+      const sectionExists = existingSections.some(
+        (section) => section.title === sectionTitle
+      );
+
+      if (!sectionExists) {
+        this.logger.warn(ErrorMessage.CUSTOM_SECTION_NOT_FOUND, {
+          userId,
+          sectionTitle,
+        });
+        throw APIError.NotFound(ErrorMessage.CUSTOM_SECTION_NOT_FOUND);
+      }
+
+      await this.userProfileRepository.updateOne(
+        { userId },
+        {
+          $pull: {
+            customSections: {
+              title: sectionTitle,
+            },
+          },
+        }
+      );
+
+      this.logger.info("Custom section deleted successfully", {
+        userId,
+        sectionTitle,
+      });
+    } catch (error) {
+      this.logger.error("Failed to delete custom section", {
+        error,
+        userId,
+        sectionTitle,
+      });
+
+      if (error instanceof MongooseError || error instanceof MongoServerError) {
+        throw DatabaseError.handleMongoDBError(error);
+      } else if (error instanceof APIError) {
+        throw error;
+      } else {
+        throw APIError.InternalServerError("Failed to delete custom section");
       }
     }
   }

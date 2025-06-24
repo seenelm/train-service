@@ -5,11 +5,22 @@ import { Types } from "mongoose";
 import { ValidationErrorMessage } from "../../common/enums.js";
 
 export default class UserProfileRequestRules {
+  public static getCustomSectionsRules: RuleSet<Request<{ userId: string }>> = {
+    userId: {
+      hasError: (req) => !req.params?.userId,
+      message: ValidationErrorMessage.USER_ID_REQUIRED,
+    },
+    validUserId: {
+      hasError: (req) => !Types.ObjectId.isValid(req.params?.userId),
+      message: ValidationErrorMessage.USER_ID_INVALID_FORMAT,
+    },
+  };
+
   public static createCustomSectionRules: RuleSet<
     Request<{ userId: string }, {}, CustomSectionRequest>
   > = {
     userId: {
-      hasError: (req) => !req.params.userId,  
+      hasError: (req) => !req.params.userId,
       message: ValidationErrorMessage.USER_ID_REQUIRED,
     },
     validUserId: {
@@ -29,8 +40,12 @@ export default class UserProfileRequestRules {
     },
     achievementItems: {
       hasError: (req) => {
-        if (!Array.isArray(req.body.details) || req.body.title !== CustomSectionType.ACHIEVEMENTS) return false;
-        
+        if (
+          !Array.isArray(req.body.details) ||
+          req.body.title !== CustomSectionType.ACHIEVEMENTS
+        )
+          return false;
+
         return req.body.details.some(
           (item: any) =>
             !item ||
@@ -45,8 +60,12 @@ export default class UserProfileRequestRules {
     },
     genericItems: {
       hasError: (req) => {
-        if (!Array.isArray(req.body.details) || req.body.title === CustomSectionType.ACHIEVEMENTS) return false;
-        
+        if (
+          !Array.isArray(req.body.details) ||
+          req.body.title === CustomSectionType.ACHIEVEMENTS
+        )
+          return false;
+
         return req.body.details.some(
           (item: any) =>
             !item ||
@@ -93,8 +112,12 @@ export default class UserProfileRequestRules {
     },
     achievementItems: {
       hasError: (req) => {
-        if (!Array.isArray(req.body?.details) || req.body?.title !== CustomSectionType.ACHIEVEMENTS) return false;
-        
+        if (
+          !Array.isArray(req.body?.details) ||
+          req.body?.title !== CustomSectionType.ACHIEVEMENTS
+        )
+          return false;
+
         return req.body.details?.some(
           (item: any) =>
             !item ||
@@ -109,8 +132,12 @@ export default class UserProfileRequestRules {
     },
     genericItems: {
       hasError: (req) => {
-        if (!Array.isArray(req.body?.details) || req.body?.title === CustomSectionType.ACHIEVEMENTS) return false;
-        
+        if (
+          !Array.isArray(req.body?.details) ||
+          req.body?.title === CustomSectionType.ACHIEVEMENTS
+        )
+          return false;
+
         return req.body.details?.some(
           (item: any) =>
             !item ||
@@ -125,6 +152,31 @@ export default class UserProfileRequestRules {
         );
       },
       message: "Invalid generic item format",
+    },
+  };
+
+  public static deleteCustomSectionRules: RuleSet<
+    Request<{ userId: string; sectionTitle: string }>
+  > = {
+    userId: {
+      hasError: (req) => !req.params?.userId,
+      message: ValidationErrorMessage.USER_ID_REQUIRED,
+    },
+    validUserId: {
+      hasError: (req) => !Types.ObjectId.isValid(req.params?.userId),
+      message: ValidationErrorMessage.USER_ID_INVALID_FORMAT,
+    },
+    sectionTitle: {
+      hasError: (req) => !req.params?.sectionTitle,
+      message: ValidationErrorMessage.CUSTOM_SECTION_TITLE_REQUIRED,
+    },
+    validSectionTitle: {
+      hasError: (req) =>
+        !req.params?.sectionTitle ||
+        !Object.values(CustomSectionType).includes(
+          req.params.sectionTitle as CustomSectionType
+        ),
+      message: ValidationErrorMessage.CUSTOM_SECTION_TITLE_INVALID,
     },
   };
 }

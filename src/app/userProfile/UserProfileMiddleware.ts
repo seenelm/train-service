@@ -8,65 +8,39 @@ import { Logger } from "../../common/logger.js";
 export default class UserProfileMiddleware {
   private static logger = Logger.getInstance();
 
+  public static validateGetCustomSections = (
+    req: Request<{ userId: string }>,
+    res: Response,
+    next: NextFunction
+  ) => {
+    try {
+      const errors = CreateValidator.validate(
+        req,
+        UserProfileRequestRules.getCustomSectionsRules
+      );
+
+      if (errors.length > 0) {
+        throw APIError.BadRequest("Validation failed", errors);
+      }
+
+      next();
+    } catch (error) {
+      next(error);
+    }
+  };
+
   public static validateCreateCustomSection = (
     req: Request<{ userId: string }, {}, CustomSectionRequest>,
     res: Response,
     next: NextFunction
   ) => {
     try {
-      // Log the incoming request for debugging
-      this.logger.info("Validating custom section request", {
-        userId: req.params.userId,
-        requestBody: JSON.stringify(req.body)
-      });
-
-      // Check available CustomSectionType values
-      this.logger.info("Available CustomSectionType values", {
-        types: Object.values(CustomSectionType)
-      });
-
       const errors = CreateValidator.validate(
         req,
         UserProfileRequestRules.createCustomSectionRules
       );
 
       if (errors.length > 0) {
-        // Log detailed validation errors
-        this.logger.error("Custom section validation failed", {
-          errors,
-          userId: req.params.userId,
-          requestBody: JSON.stringify(req.body)
-        });
-
-        // Check specific validation issues and log them
-        if (!req.params.userId) {
-          this.logger.error("User ID is missing");
-        } else if (!/^[0-9a-fA-F]{24}$/.test(req.params.userId)) {
-          this.logger.error("Invalid user ID format", { userId: req.params.userId });
-        }
-
-        if (!req.body.title) {
-          this.logger.error("Custom section title is missing");
-        } else if (!Object.values(CustomSectionType).includes(req.body.title)) {
-          this.logger.error("Invalid custom section title", { 
-            providedTitle: req.body.title,
-            validTitles: Object.values(CustomSectionType)
-          });
-        }
-
-        if (!Array.isArray(req.body.details) || req.body.details.length === 0) {
-          this.logger.error("Invalid details array", { details: req.body.details });
-        } else {
-          // Log details of each item in the array
-          req.body.details.forEach((item, index) => {
-            if (typeof item !== 'object') {
-              this.logger.error(`Item at index ${index} is not an object`, { item });
-            } else {
-              this.logger.info(`Item at index ${index}`, { item });
-            }
-          });
-        }
-
         throw APIError.BadRequest("Validation failed", errors);
       }
 
@@ -74,6 +48,29 @@ export default class UserProfileMiddleware {
       next();
     } catch (error) {
       console.log("ValidateCreateCustomSection error", error);
+      next(error);
+    }
+  };
+
+  public static validateDeleteCustomSection = (
+    req: Request<{ userId: string; sectionTitle: string }>,
+    res: Response,
+    next: NextFunction
+  ) => {
+    try {
+      const errors = CreateValidator.validate(
+        req,
+        UserProfileRequestRules.deleteCustomSectionRules
+      );
+
+      if (errors.length > 0) {
+        throw APIError.BadRequest("Validation failed", errors);
+      }
+
+      this.logger.info("Delete custom section validation successful");
+      next();
+    } catch (error) {
+      console.log("ValidateDeleteCustomSection error", error);
       next(error);
     }
   };

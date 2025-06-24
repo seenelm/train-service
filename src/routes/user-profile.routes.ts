@@ -23,6 +23,17 @@ router.post(
   userProfileController.createCustomSection
 );
 
+router.get(
+  "/:userId/custom-section",
+  UserProfileMiddleware.validateGetCustomSections,
+  userProfileController.getCustomSections
+);
+router.delete(
+  "/:userId/custom-section/:sectionTitle",
+  UserProfileMiddleware.validateDeleteCustomSection,
+  userProfileController.deleteCustomSection
+);
+
 // router.patch(
 //   "/:userId/custom-section",
 //   UserProfileMiddleware.validateUpdateCustomSection,

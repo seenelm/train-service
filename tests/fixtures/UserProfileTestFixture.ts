@@ -10,6 +10,7 @@ import {
   SocialPlatform,
   CustomSectionType,
   CustomSectionRequest,
+  CustomSectionResponse,
 } from "@seenelm/train-core";
 import {
   SocialLink,
@@ -124,6 +125,26 @@ export default class UserProfileTestFixture {
     return {
       title: CustomSectionType.ACHIEVEMENTS,
       details: [this.createAchievementItem()],
+      ...updatedData,
+    };
+  }
+
+  public static createCustomSectionResponse(
+    updatedData?: Partial<CustomSectionResponse>
+  ): CustomSectionResponse {
+    return {
+      title: CustomSectionType.ACHIEVEMENTS,
+      details: [this.createAchievementItem()],
+      ...updatedData,
+    };
+  }
+
+  public static createDeleteCustomSectionRequest(
+    updatedData?: Partial<{ userId: string; sectionTitle: CustomSectionType }>
+  ): { userId: string; sectionTitle: CustomSectionType } {
+    return {
+      userId: this.USER_ID.toString(),
+      sectionTitle: CustomSectionType.ACHIEVEMENTS,
       ...updatedData,
     };
   }
