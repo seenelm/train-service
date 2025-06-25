@@ -1,19 +1,17 @@
 import axios, { AxiosError } from "axios";
-import {
-  UserRequest,
-  UserResponse,
-  RefreshTokenResponse,
-  RefreshTokenRequest,
-  LogoutRequest,
-  RequestPasswordResetRequest,
-  ResetPasswordWithCodeRequest,
-} from "../../../src/app/user/userDto.js";
 import { v4 as uuidv4 } from "uuid";
 import { StatusCodes as HttpStatusCode } from "http-status-codes";
 import {
   CustomSectionRequest,
   UserLoginRequest,
   CustomSectionResponse,
+  UserRequest,
+  UserResponse,
+  RefreshTokenRequest,
+  RefreshTokenResponse,
+  LogoutRequest,
+  RequestPasswordResetRequest,
+  ResetPasswordWithCodeRequest,
 } from "@seenelm/train-core";
 
 export default class TrainClient {

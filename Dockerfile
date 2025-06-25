@@ -4,11 +4,11 @@
 FROM node:23-alpine AS builder
 WORKDIR /app
 
+COPY .npmrc ./
 COPY package*.json ./
 RUN npm ci
 
 COPY . .
-#COPY config ./config
 
 RUN npm run build
 

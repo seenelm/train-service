@@ -24,7 +24,7 @@ router.post(
   userProfileController.createCustomSection
 );
 router.get(
-  "/:userId/custom-section",
+  "/:userId/custom-sections",
   UserProfileMiddleware.validateGetCustomSections,
   userProfileController.getCustomSections
 );

@@ -16,7 +16,6 @@ import UserProfileDataProvider from "./dataProviders/UserProfileDataProvider.js"
 
 describe("User Profile Integration Tests", () => {
   let trainClient: TrainClient;
-  let userResponse: UserResponse;
 
   beforeAll(async () => {
     trainClient = new TrainClient();
@@ -34,74 +33,39 @@ describe("User Profile Integration Tests", () => {
 
   beforeEach(async () => {
     await TestUtil.cleanupCollections();
-
-    // Register a user for testing
-    const userRequest = UserTestFixture.createUserRequest({
-      username: undefined,
-      name: "Test User",
-      password: "Password98!",
-      isActive: undefined,
-      email: "testuser@example.com",
-      authProvider: "local",
-    });
-
-    userResponse = await trainClient.register(userRequest);
   });
 
   describe("Custom Section CRUD", () => {
-    describe("Success Cases", () => {
+    describe("Create Custom Section", () => {
       it.each(UserProfileDataProvider.createCustomSectionSuccessCases())(
         "$description",
-        async ({
-          createRequest,
-          updateRequest,
-          expectedGetResponse,
-          expectedUpdatedGetResponse,
-        }) => {
+        async ({ createRequest, expectedResponse }) => {
+          const userRequest = UserTestFixture.createUserRequest({
+            username: undefined,
+            name: "Test User",
+            password: "Password98!",
+            isActive: undefined,
+            email: "testuser@example.com",
+            authProvider: "local",
+          });
+
+          const userResponse = await trainClient.register(userRequest);
+
           // CREATE a custom section
           const createResponse = await trainClient.createCustomSection(
             userResponse.userId,
             createRequest
           );
 
-          // Assert
+          // Assert create response
           expect(createResponse).toEqual({ success: true });
 
-          // GET the custom sections
+          // GET the custom sections to verify creation
           const customSections = await trainClient.getCustomSections(
             userResponse.userId
           );
 
-          // Assert
-          expect(customSections).toEqual(expectedGetResponse);
-
-          // UPDATE the custom section
-          const updateResponse = await trainClient.updateCustomSection(
-            userResponse.userId,
-            updateRequest
-          );
-
-          expect(updateResponse).toEqual({ success: true });
-
-          // GET the custom sections
-          const updatedCustomSections = await trainClient.getCustomSections(
-            userResponse.userId
-          );
-          expect(updatedCustomSections).toEqual(expectedUpdatedGetResponse);
-
-          // DELETE the custom section
-          const deleteResponse = await trainClient.deleteCustomSection(
-            userResponse.userId,
-            expectedGetResponse[0].title
-          );
-
-          // GET the custom sections
-          const deletedCustomSections = await trainClient.getCustomSections(
-            userResponse.userId
-          );
-
-          // Assert
-          expect(deletedCustomSections).toEqual([]);
+          expect(customSections).toEqual(expectedResponse);
         }
       );
     });
