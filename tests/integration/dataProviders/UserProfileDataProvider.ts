@@ -192,6 +192,10 @@ export default class UserProfileDataProvider {
     ];
   }
 
+  static createCustomSectionErrorCases(): ErrorTestCase<CustomSectionRequest>[] {
+    return [];
+  }
+
   static updateCustomSectionSuccessCases(): SuccessTestCase<CustomSectionRequest>[] {
     return [
       {
@@ -446,6 +450,10 @@ export default class UserProfileDataProvider {
     ];
   }
 
+  static updateCustomSectionErrorCases(): ErrorTestCase<CustomSectionRequest>[] {
+    return [];
+  }
+
   static deleteCustomSectionSuccessCases(): DeleteCustomSectionSuccessTestCase[] {
     return [
       {
@@ -490,5 +498,12 @@ export default class UserProfileDataProvider {
         sectionTitleToDelete: CustomSectionType.PHILOSOPHY,
       },
     ];
+  }
+
+  static deleteCustomSectionErrorCases(): ErrorTestCase<{
+    userId: string;
+    sectionTitle: string;
+  }>[] {
+    return [];
   }
 }

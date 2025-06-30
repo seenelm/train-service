@@ -158,6 +158,9 @@ export enum ErrorMessage {
   EXTERNAL_SERVICE_UNAVAILABLE = "External service unavailable",
   EXTERNAL_SERVICE_TIMEOUT = "External service timeout",
   EXTERNAL_SERVICE_ERROR = "External service error",
+
+  // Search messages
+  SEARCH_OPERATION_FAILED = "Search operation failed",
 }
 
 export enum ValidationErrorCode {

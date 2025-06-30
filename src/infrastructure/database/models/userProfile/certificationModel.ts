@@ -6,6 +6,8 @@ export interface CertificationDocument extends Document {
   imageURL: string;
   certType: string;
   specializations: string[];
+  createdAt?: Date;
+  updatedAt?: Date;
 }
 
 const certificationSchema: Schema = new Schema(
@@ -35,6 +37,10 @@ const certificationSchema: Schema = new Schema(
   },
   { timestamps: true }
 );
+
+certificationSchema.index({ name: 1 }); // For alphabetical sorting
+certificationSchema.index({ name: "text", issuer: "text", certType: "text" }); // For text search
+certificationSchema.index({ specializations: 1 }); // For specialization search
 
 export const CertificationModel = model<CertificationDocument>(
   "Certification",
