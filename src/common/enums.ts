@@ -204,4 +204,6 @@ export enum ValidationErrorMessage {
   ACHIEVEMENT_ITEM_DESCRIPTION_INVALID = "Achievement item description must be a valid string",
   ACHIEVEMENT_ITEM_INVALID_FORMAT = "Achievement item must contain only string, number, boolean, or null values",
   GENERIC_ITEM_INVALID_FORMAT = "Generic item must contain only string, number, boolean, or null values",
+  STATS_ITEM_INVALID_FORMAT = "Stats item has invalid format",
+  STRING_ARRAY_ITEM_INVALID_FORMAT = "String array item has invalid format",
 }

@@ -280,19 +280,48 @@ export default class UserProfileMiddlewareDataProvider {
         },
       },
       {
-        description:
-          "should pass validation for achievement with optional fields",
+        description: "should pass validation for valid stats section",
         request: {
           params: { userId: new Types.ObjectId().toString() },
-          body: UserProfileTestFixture.createCustomSectionRequest({
-            title: CustomSectionType.ACHIEVEMENTS,
+          body: {
+            title: CustomSectionType.STATS,
             details: [
               {
-                title: "Test Achievement",
-                // date and description are optional
+                category: "Clients Trained",
+                value: "150",
+              },
+              {
+                category: "Years Experience",
+                value: "5",
               },
             ],
-          }),
+          },
+        },
+      },
+      {
+        description: "should pass validation for valid goals section",
+        request: {
+          params: { userId: new Types.ObjectId().toString() },
+          body: {
+            title: CustomSectionType.GOALS,
+            details: [
+              "Help clients achieve their fitness goals",
+              "Become a certified nutritionist",
+            ],
+          },
+        },
+      },
+      {
+        description: "should pass validation for valid identity section",
+        request: {
+          params: { userId: new Types.ObjectId().toString() },
+          body: {
+            title: CustomSectionType.IDENTITY,
+            details: [
+              "I am a certified personal trainer",
+              "I specialize in strength training",
+            ],
+          },
         },
       },
       {
@@ -301,14 +330,18 @@ export default class UserProfileMiddlewareDataProvider {
           params: { userId: new Types.ObjectId().toString() },
           body: UserProfileTestFixture.createCustomSectionRequest({
             title: CustomSectionType.SPECIALIZATION,
-            details: [
-              {
-                specialization: "Weight Training",
-                level: "Advanced",
-                yearsOfExperience: 3,
-              },
-            ],
+            details: ["Weight Training", "TRX Suspension Training"],
           }),
+        },
+      },
+      {
+        description: "should pass validation for valid philosophy section",
+        request: {
+          params: { userId: new Types.ObjectId().toString() },
+          body: {
+            title: CustomSectionType.PHILOSOPHY,
+            details: ["Philosophy", "Philosophy description"],
+          },
         },
       },
     ];
@@ -432,29 +465,120 @@ export default class UserProfileMiddlewareDataProvider {
       },
       {
         description:
-          "should throw BadRequest when generic item has invalid format",
+          "should throw BadRequest when achievement item has invalid custom section type",
         request: {
           params: { userId: new Types.ObjectId().toString() },
           body: {
-            title: CustomSectionType.IDENTITY,
+            title: CustomSectionType.SPECIALIZATION,
             details: [
               {
-                role: "Fitness Coach",
-                experience: ["5 years"],
-                isCertified: true,
+                specialization: "Weight Training",
+                level: "Advanced",
+                yearsOfExperience: 3,
               },
             ],
           },
         },
         error: APIError.BadRequest("Validation failed", [
-          ValidationErrorMessage.GENERIC_ITEM_INVALID_FORMAT,
+          ValidationErrorMessage.ACHIEVEMENT_ITEM_INVALID_FORMAT,
         ]),
-        validationErrors: [ValidationErrorMessage.GENERIC_ITEM_INVALID_FORMAT],
-        expectedErrorResponse: {
-          message: "Validation failed",
-          errorCode: "BAD_REQUEST",
-          details: [ValidationErrorMessage.GENERIC_ITEM_INVALID_FORMAT],
+        validationErrors: [
+          ValidationErrorMessage.ACHIEVEMENT_ITEM_INVALID_FORMAT,
+        ],
+      },
+      {
+        description:
+          "should throw BadRequest when stats item has invalid format",
+        request: {
+          params: { userId: new Types.ObjectId().toString() },
+          body: {
+            title: CustomSectionType.STATS,
+            details: [
+              {
+                category: "Test Category",
+                value: 123, // Should be string
+              },
+            ],
+          },
         },
+        error: APIError.BadRequest("Validation failed", [
+          ValidationErrorMessage.STATS_ITEM_INVALID_FORMAT,
+        ]),
+        validationErrors: [ValidationErrorMessage.STATS_ITEM_INVALID_FORMAT],
+      },
+      {
+        description:
+          "should throw BadRequest when stats item has invalid custom section type",
+        request: {
+          params: { userId: new Types.ObjectId().toString() },
+          body: {
+            title: CustomSectionType.GOALS,
+            details: [
+              {
+                category: "Test Category",
+                value: "Test Value",
+              },
+            ],
+          },
+        },
+        error: APIError.BadRequest("Validation failed", [
+          ValidationErrorMessage.STATS_ITEM_INVALID_FORMAT,
+        ]),
+        validationErrors: [ValidationErrorMessage.STATS_ITEM_INVALID_FORMAT],
+      },
+      {
+        description:
+          "should throw BadRequest when string array item has invalid format",
+        request: {
+          params: { userId: new Types.ObjectId().toString() },
+          body: {
+            title: CustomSectionType.GOALS,
+            details: [
+              "Valid goal",
+              123, // Should be string
+            ],
+          },
+        },
+        error: APIError.BadRequest("Validation failed", [
+          ValidationErrorMessage.STRING_ARRAY_ITEM_INVALID_FORMAT,
+        ]),
+        validationErrors: [
+          ValidationErrorMessage.STRING_ARRAY_ITEM_INVALID_FORMAT,
+        ],
+      },
+      {
+        description:
+          "should throw BadRequest when string array item has invalid custom section type",
+        request: {
+          params: { userId: new Types.ObjectId().toString() },
+          body: {
+            title: CustomSectionType.ACHIEVEMENTS,
+            details: ["Bodybuilding", "TRX Suspension Training"],
+          },
+        },
+        error: APIError.BadRequest("Validation failed", [
+          ValidationErrorMessage.STRING_ARRAY_ITEM_INVALID_FORMAT,
+        ]),
+        validationErrors: [
+          ValidationErrorMessage.STRING_ARRAY_ITEM_INVALID_FORMAT,
+        ],
+      },
+      {
+        description:
+          "should throw BadRequest when string array item has invalid custom section type",
+        request: {
+          params: { userId: new Types.ObjectId().toString() },
+          body: {
+            title: CustomSectionType.STATS,
+            details: ["Bodybuilding", "TRX Suspension Training"],
+          },
+        },
+        error: APIError.BadRequest("Validation failed", [
+          ValidationErrorMessage.STRING_ARRAY_ITEM_INVALID_FORMAT,
+        ]),
+        validationErrors: [
+          ValidationErrorMessage.STRING_ARRAY_ITEM_INVALID_FORMAT,
+        ],
       },
     ];
   }
@@ -478,34 +602,59 @@ export default class UserProfileMiddlewareDataProvider {
         },
       },
       {
-        description: "should pass validation for valid specialization section",
+        description: "should pass validation for valid stats section",
         request: {
-          params: { userId: "507f1f77bcf86cd799439011" },
-          body: UserProfileTestFixture.createCustomSectionRequest({
-            title: CustomSectionType.SPECIALIZATION,
+          params: { userId: new Types.ObjectId().toString() },
+          body: {
+            title: CustomSectionType.STATS,
             details: [
               {
-                specialization: "Weight Training",
-                level: "Advanced",
-                yearsOfExperience: 3,
+                category: "Clients Trained",
+                value: "150",
+              },
+              {
+                category: "Years Experience",
+                value: "5",
               },
             ],
-          }),
+          },
         },
       },
       {
-        description: "should pass validation for valid identity section",
+        description:
+          "should pass validation for valid goals section with string array",
+        request: {
+          params: { userId: new Types.ObjectId().toString() },
+          body: {
+            title: CustomSectionType.GOALS,
+            details: [
+              "Help clients achieve their fitness goals",
+              "Become a certified nutritionist",
+            ],
+          },
+        },
+      },
+      {
+        description:
+          "should pass validation for valid identity section with string array",
+        request: {
+          params: { userId: new Types.ObjectId().toString() },
+          body: {
+            title: CustomSectionType.IDENTITY,
+            details: [
+              "I am a certified personal trainer",
+              "I specialize in strength training",
+            ],
+          },
+        },
+      },
+      {
+        description: "should pass validation for valid specialization section",
         request: {
           params: { userId: new Types.ObjectId().toString() },
           body: UserProfileTestFixture.createCustomSectionRequest({
-            title: CustomSectionType.IDENTITY,
-            details: [
-              {
-                role: "Fitness Coach",
-                experience: 5,
-                isCertified: true,
-              },
-            ],
+            title: CustomSectionType.SPECIALIZATION,
+            details: ["Weight Training", "TRX Suspension Training"],
           }),
         },
       },
@@ -513,45 +662,10 @@ export default class UserProfileMiddlewareDataProvider {
         description: "should pass validation for valid philosophy section",
         request: {
           params: { userId: new Types.ObjectId().toString() },
-          body: UserProfileTestFixture.createCustomSectionRequest({
+          body: {
             title: CustomSectionType.PHILOSOPHY,
-            details: [
-              {
-                title: "Philosophy",
-                description: "Philosophy description",
-              },
-            ],
-          }),
-        },
-      },
-      {
-        description: "should pass validation for valid goals section",
-        request: {
-          params: { userId: new Types.ObjectId().toString() },
-          body: UserProfileTestFixture.createCustomSectionRequest({
-            title: CustomSectionType.GOALS,
-            details: [
-              {
-                title: "Goals",
-                description: "Goals description",
-              },
-            ],
-          }),
-        },
-      },
-      {
-        description: "should pass validation for valid stats section",
-        request: {
-          params: { userId: new Types.ObjectId().toString() },
-          body: UserProfileTestFixture.createCustomSectionRequest({
-            title: CustomSectionType.STATS,
-            details: [
-              {
-                title: "Stats",
-                description: "Stats description",
-              },
-            ],
-          }),
+            details: ["Philosophy", "Philosophy description"],
+          },
         },
       },
     ];
@@ -676,29 +790,120 @@ export default class UserProfileMiddlewareDataProvider {
       },
       {
         description:
-          "should throw BadRequest when generic item has invalid format",
+          "should throw BadRequest when achievement item has invalid custom section type",
         request: {
           params: { userId: new Types.ObjectId().toString() },
           body: {
-            title: CustomSectionType.IDENTITY,
+            title: CustomSectionType.SPECIALIZATION,
             details: [
               {
-                role: "Fitness Coach",
-                experience: ["5 years"],
-                isCertified: true,
+                specialization: "Weight Training",
+                level: "Advanced",
+                yearsOfExperience: 3,
               },
             ],
           },
         },
         error: APIError.BadRequest("Validation failed", [
-          ValidationErrorMessage.GENERIC_ITEM_INVALID_FORMAT,
+          ValidationErrorMessage.ACHIEVEMENT_ITEM_INVALID_FORMAT,
         ]),
-        validationErrors: [ValidationErrorMessage.GENERIC_ITEM_INVALID_FORMAT],
-        expectedErrorResponse: {
-          message: "Validation failed",
-          errorCode: "BAD_REQUEST",
-          details: [ValidationErrorMessage.GENERIC_ITEM_INVALID_FORMAT],
+        validationErrors: [
+          ValidationErrorMessage.ACHIEVEMENT_ITEM_INVALID_FORMAT,
+        ],
+      },
+      {
+        description:
+          "should throw BadRequest when stats item has invalid format",
+        request: {
+          params: { userId: new Types.ObjectId().toString() },
+          body: {
+            title: CustomSectionType.STATS,
+            details: [
+              {
+                category: "Test Category",
+                value: 123, // Should be string
+              },
+            ],
+          },
         },
+        error: APIError.BadRequest("Validation failed", [
+          ValidationErrorMessage.STATS_ITEM_INVALID_FORMAT,
+        ]),
+        validationErrors: [ValidationErrorMessage.STATS_ITEM_INVALID_FORMAT],
+      },
+      {
+        description:
+          "should throw BadRequest when stats item has invalid custom section type",
+        request: {
+          params: { userId: new Types.ObjectId().toString() },
+          body: {
+            title: CustomSectionType.GOALS,
+            details: [
+              {
+                category: "Test Category",
+                value: "Test Value",
+              },
+            ],
+          },
+        },
+        error: APIError.BadRequest("Validation failed", [
+          ValidationErrorMessage.STATS_ITEM_INVALID_FORMAT,
+        ]),
+        validationErrors: [ValidationErrorMessage.STATS_ITEM_INVALID_FORMAT],
+      },
+      {
+        description:
+          "should throw BadRequest when string array item has invalid format",
+        request: {
+          params: { userId: new Types.ObjectId().toString() },
+          body: {
+            title: CustomSectionType.GOALS,
+            details: [
+              "Valid goal",
+              123, // Should be string
+            ],
+          },
+        },
+        error: APIError.BadRequest("Validation failed", [
+          ValidationErrorMessage.STRING_ARRAY_ITEM_INVALID_FORMAT,
+        ]),
+        validationErrors: [
+          ValidationErrorMessage.STRING_ARRAY_ITEM_INVALID_FORMAT,
+        ],
+      },
+      {
+        description:
+          "should throw BadRequest when string array item has invalid custom section type",
+        request: {
+          params: { userId: new Types.ObjectId().toString() },
+          body: {
+            title: CustomSectionType.ACHIEVEMENTS,
+            details: ["Bodybuilding", "TRX Suspension Training"],
+          },
+        },
+        error: APIError.BadRequest("Validation failed", [
+          ValidationErrorMessage.STRING_ARRAY_ITEM_INVALID_FORMAT,
+        ]),
+        validationErrors: [
+          ValidationErrorMessage.STRING_ARRAY_ITEM_INVALID_FORMAT,
+        ],
+      },
+      {
+        description:
+          "should throw BadRequest when string array item has invalid custom section type",
+        request: {
+          params: { userId: new Types.ObjectId().toString() },
+          body: {
+            title: CustomSectionType.STATS,
+            details: ["Bodybuilding", "TRX Suspension Training"],
+          },
+        },
+        error: APIError.BadRequest("Validation failed", [
+          ValidationErrorMessage.STRING_ARRAY_ITEM_INVALID_FORMAT,
+        ]),
+        validationErrors: [
+          ValidationErrorMessage.STRING_ARRAY_ITEM_INVALID_FORMAT,
+        ],
       },
     ];
   }

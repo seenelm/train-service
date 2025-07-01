@@ -14,6 +14,7 @@ export interface SocialLink {
 export interface Certification {
   certification: Types.ObjectId;
   specializations: string[];
+  receivedDate: string;
 }
 
 export interface AchievementItem {
@@ -21,23 +22,16 @@ export interface AchievementItem {
   date?: string;
   description?: string;
 }
-export interface GenericItem {
-  [key: string]: string | number | boolean | null;
+
+export interface StatsItem {
+  category: string;
+  value: string;
 }
 
 export interface CustomSection {
   title: CustomSectionType;
-  details: AchievementItem[] | GenericItem[];
+  details: AchievementItem[] | StatsItem[] | string[];
 }
-
-// export interface Education {
-//   institution: string;
-//   degree: string;
-//   fieldOfStudy?: string;
-//   startDate?: Date;
-//   endDate?: Date;
-//   description?: string;
-// }
 
 export interface UserProfileDocument extends Document {
   userId: Types.ObjectId;
@@ -51,7 +45,6 @@ export interface UserProfileDocument extends Document {
   socialLinks?: SocialLink[];
   certifications?: Certification[];
   customSections?: CustomSection[];
-  // education?: Education[];
   createdAt: Date;
   updatedAt: Date;
 }
@@ -94,36 +87,13 @@ const certificationSchema = new Schema(
       ref: "Certification",
       required: true,
     },
-    speializations: [String],
+    specializations: [String],
+    receivedDate: {
+      type: String,
+    },
   },
   { _id: false }
 );
-
-// const educationSchema = new Schema(
-//   {
-//     institution: {
-//       type: String,
-//       required: true,
-//     },
-//     degree: {
-//       type: String,
-//       required: true,
-//     },
-//     fieldOfStudy: {
-//       type: String,
-//     },
-//     startDate: {
-//       type: Date,
-//     },
-//     endDate: {
-//       type: Date,
-//     },
-//     description: {
-//       type: String,
-//     },
-//   },
-//   { _id: false }
-// );
 
 const userProfileSchema = new Schema(
   {
@@ -167,19 +137,11 @@ const userProfileSchema = new Schema(
     socialLinks: [socialLinkSchema],
     certifications: [certificationSchema],
     customSections: [customSectionSchema],
-    // education: [educationSchema],
   },
   {
     timestamps: true,
-    // indexes: [{ "socialLinks.platform": 1 }, { "socialLinks.username": 1 }],
   }
 );
-
-// Add a compound index for efficient social link queries
-// userProfileSchema.index({
-//   "socialLinks.platform": 1,
-//   "socialLinks.username": 1,
-// });
 
 export const UserProfileModel = model<UserProfileDocument>(
   "UserProfile",

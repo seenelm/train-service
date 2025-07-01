@@ -52,6 +52,7 @@ export default class UserProfileRepository
       certifications: request.certifications?.map((certification) => ({
         certification: new Types.ObjectId(certification.certification),
         specializations: certification.specializations,
+        receivedDate: certification.receivedDate,
       })),
       customSections: request.customSections,
     };

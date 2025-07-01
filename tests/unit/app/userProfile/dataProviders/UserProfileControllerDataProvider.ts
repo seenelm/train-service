@@ -42,7 +42,7 @@ export default class UserProfileControllerDataProvider {
             ],
           }),
         },
-        error: APIError.NotFound("User profile not found"),
+        error: APIError.NotFound(ErrorMessage.USER_PROFILE_NOT_FOUND),
       },
       {
         description: "should handle Conflict error",
@@ -59,7 +59,7 @@ export default class UserProfileControllerDataProvider {
             ],
           }),
         },
-        error: APIError.Conflict("Custom section already exists"),
+        error: APIError.Conflict(ErrorMessage.CUSTOM_SECTION_ALREADY_EXISTS),
       },
       {
         description: "should handle DatabaseError",
@@ -67,13 +67,7 @@ export default class UserProfileControllerDataProvider {
           params: { userId: new Types.ObjectId().toString() },
           body: UserProfileTestFixture.createCustomSectionRequest({
             title: CustomSectionType.IDENTITY,
-            details: [
-              {
-                role: "Fitness Enthusiast",
-                experience: 5,
-                isCertified: true,
-              },
-            ],
+            details: ["Bodybuilding Coach", "Athletic Trainer"],
           }),
         },
         error: new DatabaseError("Database connection failed"),
@@ -84,12 +78,7 @@ export default class UserProfileControllerDataProvider {
           params: { userId: new Types.ObjectId().toString() },
           body: UserProfileTestFixture.createCustomSectionRequest({
             title: CustomSectionType.SPECIALIZATION,
-            details: [
-              {
-                specialization: "Weight Training",
-                level: "Advanced",
-              },
-            ],
+            details: ["Weight Training", "TRX Suspension Training"],
           }),
         },
         error: APIError.InternalServerError("Internal server error"),
@@ -149,13 +138,7 @@ export default class UserProfileControllerDataProvider {
           params: { userId: new Types.ObjectId().toString() },
           body: UserProfileTestFixture.createCustomSectionRequest({
             title: CustomSectionType.SPECIALIZATION,
-            details: [
-              {
-                specialization: "Weight Training",
-                level: "Advanced",
-                yearsOfExperience: 3,
-              },
-            ],
+            details: ["Weight Training", "TRX Suspension Training"],
           }),
         },
         error: APIError.NotFound(ErrorMessage.CUSTOM_SECTION_NOT_FOUND),
@@ -166,13 +149,7 @@ export default class UserProfileControllerDataProvider {
           params: { userId: new Types.ObjectId().toString() },
           body: UserProfileTestFixture.createCustomSectionRequest({
             title: CustomSectionType.IDENTITY,
-            details: [
-              {
-                role: "Fitness Enthusiast",
-                experience: 5,
-                isCertified: true,
-              },
-            ],
+            details: ["Bodybuilding Coach", "Athletic Trainer"],
           }),
         },
         error: new DatabaseError("Database connection failed"),
@@ -183,12 +160,7 @@ export default class UserProfileControllerDataProvider {
           params: { userId: new Types.ObjectId().toString() },
           body: UserProfileTestFixture.createCustomSectionRequest({
             title: CustomSectionType.PHILOSOPHY,
-            details: [
-              {
-                philosophy: "Consistency over perfection",
-                approach: "Progressive overload",
-              },
-            ],
+            details: ["Consistency over perfection", "Progressive overload"],
           }),
         },
         error: APIError.InternalServerError("Internal server error"),

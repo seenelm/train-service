@@ -155,11 +155,13 @@ describe("UserProfileService", () => {
           // Arrange
           const userId = new Types.ObjectId();
 
-          if (error.message === "User profile not found") {
+          if (error.message === ErrorMessage.USER_PROFILE_NOT_FOUND) {
             vi.spyOn(mockUserProfileRepository, "findOne").mockResolvedValue(
               null
             );
-          } else if (error.message === "Custom section already exists") {
+          } else if (
+            error.message === ErrorMessage.CUSTOM_SECTION_ALREADY_EXISTS
+          ) {
             const entity = UserProfileTestFixture.createUserProfileEntity(
               (builder) =>
                 builder.setCustomSections([
@@ -210,12 +212,14 @@ describe("UserProfileService", () => {
             ).rejects.toThrowError(error);
           }
 
-          if (error.message === "User profile not found") {
+          if (error.message === ErrorMessage.USER_PROFILE_NOT_FOUND) {
             expect(mockUserProfileRepository.findOne).toHaveBeenCalledWith({
               userId: new Types.ObjectId(userId),
             });
             expect(mockUserProfileRepository.updateOne).not.toHaveBeenCalled();
-          } else if (error.message === "Custom section already exists") {
+          } else if (
+            error.message === ErrorMessage.CUSTOM_SECTION_ALREADY_EXISTS
+          ) {
             expect(mockUserProfileRepository.findOne).toHaveBeenCalledWith({
               userId: new Types.ObjectId(userId),
             });

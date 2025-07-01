@@ -1,5 +1,5 @@
 import { Types } from "mongoose";
-import { ProfileAccess } from "@seenelm/train-core";
+import { CertificationRequest, ProfileAccess } from "@seenelm/train-core";
 import { UserProfileDocument } from "../../src/infrastructure/database/models/userProfile/userProfileModel.js";
 import UserProfile, {
   UserProfileBuilder,
@@ -15,7 +15,7 @@ import {
 import {
   SocialLink,
   Certification,
-  GenericItem,
+  StatsItem,
   CustomSection,
   AchievementItem,
 } from "../../src/infrastructure/database/models/userProfile/userProfileModel.js";
@@ -35,6 +35,7 @@ export default class UserProfileTestFixture {
     {
       certification: new Types.ObjectId(),
       specializations: ["testSpecialization"],
+      receivedDate: "2024-03-20",
     },
   ];
   public static SOCIAL_LINKS: SocialLink[] = [
@@ -83,11 +84,14 @@ export default class UserProfileTestFixture {
     };
   }
 
-  public static createGenericItem(
-    updatedData?: Partial<GenericItem>
-  ): GenericItem {
+  public static createStringArrayItem(updatedData?: string[]): string[] {
+    return ["testString1", "testString2", "testString3"];
+  }
+
+  public static createStatsItem(updatedData?: Partial<StatsItem>): StatsItem {
     return {
-      philosophy: "testPhilosophy",
+      category: "testCategory",
+      value: "testValue",
       ...updatedData,
     };
   }
@@ -99,6 +103,17 @@ export default class UserProfileTestFixture {
       title: "testTitle",
       date: "2024-03-20",
       description: "testDescription",
+      ...updatedData,
+    };
+  }
+
+  public static createCertificationRequest(
+    updatedData?: Partial<CertificationRequest>
+  ): CertificationRequest {
+    return {
+      certification: "testCertification",
+      specializations: ["testSpecialization"],
+      receivedDate: "2024-03-20",
       ...updatedData,
     };
   }
@@ -115,6 +130,8 @@ export default class UserProfileTestFixture {
       profilePicture: this.PROFILE_PICTURE,
       role: this.ROLE,
       socialLinks: this.SOCIAL_LINKS_REQUEST,
+      certifications: [this.createCertificationRequest()],
+      customSections: [this.createCustomSectionRequest()],
       ...updatedData,
     };
   }

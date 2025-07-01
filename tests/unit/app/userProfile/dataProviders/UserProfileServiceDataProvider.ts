@@ -152,13 +152,7 @@ export default class UserProfileServiceDataProvider {
         description: "should handle DatabaseError for custom section creation",
         request: UserProfileTestFixture.createCustomSectionRequest({
           title: CustomSectionType.IDENTITY,
-          details: [
-            {
-              role: "Fitness Enthusiast",
-              experience: 5,
-              isCertified: true,
-            },
-          ],
+          details: ["Bodybuilding Coach", "Athletic Trainer"],
         }),
         error: new MongooseError("Connection failed"),
         expectedErrorResponse: {
@@ -171,12 +165,7 @@ export default class UserProfileServiceDataProvider {
           "should throw InternalServerError for unknown errors in custom section creation",
         request: UserProfileTestFixture.createCustomSectionRequest({
           title: CustomSectionType.SPECIALIZATION,
-          details: [
-            {
-              specialization: "Weight Training",
-              level: "Advanced",
-            },
-          ],
+          details: ["Weight Training", "TRX Suspension Training"],
         }),
         error: APIError.InternalServerError("Failed to create custom section"),
         expectedErrorResponse: {
@@ -212,13 +201,7 @@ export default class UserProfileServiceDataProvider {
           "should throw NotFound error when custom section not found",
         request: UserProfileTestFixture.createCustomSectionRequest({
           title: CustomSectionType.SPECIALIZATION,
-          details: [
-            {
-              specialization: "Weight Training",
-              level: "Advanced",
-              yearsOfExperience: 3,
-            },
-          ],
+          details: ["Weight Training", "TRX Suspension Training"],
         }),
         error: APIError.NotFound(ErrorMessage.CUSTOM_SECTION_NOT_FOUND),
         expectedErrorResponse: {
@@ -230,13 +213,7 @@ export default class UserProfileServiceDataProvider {
         description: "should handle DatabaseError for custom section update",
         request: UserProfileTestFixture.createCustomSectionRequest({
           title: CustomSectionType.IDENTITY,
-          details: [
-            {
-              role: "Fitness Enthusiast",
-              experience: 5,
-              isCertified: true,
-            },
-          ],
+          details: ["Bodybuilding Coach", "Athletic Trainer"],
         }),
         error: new MongooseError("Connection failed"),
         expectedErrorResponse: {
@@ -249,12 +226,7 @@ export default class UserProfileServiceDataProvider {
           "should throw InternalServerError for unknown errors in custom section update",
         request: UserProfileTestFixture.createCustomSectionRequest({
           title: CustomSectionType.PHILOSOPHY,
-          details: [
-            {
-              philosophy: "Consistency over perfection",
-              approach: "Progressive overload",
-            },
-          ],
+          details: ["Consistency over perfection"],
         }),
         error: APIError.InternalServerError("Failed to update custom section"),
         expectedErrorResponse: {
@@ -356,24 +328,11 @@ export default class UserProfileServiceDataProvider {
             },
             {
               title: CustomSectionType.SPECIALIZATION,
-              details: [
-                {
-                  specialization: "Weight Training",
-                  level: "Advanced",
-                  yearsOfExperience: 5,
-                },
-              ],
+              details: ["Weight Training", "TRX Suspension Training"],
             },
             {
               title: CustomSectionType.IDENTITY,
-              details: [
-                {
-                  role: "Fitness Coach",
-                  experience: 7,
-                  isCertified: true,
-                  clientCount: 150,
-                },
-              ],
+              details: ["Bodybuilding Coach", "Athletic Trainer"],
             },
           ])
         ),
@@ -395,24 +354,11 @@ export default class UserProfileServiceDataProvider {
           },
           {
             title: CustomSectionType.SPECIALIZATION,
-            details: [
-              {
-                specialization: "Weight Training",
-                level: "Advanced",
-                yearsOfExperience: 5,
-              },
-            ],
+            details: ["Weight Training", "TRX Suspension Training"],
           },
           {
             title: CustomSectionType.IDENTITY,
-            details: [
-              {
-                role: "Fitness Coach",
-                experience: 7,
-                isCertified: true,
-                clientCount: 150,
-              },
-            ],
+            details: ["Bodybuilding Coach", "Athletic Trainer"],
           },
         ],
       },

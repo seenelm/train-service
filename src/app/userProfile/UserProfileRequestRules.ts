@@ -27,6 +27,24 @@ export default class UserProfileRequestRules {
       hasError: (req) => !Types.ObjectId.isValid(req.params.userId),
       message: ValidationErrorMessage.USER_ID_INVALID_FORMAT,
     },
+    statsItems: {
+      hasError: (req) => {
+        if (
+          !Array.isArray(req.body.details) ||
+          req.body.title !== CustomSectionType.STATS
+        )
+          return false;
+
+        return req.body.details.some(
+          (item: any) =>
+            !item ||
+            typeof item !== "object" ||
+            typeof item.category !== "string" ||
+            typeof item.value !== "string"
+        );
+      },
+      message: ValidationErrorMessage.STATS_ITEM_INVALID_FORMAT,
+    },
     sectionTitle: {
       hasError: (req) =>
         !req.body.title ||
@@ -39,6 +57,19 @@ export default class UserProfileRequestRules {
         !Array.isArray(req.body.details) ||
         req.body.details.length === 0,
       message: ValidationErrorMessage.CUSTOM_SECTION_DETAILS_INVALID,
+    },
+    stringArrayItems: {
+      hasError: (req) => {
+        if (
+          !Array.isArray(req.body.details) ||
+          req.body.title === CustomSectionType.ACHIEVEMENTS ||
+          req.body.title === CustomSectionType.STATS
+        )
+          return false;
+
+        return req.body.details.some((item: any) => typeof item !== "string");
+      },
+      message: ValidationErrorMessage.STRING_ARRAY_ITEM_INVALID_FORMAT,
     },
     achievementItems: {
       hasError: (req) => {
@@ -59,29 +90,6 @@ export default class UserProfileRequestRules {
         );
       },
       message: ValidationErrorMessage.ACHIEVEMENT_ITEM_INVALID_FORMAT,
-    },
-    genericItems: {
-      hasError: (req) => {
-        if (
-          !Array.isArray(req.body.details) ||
-          req.body.title === CustomSectionType.ACHIEVEMENTS
-        )
-          return false;
-
-        return req.body.details.some(
-          (item: any) =>
-            !item ||
-            typeof item !== "object" ||
-            !Object.values(item).every(
-              (value) =>
-                typeof value === "string" ||
-                typeof value === "number" ||
-                typeof value === "boolean" ||
-                value === null
-            )
-        );
-      },
-      message: ValidationErrorMessage.GENERIC_ITEM_INVALID_FORMAT,
     },
   };
 
