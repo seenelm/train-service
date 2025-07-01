@@ -11,16 +11,16 @@ import {
   SocialPlatform,
   CustomSectionType,
   CustomSectionResponse,
-  UserProfileResponse,
+  BasicUserProfileInfoRequest,
 } from "@seenelm/train-core";
 import { CustomSectionRequest } from "@seenelm/train-core";
 import { ErrorMessage } from "../../../../../src/common/enums.js";
+import { MongoServerError } from "mongodb";
 
 interface ErrorTestCase<T> {
   description: string;
   request: T;
   error: Error;
-  expectedErrorResponse: Partial<ErrorResponse>;
 }
 
 interface SuccessTestCase<T, E, D, R> {
@@ -46,29 +46,25 @@ export default class UserProfileServiceDataProvider {
         request: UserProfileTestFixture.createUserProfileRequest({
           userId: new Types.ObjectId().toString(),
         }),
-        error: APIError.NotFound(APIErrorType.UserProfileNotFound),
-        expectedErrorResponse: {
-          message: APIErrorType.UserProfileNotFound,
-          errorCode: "NOT_FOUND",
-        },
+        error: APIError.NotFound(ErrorMessage.USER_PROFILE_NOT_FOUND),
       },
       {
-        description: "should handle DatabaseError",
+        description: "should handle DatabaseError when finding user profile",
         request: UserProfileTestFixture.createUserProfileRequest(),
         error: new MongooseError("Connection failed"),
-        expectedErrorResponse: {
-          message: "Database error occurred",
-          errorCode: "DATABASE_ERROR",
-        },
+      },
+      {
+        description: "should handle DatabaseError during updateOne",
+        request: UserProfileTestFixture.createUserProfileRequest(),
+        error: new MongoServerError({
+          code: 11000,
+          message: "Duplicate key error",
+        }),
       },
       {
         description: "should throw InternalServerError for unknown errors",
         request: UserProfileTestFixture.createUserProfileRequest(),
         error: APIError.InternalServerError("Failed to update user profile"),
-        expectedErrorResponse: {
-          message: "Failed to update user profile",
-          errorCode: "INTERNAL_SERVER_ERROR",
-        },
       },
     ];
   }
@@ -106,6 +102,138 @@ export default class UserProfileServiceDataProvider {
           ],
         }),
       },
+      {
+        description: "should update certifications successfully",
+        request: UserProfileTestFixture.createUserProfileRequest({
+          certifications: [
+            {
+              certification: new Types.ObjectId().toString(),
+              specializations: ["Weight Training", "Cardio"],
+              receivedDate: "2024-01-15",
+            },
+          ],
+        }),
+        entity: UserProfileTestFixture.createUserProfileEntity(),
+        document: UserProfileTestFixture.createUserProfileDocument({
+          certifications: [
+            {
+              certification: new Types.ObjectId(),
+              specializations: ["Weight Training", "Cardio"],
+              receivedDate: "2024-01-15",
+            },
+          ],
+        }),
+      },
+      {
+        description: "should update custom sections successfully",
+        request: UserProfileTestFixture.createUserProfileRequest({
+          customSections: [
+            {
+              title: CustomSectionType.ACHIEVEMENTS,
+              details: [
+                {
+                  title: "First Place in Competition",
+                  date: "2024-03-20",
+                  description:
+                    "Won first place in regional fitness competition",
+                },
+              ],
+            },
+            {
+              title: CustomSectionType.STATS,
+              details: [
+                {
+                  category: "Clients Trained",
+                  value: "150",
+                },
+              ],
+            },
+          ],
+        }),
+        entity: UserProfileTestFixture.createUserProfileEntity(),
+        document: UserProfileTestFixture.createUserProfileDocument({
+          customSections: [
+            {
+              title: CustomSectionType.ACHIEVEMENTS,
+              details: [
+                {
+                  title: "First Place in Competition",
+                  date: "2024-03-20",
+                  description:
+                    "Won first place in regional fitness competition",
+                },
+              ],
+            },
+            {
+              title: CustomSectionType.STATS,
+              details: [
+                {
+                  category: "Clients Trained",
+                  value: "150",
+                },
+              ],
+            },
+          ],
+        }),
+      },
+    ];
+  }
+
+  static updateBasicUserProfileErrorCases(): ErrorTestCase<BasicUserProfileInfoRequest>[] {
+    return [
+      {
+        description: "should throw NotFound error when user profile not found",
+        request: UserProfileTestFixture.createBasicUserProfileInfoRequest({
+          username: "user_011",
+          role: "Bodybuilding Coach",
+        }),
+        error: APIError.NotFound(ErrorMessage.USER_PROFILE_NOT_FOUND),
+      },
+      {
+        description: "should handle DatabaseError when finding user profile",
+        request: UserProfileTestFixture.createBasicUserProfileInfoRequest(),
+        error: new MongooseError("Connection failed"),
+      },
+      {
+        description: "should handle DatabaseError during updateOne",
+        request: UserProfileTestFixture.createBasicUserProfileInfoRequest(),
+        error: new MongoServerError({
+          code: 11000,
+          message: "Duplicate key error",
+        }),
+      },
+      {
+        description: "should throw InternalServerError for unknown errors",
+        request: UserProfileTestFixture.createBasicUserProfileInfoRequest(),
+        error: APIError.InternalServerError(
+          "Failed to update basic user profile info"
+        ),
+      },
+    ];
+  }
+
+  static updateBasicUserProfileSuccessCases(): SuccessTestCase<
+    BasicUserProfileInfoRequest,
+    UserProfile,
+    UserProfileDocument,
+    void
+  >[] {
+    return [
+      {
+        description:
+          "should update basic user profile successfully with all fields",
+        request: UserProfileTestFixture.createBasicUserProfileInfoRequest(),
+        entity: UserProfileTestFixture.createUserProfileEntity(),
+      },
+      {
+        description: "should update basic user profile with minimal fields",
+        request: {
+          username: "test_user",
+          name: "John Doe",
+          accountType: 1,
+        },
+        entity: UserProfileTestFixture.createUserProfileEntity(),
+      },
     ];
   }
 
@@ -124,10 +252,6 @@ export default class UserProfileServiceDataProvider {
           ],
         }),
         error: APIError.NotFound(ErrorMessage.USER_PROFILE_NOT_FOUND),
-        expectedErrorResponse: {
-          message: ErrorMessage.USER_PROFILE_NOT_FOUND,
-          errorCode: "NOT_FOUND",
-        },
       },
       {
         description:
@@ -143,10 +267,6 @@ export default class UserProfileServiceDataProvider {
           ],
         }),
         error: APIError.Conflict(ErrorMessage.CUSTOM_SECTION_ALREADY_EXISTS),
-        expectedErrorResponse: {
-          message: ErrorMessage.CUSTOM_SECTION_ALREADY_EXISTS,
-          errorCode: "CONFLICT",
-        },
       },
       {
         description: "should handle DatabaseError for custom section creation",
@@ -155,10 +275,6 @@ export default class UserProfileServiceDataProvider {
           details: ["Bodybuilding Coach", "Athletic Trainer"],
         }),
         error: new MongooseError("Connection failed"),
-        expectedErrorResponse: {
-          message: "Database error occurred",
-          errorCode: "DATABASE_ERROR",
-        },
       },
       {
         description:
@@ -168,10 +284,6 @@ export default class UserProfileServiceDataProvider {
           details: ["Weight Training", "TRX Suspension Training"],
         }),
         error: APIError.InternalServerError("Failed to create custom section"),
-        expectedErrorResponse: {
-          message: "Failed to create custom section",
-          errorCode: "INTERNAL_SERVER_ERROR",
-        },
       },
     ];
   }
@@ -191,10 +303,6 @@ export default class UserProfileServiceDataProvider {
           ],
         }),
         error: APIError.NotFound(ErrorMessage.USER_PROFILE_NOT_FOUND),
-        expectedErrorResponse: {
-          message: ErrorMessage.USER_PROFILE_NOT_FOUND,
-          errorCode: "NOT_FOUND",
-        },
       },
       {
         description:
@@ -204,10 +312,6 @@ export default class UserProfileServiceDataProvider {
           details: ["Weight Training", "TRX Suspension Training"],
         }),
         error: APIError.NotFound(ErrorMessage.CUSTOM_SECTION_NOT_FOUND),
-        expectedErrorResponse: {
-          message: ErrorMessage.CUSTOM_SECTION_NOT_FOUND,
-          errorCode: "NOT_FOUND",
-        },
       },
       {
         description: "should handle DatabaseError for custom section update",
@@ -216,10 +320,6 @@ export default class UserProfileServiceDataProvider {
           details: ["Bodybuilding Coach", "Athletic Trainer"],
         }),
         error: new MongooseError("Connection failed"),
-        expectedErrorResponse: {
-          message: "Database error occurred",
-          errorCode: "DATABASE_ERROR",
-        },
       },
       {
         description:
@@ -229,10 +329,6 @@ export default class UserProfileServiceDataProvider {
           details: ["Consistency over perfection"],
         }),
         error: APIError.InternalServerError("Failed to update custom section"),
-        expectedErrorResponse: {
-          message: "Failed to update custom section",
-          errorCode: "INTERNAL_SERVER_ERROR",
-        },
       },
     ];
   }
@@ -249,10 +345,6 @@ export default class UserProfileServiceDataProvider {
           sectionTitle: CustomSectionType.ACHIEVEMENTS,
         },
         error: APIError.NotFound(ErrorMessage.USER_PROFILE_NOT_FOUND),
-        expectedErrorResponse: {
-          message: ErrorMessage.USER_PROFILE_NOT_FOUND,
-          errorCode: "NOT_FOUND",
-        },
       },
       {
         description:
@@ -262,10 +354,6 @@ export default class UserProfileServiceDataProvider {
           sectionTitle: CustomSectionType.SPECIALIZATION,
         },
         error: APIError.NotFound(ErrorMessage.CUSTOM_SECTION_NOT_FOUND),
-        expectedErrorResponse: {
-          message: ErrorMessage.CUSTOM_SECTION_NOT_FOUND,
-          errorCode: "NOT_FOUND",
-        },
       },
       {
         description: "should handle DatabaseError for custom section deletion",
@@ -274,10 +362,6 @@ export default class UserProfileServiceDataProvider {
           sectionTitle: CustomSectionType.IDENTITY,
         },
         error: new MongooseError("Connection failed"),
-        expectedErrorResponse: {
-          message: "Database error occurred",
-          errorCode: "DATABASE_ERROR",
-        },
       },
       {
         description:
@@ -287,10 +371,6 @@ export default class UserProfileServiceDataProvider {
           sectionTitle: CustomSectionType.PHILOSOPHY,
         },
         error: APIError.InternalServerError("Failed to delete custom section"),
-        expectedErrorResponse: {
-          message: "Failed to delete custom section",
-          errorCode: "INTERNAL_SERVER_ERROR",
-        },
       },
     ];
   }
@@ -417,10 +497,6 @@ export default class UserProfileServiceDataProvider {
           userId: new Types.ObjectId(),
         },
         error: APIError.NotFound(ErrorMessage.USER_PROFILE_NOT_FOUND),
-        expectedErrorResponse: {
-          message: ErrorMessage.USER_PROFILE_NOT_FOUND,
-          errorCode: "NOT_FOUND",
-        },
       },
       {
         description: "should handle DatabaseError for get custom sections",
@@ -428,10 +504,6 @@ export default class UserProfileServiceDataProvider {
           userId: new Types.ObjectId(),
         },
         error: new MongooseError("Connection failed"),
-        expectedErrorResponse: {
-          message: "Database error occurred",
-          errorCode: "DATABASE_ERROR",
-        },
       },
       {
         description:
@@ -440,10 +512,6 @@ export default class UserProfileServiceDataProvider {
           userId: new Types.ObjectId(),
         },
         error: APIError.InternalServerError("Failed to get custom sections"),
-        expectedErrorResponse: {
-          message: "Failed to get custom sections",
-          errorCode: "INTERNAL_SERVER_ERROR",
-        },
       },
     ];
   }

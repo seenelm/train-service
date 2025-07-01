@@ -28,80 +28,204 @@ describe("UserProfileService", () => {
     vi.clearAllMocks();
   });
 
-  // describe("updateUserProfile", () => {
-  //   describe("success cases", () => {
-  //     it.each(UserProfileDataProvider.updateUserProfileSuccessCases())(
-  //       "$description",
-  //       async ({ request, entity, document }) => {
-  //         // Arrange
-  //         vi.spyOn(mockUserProfileRepository, "findOne").mockResolvedValue(
-  //           entity
-  //         );
-  //         vi.spyOn(mockUserProfileRepository, "toDocument").mockReturnValue(
-  //           document
-  //         );
-  //         vi.spyOn(mockUserProfileRepository, "updateOne").mockResolvedValue();
+  describe("updateUserProfile", () => {
+    describe("success cases", () => {
+      it.each(UserProfileServiceDataProvider.updateUserProfileSuccessCases())(
+        "$description",
+        async ({ request, entity, document }) => {
+          // Arrange
+          vi.spyOn(mockUserProfileRepository, "findOne").mockResolvedValue(
+            entity
+          );
+          vi.spyOn(mockUserProfileRepository, "toDocument").mockReturnValue(
+            document!
+          );
+          vi.spyOn(mockUserProfileRepository, "updateOne").mockResolvedValue();
 
-  //         // Act
-  //         await userProfileService.updateUserProfile(request);
+          // Act
+          await userProfileService.updateUserProfile(request);
 
-  //         // Assert
-  //         expect(mockUserProfileRepository.findOne).toHaveBeenCalledWith({
-  //           userId: new Types.ObjectId(request.userId),
-  //         });
-  //         expect(mockUserProfileRepository.toDocument).toHaveBeenCalledWith(
-  //           request
-  //         );
-  //         expect(mockUserProfileRepository.updateOne).toHaveBeenCalledWith(
-  //           { userId: new Types.ObjectId(request.userId) },
-  //           document
-  //         );
-  //       }
-  //     );
-  //   });
+          // Assert
+          expect(mockUserProfileRepository.findOne).toHaveBeenCalledWith({
+            userId: new Types.ObjectId(request.userId),
+          });
+          expect(mockUserProfileRepository.toDocument).toHaveBeenCalledWith(
+            request
+          );
+          expect(mockUserProfileRepository.updateOne).toHaveBeenCalled();
+        }
+      );
+    });
 
-  //   describe("error cases", () => {
-  //     it.each(UserProfileDataProvider.updateUserProfileErrorCases())(
-  //       "$description",
-  //       async ({ request, error, expectedErrorResponse }) => {
-  //         // Arrange
-  //         if (error instanceof APIError) {
-  //           vi.spyOn(mockUserProfileRepository, "findOne").mockRejectedValue(
-  //             error
-  //           );
-  //         } else if (
-  //           error instanceof MongooseError ||
-  //           error instanceof MongoServerError
-  //         ) {
-  //           vi.spyOn(mockUserProfileRepository, "findOne").mockResolvedValue(
-  //             UserProfileTestFixture.createUserProfileEntity()
-  //           );
-  //           vi.spyOn(mockUserProfileRepository, "updateOne").mockRejectedValue(
-  //             error
-  //           );
-  //         } else {
-  //           vi.spyOn(mockUserProfileRepository, "findOne").mockRejectedValue(
-  //             error
-  //           );
-  //         }
+    describe("error cases", () => {
+      it.each(UserProfileServiceDataProvider.updateUserProfileErrorCases())(
+        "$description",
+        async ({ request, error }) => {
+          // Arrange
+          if (
+            error instanceof APIError &&
+            error.message === ErrorMessage.USER_PROFILE_NOT_FOUND
+          ) {
+            // Profile not found case
+            vi.spyOn(mockUserProfileRepository, "findOne").mockResolvedValue(
+              null
+            );
+          } else if (error instanceof MongooseError) {
+            // Database error during findOne
+            vi.spyOn(mockUserProfileRepository, "findOne").mockRejectedValue(
+              error
+            );
+          } else if (error instanceof MongoServerError) {
+            // Database error during updateOne
+            const entity = UserProfileTestFixture.createUserProfileEntity();
+            vi.spyOn(mockUserProfileRepository, "findOne").mockResolvedValue(
+              entity
+            );
+            vi.spyOn(mockUserProfileRepository, "toDocument").mockReturnValue(
+              {}
+            );
+            vi.spyOn(mockUserProfileRepository, "updateOne").mockRejectedValue(
+              error
+            );
+          } else if (
+            error instanceof APIError &&
+            error.message === "Failed to update user profile"
+          ) {
+            // InternalServerError case - simulate an unknown error during updateOne
+            const entity = UserProfileTestFixture.createUserProfileEntity();
+            vi.spyOn(mockUserProfileRepository, "findOne").mockResolvedValue(
+              entity
+            );
+            vi.spyOn(mockUserProfileRepository, "toDocument").mockReturnValue(
+              {}
+            );
+            vi.spyOn(mockUserProfileRepository, "updateOne").mockRejectedValue(
+              new Error("Unknown error during update")
+            );
+          } else {
+            // Other API errors
+            vi.spyOn(mockUserProfileRepository, "findOne").mockRejectedValue(
+              error
+            );
+          }
 
-  //         // Act & Assert
-  //         await expect(
-  //           userProfileService.updateUserProfile(request)
-  //         ).rejects.toThrowError(error);
+          // Act & Assert
+          if (
+            error instanceof MongooseError ||
+            error instanceof MongoServerError
+          ) {
+            // Database errors are wrapped in DatabaseError by the service
+            await expect(
+              userProfileService.updateUserProfile(request)
+            ).rejects.toThrow(DatabaseError);
+          } else {
+            // API errors are thrown as-is
+            await expect(
+              userProfileService.updateUserProfile(request)
+            ).rejects.toThrow(error);
+          }
+        }
+      );
+    });
+  });
 
-  //         if (
-  //           error instanceof MongoServerError ||
-  //           error instanceof MongooseError
-  //         ) {
-  //           await expect(
-  //             userProfileService.updateUserProfile(request)
-  //           ).rejects.toThrowError(DatabaseError);
-  //         }
-  //       }
-  //     );
-  //   });
-  // });
+  describe("updateBasicUserProfile", () => {
+    describe("success cases", () => {
+      it.each(
+        UserProfileServiceDataProvider.updateBasicUserProfileSuccessCases()
+      )("$description", async ({ request, entity }) => {
+        const userId = new Types.ObjectId();
+        // Arrange
+        vi.spyOn(mockUserProfileRepository, "findOne").mockResolvedValue(
+          entity
+        );
+        vi.spyOn(mockUserProfileRepository, "updateOne").mockResolvedValue();
+
+        // Act
+        await userProfileService.updateBasicUserProfileInfo(userId, request);
+
+        // Assert
+        expect(mockUserProfileRepository.findOne).toHaveBeenCalledWith({
+          userId,
+        });
+        expect(mockUserProfileRepository.updateOne).toHaveBeenCalledWith(
+          { userId },
+          {
+            username: request.username,
+            name: request.name,
+            bio: request.bio,
+            accountType: request.accountType,
+            profilePicture: request.profilePicture,
+            role: request.role,
+            location: request.location,
+          }
+        );
+      });
+    });
+
+    describe("error cases", () => {
+      it.each(
+        UserProfileServiceDataProvider.updateBasicUserProfileErrorCases()
+      )("$description", async ({ request, error }) => {
+        const userId = new Types.ObjectId();
+        // Arrange
+        if (
+          error instanceof APIError &&
+          error.message === ErrorMessage.USER_PROFILE_NOT_FOUND
+        ) {
+          // Profile not found case
+          vi.spyOn(mockUserProfileRepository, "findOne").mockResolvedValue(
+            null
+          );
+        } else if (error instanceof MongooseError) {
+          // Database error during findOne
+          vi.spyOn(mockUserProfileRepository, "findOne").mockRejectedValue(
+            error
+          );
+        } else if (error instanceof MongoServerError) {
+          // Database error during updateOne
+          const entity = UserProfileTestFixture.createUserProfileEntity();
+          vi.spyOn(mockUserProfileRepository, "findOne").mockResolvedValue(
+            entity
+          );
+          vi.spyOn(mockUserProfileRepository, "updateOne").mockRejectedValue(
+            error
+          );
+        } else if (
+          error instanceof APIError &&
+          error.message === "Failed to update basic user profile info"
+        ) {
+          // InternalServerError case - simulate an unknown error during updateOne
+          const entity = UserProfileTestFixture.createUserProfileEntity();
+          vi.spyOn(mockUserProfileRepository, "findOne").mockResolvedValue(
+            entity
+          );
+          vi.spyOn(mockUserProfileRepository, "updateOne").mockRejectedValue(
+            new Error("Unknown error during update")
+          );
+        } else {
+          // Other API errors
+          vi.spyOn(mockUserProfileRepository, "findOne").mockRejectedValue(
+            error
+          );
+        }
+
+        // Act & Assert
+        if (
+          error instanceof MongooseError ||
+          error instanceof MongoServerError
+        ) {
+          await expect(
+            userProfileService.updateBasicUserProfileInfo(userId, request)
+          ).rejects.toThrow(DatabaseError);
+        } else {
+          await expect(
+            userProfileService.updateBasicUserProfileInfo(userId, request)
+          ).rejects.toThrow(error);
+        }
+      });
+    });
+  });
 
   describe("createCustomSection", () => {
     it("should successfully create a custom section", async () => {
@@ -151,7 +275,7 @@ describe("UserProfileService", () => {
     describe("error cases", () => {
       it.each(UserProfileServiceDataProvider.createCustomSectionErrorCases())(
         "$description",
-        async ({ request, error, expectedErrorResponse }) => {
+        async ({ request, error }) => {
           // Arrange
           const userId = new Types.ObjectId();
 
@@ -280,7 +404,7 @@ describe("UserProfileService", () => {
     describe("error cases", () => {
       it.each(UserProfileServiceDataProvider.updateCustomSectionErrorCases())(
         "$description",
-        async ({ request, error, expectedErrorResponse }) => {
+        async ({ request, error }) => {
           // Arrange
           const userId = new Types.ObjectId();
 
@@ -403,7 +527,7 @@ describe("UserProfileService", () => {
     describe("error cases", () => {
       it.each(UserProfileServiceDataProvider.deleteCustomSectionErrorCases())(
         "$description",
-        async ({ request, error, expectedErrorResponse }) => {
+        async ({ request, error }) => {
           // Arrange
           const { userId, sectionTitle } = request;
 
@@ -514,7 +638,7 @@ describe("UserProfileService", () => {
     describe("error cases", () => {
       it.each(UserProfileServiceDataProvider.getCustomSectionsErrorCases())(
         "$description",
-        async ({ request, error, expectedErrorResponse }) => {
+        async ({ request, error }) => {
           // Arrange
           const { userId } = request;
 

@@ -101,14 +101,12 @@ const userProfileSchema = new Schema(
       type: Schema.Types.ObjectId,
       ref: "User",
       required: true,
-      // index: true,
     },
     username: {
       type: String,
       required: true,
       unique: true,
       trim: true,
-      // index: true,
     },
     name: {
       type: String,

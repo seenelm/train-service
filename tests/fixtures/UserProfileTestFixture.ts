@@ -11,6 +11,7 @@ import {
   CustomSectionType,
   CustomSectionRequest,
   CustomSectionResponse,
+  BasicUserProfileInfoRequest,
 } from "@seenelm/train-core";
 import {
   SocialLink,
@@ -74,6 +75,21 @@ export default class UserProfileTestFixture {
     };
   }
 
+  public static createBasicUserProfileInfoRequest(
+    updatedData?: Partial<BasicUserProfileInfoRequest>
+  ): BasicUserProfileInfoRequest {
+    return {
+      username: this.USERNAME,
+      name: this.NAME,
+      bio: this.BIO,
+      accountType: this.ACCOUNT_TYPE,
+      profilePicture: this.PROFILE_PICTURE,
+      role: this.ROLE,
+      location: this.LOCATION,
+      ...updatedData,
+    };
+  }
+
   public static createCustomSection(
     updatedData?: Partial<CustomSection>
   ): CustomSection {
@@ -111,7 +127,7 @@ export default class UserProfileTestFixture {
     updatedData?: Partial<CertificationRequest>
   ): CertificationRequest {
     return {
-      certification: "testCertification",
+      certification: new Types.ObjectId().toString(),
       specializations: ["testSpecialization"],
       receivedDate: "2024-03-20",
       ...updatedData,

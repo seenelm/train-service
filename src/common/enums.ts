@@ -188,6 +188,9 @@ export enum ValidationErrorCode {
 export enum ValidationErrorMessage {
   USER_ID_REQUIRED = "User ID is required",
   USER_ID_INVALID_FORMAT = "Invalid user ID format",
+  NAME_REQUIRED = "Name is required",
+  ACCOUNT_TYPE_REQUIRED = "Account type is required",
+  ACCOUNT_TYPE_INVALID = "Invalid account type. Must be 0 (Public) or 1 (Private)",
   USERNAME_REQUIRED = "Username is required",
   USERNAME_INVALID_FORMAT = "Username must be 3-20 characters and contain only letters, numbers, and underscores",
   EMAIL_REQUIRED = "Email is required",

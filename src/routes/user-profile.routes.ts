@@ -38,5 +38,10 @@ router.patch(
   UserProfileMiddleware.validateUpdateCustomSection,
   userProfileController.updateCustomSection
 );
+router.patch(
+  "/:userId/basic-info",
+  UserProfileMiddleware.validateBasicProfileUpdate,
+  userProfileController.updateBasicUserProfile
+);
 
 export default router;

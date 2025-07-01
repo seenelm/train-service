@@ -2,7 +2,11 @@ import { IUserProfileService } from "./UserProfileService.js";
 import { NextFunction, Request, Response } from "express";
 import { UserProfileRequest } from "@seenelm/train-core";
 import { StatusCodes as HttpStatusCode } from "http-status-codes";
-import { CustomSectionRequest, CustomSectionType } from "@seenelm/train-core";
+import {
+  CustomSectionRequest,
+  CustomSectionType,
+  BasicUserProfileInfoRequest,
+} from "@seenelm/train-core";
 import { Types } from "mongoose";
 
 export default class UserProfileController {
@@ -20,6 +24,26 @@ export default class UserProfileController {
     try {
       const userProfileRequest: UserProfileRequest = req.body;
       await this.userProfileService.updateUserProfile(userProfileRequest);
+
+      res.status(HttpStatusCode.OK).json({ success: true });
+    } catch (error) {
+      next(error);
+    }
+  };
+
+  public updateBasicUserProfile = async (
+    req: Request,
+    res: Response,
+    next: NextFunction
+  ) => {
+    try {
+      const basicProfileRequest: BasicUserProfileInfoRequest = req.body;
+      const userId = new Types.ObjectId(req.params.userId);
+
+      await this.userProfileService.updateBasicUserProfileInfo(
+        userId,
+        basicProfileRequest
+      );
 
       res.status(HttpStatusCode.OK).json({ success: true });
     } catch (error) {

@@ -6,6 +6,7 @@ import { CustomSectionType } from "@seenelm/train-core";
 import { DatabaseError } from "../../../../../src/common/errors/DatabaseError.js";
 import { Request } from "express";
 import { ErrorMessage } from "../../../../../src/common/enums.js";
+import { UserProfileRequest, SocialPlatform } from "@seenelm/train-core";
 
 interface ErrorTestCase<T> {
   description: string;
@@ -14,6 +15,14 @@ interface ErrorTestCase<T> {
     body?: T;
   };
   error: Error;
+}
+
+interface SuccessTestCase<T> {
+  description: string;
+  request: {
+    params: Record<string, string>;
+    body?: T;
+  };
 }
 
 interface DeleteCustomSectionErrorTestCase {
@@ -25,6 +34,112 @@ interface DeleteCustomSectionErrorTestCase {
 }
 
 export default class UserProfileControllerDataProvider {
+  static updateUserProfileSuccessCases(): SuccessTestCase<UserProfileRequest>[] {
+    return [
+      {
+        description: "should update user profile successfully with all fields",
+        request: {
+          params: {},
+          body: UserProfileTestFixture.createUserProfileRequest(),
+        },
+      },
+      {
+        description: "should update user profile with social links",
+        request: {
+          params: {},
+          body: UserProfileTestFixture.createUserProfileRequest({
+            socialLinks: [
+              {
+                platform: SocialPlatform.INSTAGRAM,
+                url: "https://www.instagram.com/john_doe",
+              },
+              {
+                platform: SocialPlatform.TIKTOK,
+                url: "https://www.tiktok.com/@john_doe",
+              },
+            ],
+          }),
+        },
+      },
+      {
+        description: "should update user profile with certifications",
+        request: {
+          params: {},
+          body: UserProfileTestFixture.createUserProfileRequest({
+            certifications: [
+              {
+                certification: new Types.ObjectId().toString(),
+                specializations: ["Weight Training", "Cardio"],
+                receivedDate: "2024-01-15",
+              },
+            ],
+          }),
+        },
+      },
+      {
+        description: "should update user profile with custom sections",
+        request: {
+          params: {},
+          body: UserProfileTestFixture.createUserProfileRequest({
+            customSections: [
+              {
+                title: CustomSectionType.ACHIEVEMENTS,
+                details: [
+                  {
+                    title: "First Place in Competition",
+                    date: "2024-03-20",
+                    description:
+                      "Won first place in regional fitness competition",
+                  },
+                ],
+              },
+              {
+                title: CustomSectionType.STATS,
+                details: [
+                  {
+                    category: "Clients Trained",
+                    value: "150",
+                  },
+                ],
+              },
+            ],
+          }),
+        },
+      },
+    ];
+  }
+
+  static updateUserProfileErrorCases(): ErrorTestCase<UserProfileRequest>[] {
+    return [
+      {
+        description: "should handle NotFound error when profile not found",
+        request: {
+          params: {},
+          body: UserProfileTestFixture.createUserProfileRequest({
+            userId: new Types.ObjectId().toString(),
+          }),
+        },
+        error: APIError.NotFound(ErrorMessage.USER_PROFILE_NOT_FOUND),
+      },
+      {
+        description: "should handle DatabaseError",
+        request: {
+          params: {},
+          body: UserProfileTestFixture.createUserProfileRequest(),
+        },
+        error: new DatabaseError("Database connection failed"),
+      },
+      {
+        description: "should handle InternalServerError",
+        request: {
+          params: {},
+          body: UserProfileTestFixture.createUserProfileRequest(),
+        },
+        error: APIError.InternalServerError("Failed to update user profile"),
+      },
+    ];
+  }
+
   static createCustomSectionErrorCases(): ErrorTestCase<CustomSectionRequest>[] {
     return [
       {

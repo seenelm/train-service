@@ -7,4 +7,5 @@ export const mockUserProfileService: IUserProfileService = {
   createCustomSection: vi.fn(),
   getCustomSections: vi.fn(),
   deleteCustomSection: vi.fn(),
+  updateBasicUserProfileInfo: vi.fn(),
 };

@@ -10,13 +10,21 @@ import { Types } from "mongoose";
 import { CustomSectionRequest } from "@seenelm/train-core";
 import { ErrorMessage } from "../../common/enums.js";
 import { CustomSection } from "../../infrastructure/database/models/userProfile/userProfileModel.js";
-import { CustomSectionResponse, CustomSectionType } from "@seenelm/train-core";
+import {
+  CustomSectionResponse,
+  CustomSectionType,
+  BasicUserProfileInfoRequest,
+} from "@seenelm/train-core";
 
 export interface IUserProfileService {
   updateUserProfile(userProfileRequest: UserProfileRequest): Promise<void>;
   updateCustomSection(
     userId: Types.ObjectId,
     customSectionRequest: CustomSectionRequest
+  ): Promise<void>;
+  updateBasicUserProfileInfo(
+    userId: Types.ObjectId,
+    basicProfileRequest: BasicUserProfileInfoRequest
   ): Promise<void>;
   createCustomSection(
     userId: Types.ObjectId,
@@ -126,6 +134,54 @@ export default class UserProfileService implements IUserProfileService {
         throw error;
       } else {
         throw APIError.InternalServerError("Failed to update user profile");
+      }
+    }
+  }
+
+  public async updateBasicUserProfileInfo(
+    userId: Types.ObjectId,
+    basicProfileRequest: BasicUserProfileInfoRequest
+  ): Promise<void> {
+    try {
+      const userProfile = await this.userProfileRepository.findOne({
+        userId,
+      });
+
+      if (!userProfile) {
+        this.logger.warn(ErrorMessage.USER_PROFILE_NOT_FOUND, {
+          userId,
+          username: basicProfileRequest.username,
+        });
+        throw APIError.NotFound(ErrorMessage.USER_PROFILE_NOT_FOUND);
+      }
+
+      const updateData = {
+        username: basicProfileRequest.username,
+        name: basicProfileRequest.name,
+        bio: basicProfileRequest.bio,
+        accountType: basicProfileRequest.accountType,
+        profilePicture: basicProfileRequest.profilePicture,
+        role: basicProfileRequest.role,
+        location: basicProfileRequest.location,
+      };
+
+      await this.userProfileRepository.updateOne({ userId }, updateData);
+
+      this.logger.info(
+        `Basic profile updated for user: ${basicProfileRequest.username}`
+      );
+    } catch (error) {
+      this.logger.error("Failed to update basic user profile info", {
+        error,
+      });
+      if (error instanceof MongooseError || error instanceof MongoServerError) {
+        throw DatabaseError.handleMongoDBError(error);
+      } else if (error instanceof APIError) {
+        throw error;
+      } else {
+        throw APIError.InternalServerError(
+          "Failed to update basic user profile info"
+        );
       }
     }
   }

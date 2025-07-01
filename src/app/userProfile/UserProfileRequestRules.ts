@@ -1,10 +1,51 @@
 import { RuleSet } from "../../common/utils/requestValidation.js";
-import { CustomSectionType, CustomSectionRequest } from "@seenelm/train-core";
+import {
+  CustomSectionType,
+  CustomSectionRequest,
+  BasicUserProfileInfoRequest,
+} from "@seenelm/train-core";
 import { Request } from "express";
 import { Types } from "mongoose";
 import { ValidationErrorMessage } from "../../common/enums.js";
 
 export default class UserProfileRequestRules {
+  public static basicProfileUpdateRules: RuleSet<
+    Request<{ userId: string }, {}, BasicUserProfileInfoRequest>
+  > = {
+    userId: {
+      hasError: (req) => !req.params.userId,
+      message: ValidationErrorMessage.USER_ID_REQUIRED,
+    },
+    validUserId: {
+      hasError: (req) => !Types.ObjectId.isValid(req.params.userId),
+      message: ValidationErrorMessage.USER_ID_INVALID_FORMAT,
+    },
+    username: {
+      hasError: (req) =>
+        !req.body.username || typeof req.body.username !== "string",
+      message: ValidationErrorMessage.USERNAME_REQUIRED,
+    },
+    name: {
+      hasError: (req) => !req.body.name || typeof req.body.name !== "string",
+      message: ValidationErrorMessage.NAME_REQUIRED,
+    },
+    accountType: {
+      hasError: (req) =>
+        req.body.accountType === undefined || req.body.accountType === null,
+      message: ValidationErrorMessage.ACCOUNT_TYPE_REQUIRED,
+    },
+    validAccountType: {
+      hasError: (req) => {
+        const accountType = req.body.accountType;
+        return (
+          accountType !== undefined &&
+          accountType !== null &&
+          ![0, 1].includes(accountType)
+        );
+      },
+      message: ValidationErrorMessage.ACCOUNT_TYPE_INVALID,
+    },
+  };
   public static getCustomSectionsRules: RuleSet<Request<{ userId: string }>> = {
     userId: {
       hasError: (req) => !req.params?.userId,

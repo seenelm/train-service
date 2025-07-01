@@ -40,6 +40,67 @@ describe("UserProfileController", () => {
     vi.clearAllMocks();
   });
 
+  describe("updateUserProfile", () => {
+    describe("success cases", () => {
+      it.each(
+        UserProfileControllerDataProvider.updateUserProfileSuccessCases()
+      )("$description", async ({ request }) => {
+        // Arrange
+        mockRequest.body = request.body;
+
+        vi.spyOn(
+          mockUserProfileService,
+          "updateUserProfile"
+        ).mockResolvedValue();
+
+        // Act
+        await userProfileController.updateUserProfile(
+          mockRequest as Request,
+          mockResponse as Response,
+          mockNext as NextFunction
+        );
+
+        // Assert
+        expect(mockUserProfileService.updateUserProfile).toHaveBeenCalledWith(
+          request.body
+        );
+        expect(mockResponse.status).toHaveBeenCalledWith(HttpStatusCode.OK);
+        expect(mockResponse.json).toHaveBeenCalledWith({ success: true });
+        expect(mockNext).not.toHaveBeenCalled();
+      });
+    });
+
+    describe("error cases", () => {
+      it.each(UserProfileControllerDataProvider.updateUserProfileErrorCases())(
+        "$description",
+        async ({ request, error }) => {
+          // Arrange
+          mockRequest.body = request.body;
+
+          vi.spyOn(
+            mockUserProfileService,
+            "updateUserProfile"
+          ).mockRejectedValue(error);
+
+          // Act
+          await userProfileController.updateUserProfile(
+            mockRequest as Request,
+            mockResponse as Response,
+            mockNext as NextFunction
+          );
+
+          // Assert
+          expect(mockUserProfileService.updateUserProfile).toHaveBeenCalledWith(
+            request.body
+          );
+          expect(mockResponse.status).not.toHaveBeenCalled();
+          expect(mockResponse.json).not.toHaveBeenCalled();
+          expect(mockNext).toHaveBeenCalledWith(error);
+        }
+      );
+    });
+  });
+
   describe("createCustomSection", () => {
     it("should create a custom section successfully and return 201 status", async () => {
       // Arrange

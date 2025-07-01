@@ -1,4 +1,8 @@
-import { CustomSectionRequest, CustomSectionType } from "@seenelm/train-core";
+import {
+  CustomSectionRequest,
+  CustomSectionType,
+  BasicUserProfileInfoRequest,
+} from "@seenelm/train-core";
 import { NextFunction, Request, Response } from "express";
 import { APIError } from "../../common/errors/APIError.js";
 import { CreateValidator } from "../../common/utils/requestValidation.js";
@@ -7,6 +11,28 @@ import { Logger } from "../../common/logger.js";
 
 export default class UserProfileMiddleware {
   private static logger = Logger.getInstance();
+
+  public static validateBasicProfileUpdate = (
+    req: Request<{ userId: string }, {}, BasicUserProfileInfoRequest>,
+    res: Response,
+    next: NextFunction
+  ) => {
+    try {
+      const errors = CreateValidator.validate(
+        req,
+        UserProfileRequestRules.basicProfileUpdateRules
+      );
+
+      if (errors.length > 0) {
+        throw APIError.BadRequest("Validation failed", errors);
+      }
+
+      this.logger.info("Basic profile update validation successful");
+      next();
+    } catch (error) {
+      next(error);
+    }
+  };
 
   public static validateGetCustomSections = (
     req: Request<{ userId: string }>,
