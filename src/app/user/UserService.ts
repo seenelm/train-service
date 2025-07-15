@@ -510,6 +510,7 @@ export default class UserService implements IUserService {
     const { refreshToken, deviceId } = logoutRequest;
 
     try {
+      // TODO: look this over.
       const user = await this.userRepository.findOneAndUpdate(
         {
           "refreshTokens.token": refreshToken,
