@@ -3,6 +3,8 @@ import {
   SocialPlatform,
   ProfileAccess,
   CustomSectionType,
+  AchievementItem,
+  StatsItem,
 } from "@seenelm/train-core";
 
 // Social media link interface
@@ -15,17 +17,6 @@ export interface Certification {
   certification: Types.ObjectId;
   specializations: string[];
   receivedDate: string;
-}
-
-export interface AchievementItem {
-  title: string;
-  date?: string;
-  description?: string;
-}
-
-export interface StatsItem {
-  category: string;
-  value: string;
 }
 
 export interface CustomSection {

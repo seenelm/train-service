@@ -10,7 +10,10 @@ import {
 import { NextFunction, Request, Response } from "express";
 import UserProfileMiddleware from "../../../../src/app/userProfile/UserProfileMiddleware.js";
 import UserProfileMiddlewareDataProvider from "./dataProviders/UserProfileMiddlewareDataProvider.js";
-import { CustomSectionRequest } from "@seenelm/train-core";
+import {
+  CustomSectionRequest,
+  BasicUserProfileInfoRequest,
+} from "@seenelm/train-core";
 import { CreateValidator } from "../../../../src/common/utils/requestValidation.js";
 import UserProfileRequestRules from "../../../../src/app/userProfile/UserProfileRequestRules.js";
 import { CustomSectionType } from "@seenelm/train-core";
@@ -30,11 +33,17 @@ type DeleteCustomSectionRequestType = Request<{
   sectionTitle: string;
 }>;
 type GetCustomSectionsRequestType = Request<{ userId: string }>;
+type BasicProfileUpdateRequestType = Request<
+  { userId: string },
+  {},
+  BasicUserProfileInfoRequest
+>;
 type MockRequestType =
   | CustomSectionRequestType
   | UpdateUserProfileRequestType
   | DeleteCustomSectionRequestType
-  | GetCustomSectionsRequestType;
+  | GetCustomSectionsRequestType
+  | BasicProfileUpdateRequestType;
 
 describe("UserProfileMiddleware", () => {
   let mockRequest: MockedObject<MockRequestType>;
@@ -56,6 +65,62 @@ describe("UserProfileMiddleware", () => {
 
   afterEach(() => {
     vi.clearAllMocks();
+  });
+
+  describe("validateBasicProfileUpdate", () => {
+    describe("success cases", () => {
+      it.each(
+        UserProfileMiddlewareDataProvider.validateBasicProfileUpdateSuccessCases()
+      )("$description", async ({ request }) => {
+        // Arrange
+        mockRequest.params = request.params;
+        mockRequest.body = request.body;
+
+        // Act
+        UserProfileMiddleware.validateBasicProfileUpdate(
+          mockRequest as BasicProfileUpdateRequestType,
+          mockResponse as Response,
+          mockNext as NextFunction
+        );
+
+        // Assert
+        expect(CreateValidator.validate).toHaveBeenCalledWith(
+          request,
+          UserProfileRequestRules.basicProfileUpdateRules
+        );
+        expect(mockNext).toHaveBeenCalledWith();
+        expect(mockNext).toHaveBeenCalledTimes(1);
+      });
+    });
+
+    describe("error cases", () => {
+      it.each(
+        UserProfileMiddlewareDataProvider.validateBasicProfileUpdateErrorCases()
+      )("$description", async ({ request, validationErrors, error }) => {
+        // Arrange
+        mockRequest.params = request.params;
+        mockRequest.body = request.body;
+
+        vi.mocked(CreateValidator.validate).mockReturnValueOnce(
+          validationErrors
+        );
+
+        // Act
+        UserProfileMiddleware.validateBasicProfileUpdate(
+          mockRequest as BasicProfileUpdateRequestType,
+          mockResponse as Response,
+          mockNext as NextFunction
+        );
+
+        // Assert
+        expect(CreateValidator.validate).toHaveBeenCalledWith(
+          request,
+          UserProfileRequestRules.basicProfileUpdateRules
+        );
+        expect(mockNext).toHaveBeenCalledWith(error);
+        expect(mockNext).toHaveBeenCalledTimes(1);
+      });
+    });
   });
 
   describe("validateGetCustomSections", () => {
@@ -87,33 +152,30 @@ describe("UserProfileMiddleware", () => {
     describe("error cases", () => {
       it.each(
         UserProfileMiddlewareDataProvider.validateGetCustomSectionsErrorCases()
-      )(
-        "$description",
-        async ({ request, validationErrors, error, expectedErrorResponse }) => {
-          // Arrange
-          mockRequest.params = request.params;
-          mockRequest.body = request.body;
+      )("$description", async ({ request, validationErrors, error }) => {
+        // Arrange
+        mockRequest.params = request.params;
+        mockRequest.body = request.body;
 
-          vi.mocked(CreateValidator.validate).mockReturnValueOnce(
-            validationErrors
-          );
+        vi.mocked(CreateValidator.validate).mockReturnValueOnce(
+          validationErrors
+        );
 
-          // Act
-          UserProfileMiddleware.validateGetCustomSections(
-            mockRequest as GetCustomSectionsRequestType,
-            mockResponse as Response,
-            mockNext as NextFunction
-          );
+        // Act
+        UserProfileMiddleware.validateGetCustomSections(
+          mockRequest as GetCustomSectionsRequestType,
+          mockResponse as Response,
+          mockNext as NextFunction
+        );
 
-          // Assert
-          expect(CreateValidator.validate).toHaveBeenCalledWith(
-            request,
-            UserProfileRequestRules.getCustomSectionsRules
-          );
-          expect(mockNext).toHaveBeenCalledWith(error);
-          expect(mockNext).toHaveBeenCalledTimes(1);
-        }
-      );
+        // Assert
+        expect(CreateValidator.validate).toHaveBeenCalledWith(
+          request,
+          UserProfileRequestRules.getCustomSectionsRules
+        );
+        expect(mockNext).toHaveBeenCalledWith(error);
+        expect(mockNext).toHaveBeenCalledTimes(1);
+      });
     });
   });
 
@@ -145,32 +207,29 @@ describe("UserProfileMiddleware", () => {
     describe("error cases", () => {
       it.each(
         UserProfileMiddlewareDataProvider.validateCreateCustomSectionErrorCases()
-      )(
-        "$description",
-        async ({ request, error, validationErrors, expectedErrorResponse }) => {
-          // Arrange
-          mockRequest.params = request.params;
-          mockRequest.body = request.body;
+      )("$description", async ({ request, error, validationErrors }) => {
+        // Arrange
+        mockRequest.params = request.params;
+        mockRequest.body = request.body;
 
-          vi.mocked(CreateValidator.validate).mockReturnValueOnce(
-            validationErrors
-          );
+        vi.mocked(CreateValidator.validate).mockReturnValueOnce(
+          validationErrors
+        );
 
-          // Act
-          UserProfileMiddleware.validateCreateCustomSection(
-            mockRequest as CustomSectionRequestType,
-            mockResponse as Response,
-            mockNext as NextFunction
-          );
+        // Act
+        UserProfileMiddleware.validateCreateCustomSection(
+          mockRequest as CustomSectionRequestType,
+          mockResponse as Response,
+          mockNext as NextFunction
+        );
 
-          // Assert
-          expect(CreateValidator.validate).toHaveBeenCalledWith(
-            request,
-            UserProfileRequestRules.customSectionRules
-          );
-          expect(mockNext).toHaveBeenCalledWith(error);
-        }
-      );
+        // Assert
+        expect(CreateValidator.validate).toHaveBeenCalledWith(
+          request,
+          UserProfileRequestRules.customSectionRules
+        );
+        expect(mockNext).toHaveBeenCalledWith(error);
+      });
     });
   });
 
@@ -203,33 +262,30 @@ describe("UserProfileMiddleware", () => {
     describe("error cases", () => {
       it.each(
         UserProfileMiddlewareDataProvider.validateUpdateCustomSectionErrorCases()
-      )(
-        "$description",
-        async ({ request, validationErrors, error, expectedErrorResponse }) => {
-          // Arrange
-          mockRequest.params = request.params;
-          mockRequest.body = request.body;
+      )("$description", async ({ request, validationErrors, error }) => {
+        // Arrange
+        mockRequest.params = request.params;
+        mockRequest.body = request.body;
 
-          vi.mocked(CreateValidator.validate).mockReturnValueOnce(
-            validationErrors
-          );
+        vi.mocked(CreateValidator.validate).mockReturnValueOnce(
+          validationErrors
+        );
 
-          // Act
-          UserProfileMiddleware.validateUpdateCustomSection(
-            mockRequest as CustomSectionRequestType,
-            mockResponse as Response,
-            mockNext as NextFunction
-          );
+        // Act
+        UserProfileMiddleware.validateUpdateCustomSection(
+          mockRequest as CustomSectionRequestType,
+          mockResponse as Response,
+          mockNext as NextFunction
+        );
 
-          // Assert
-          expect(CreateValidator.validate).toHaveBeenCalledWith(
-            request,
-            UserProfileRequestRules.customSectionRules
-          );
-          expect(mockNext).toHaveBeenCalledWith(error);
-          expect(mockNext).toHaveBeenCalledTimes(1);
-        }
-      );
+        // Assert
+        expect(CreateValidator.validate).toHaveBeenCalledWith(
+          request,
+          UserProfileRequestRules.customSectionRules
+        );
+        expect(mockNext).toHaveBeenCalledWith(error);
+        expect(mockNext).toHaveBeenCalledTimes(1);
+      });
     });
   });
 
@@ -262,33 +318,30 @@ describe("UserProfileMiddleware", () => {
     describe("error cases", () => {
       it.each(
         UserProfileMiddlewareDataProvider.validateDeleteCustomSectionErrorCases()
-      )(
-        "$description",
-        async ({ request, validationErrors, error, expectedErrorResponse }) => {
-          // Arrange
-          mockRequest.params = request.params;
-          mockRequest.body = request.body;
+      )("$description", async ({ request, validationErrors, error }) => {
+        // Arrange
+        mockRequest.params = request.params;
+        mockRequest.body = request.body;
 
-          vi.mocked(CreateValidator.validate).mockReturnValueOnce(
-            validationErrors
-          );
+        vi.mocked(CreateValidator.validate).mockReturnValueOnce(
+          validationErrors
+        );
 
-          // Act
-          UserProfileMiddleware.validateDeleteCustomSection(
-            mockRequest as DeleteCustomSectionRequestType,
-            mockResponse as Response,
-            mockNext as NextFunction
-          );
+        // Act
+        UserProfileMiddleware.validateDeleteCustomSection(
+          mockRequest as DeleteCustomSectionRequestType,
+          mockResponse as Response,
+          mockNext as NextFunction
+        );
 
-          // Assert
-          expect(CreateValidator.validate).toHaveBeenCalledWith(
-            request,
-            UserProfileRequestRules.deleteCustomSectionRules
-          );
-          expect(mockNext).toHaveBeenCalledWith(error);
-          expect(mockNext).toHaveBeenCalledTimes(1);
-        }
-      );
+        // Assert
+        expect(CreateValidator.validate).toHaveBeenCalledWith(
+          request,
+          UserProfileRequestRules.deleteCustomSectionRules
+        );
+        expect(mockNext).toHaveBeenCalledWith(error);
+        expect(mockNext).toHaveBeenCalledTimes(1);
+      });
     });
   });
 });

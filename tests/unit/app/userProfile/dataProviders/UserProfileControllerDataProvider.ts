@@ -7,6 +7,7 @@ import { DatabaseError } from "../../../../../src/common/errors/DatabaseError.js
 import { Request } from "express";
 import { ErrorMessage } from "../../../../../src/common/enums.js";
 import { UserProfileRequest, SocialPlatform } from "@seenelm/train-core";
+import { BasicUserProfileInfoRequest } from "@seenelm/train-core";
 
 interface ErrorTestCase<T> {
   description: string;
@@ -136,6 +137,76 @@ export default class UserProfileControllerDataProvider {
           body: UserProfileTestFixture.createUserProfileRequest(),
         },
         error: APIError.InternalServerError("Failed to update user profile"),
+      },
+    ];
+  }
+
+  static updateBasicUserProfileSuccessCases(): SuccessTestCase<BasicUserProfileInfoRequest>[] {
+    return [
+      {
+        description:
+          "should update basic user profile successfully with all fields",
+        request: {
+          params: { userId: new Types.ObjectId().toString() },
+          body: UserProfileTestFixture.createBasicUserProfileInfoRequest(),
+        },
+      },
+      {
+        description: "should update basic user profile with minimal fields",
+        request: {
+          params: { userId: new Types.ObjectId().toString() },
+          body: UserProfileTestFixture.createBasicUserProfileInfoRequest({
+            username: "john_doe",
+            name: "John Doe",
+            bio: undefined,
+            location: undefined,
+            role: undefined,
+            profilePicture: undefined,
+          }),
+        },
+      },
+      {
+        description: "should update basic user profile with bio and location",
+        request: {
+          params: { userId: new Types.ObjectId().toString() },
+          body: UserProfileTestFixture.createBasicUserProfileInfoRequest({
+            username: "jane_smith",
+            name: "Jane Smith",
+            bio: "Certified personal trainer with 5+ years of experience",
+            location: "New York, NY",
+          }),
+        },
+      },
+    ];
+  }
+
+  static updateBasicUserProfileErrorCases(): ErrorTestCase<BasicUserProfileInfoRequest>[] {
+    return [
+      {
+        description: "should handle NotFound error when user profile not found",
+        request: {
+          params: { userId: new Types.ObjectId().toString() },
+          body: UserProfileTestFixture.createBasicUserProfileInfoRequest(),
+        },
+        error: APIError.NotFound(ErrorMessage.USER_PROFILE_NOT_FOUND),
+      },
+      {
+        description: "should handle DatabaseError",
+        request: {
+          params: { userId: new Types.ObjectId().toString() },
+          body: UserProfileTestFixture.createBasicUserProfileInfoRequest(),
+        },
+        error: new DatabaseError("Database connection failed"),
+      },
+      {
+        description: "should handle InternalServerError",
+        request: {
+          params: { userId: new Types.ObjectId().toString() },
+          body: UserProfileTestFixture.createBasicUserProfileInfoRequest(),
+        },
+        error: APIError.InternalServerError(
+          "Failed to update basic user profile"
+        ),
       },
     ];
   }

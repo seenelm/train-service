@@ -1,8 +1,3 @@
-import {
-  PaginationRequest,
-  PaginationResponse,
-  CertificationResponse,
-} from "../userProfile/userProfileDto.js";
 import { ICertificationRepository } from "../../infrastructure/database/repositories/userProfile/CertificationRepository.js";
 import { Logger } from "../../common/logger.js";
 import { MongooseError } from "mongoose";
@@ -10,6 +5,11 @@ import { MongoServerError } from "mongodb";
 import { APIError } from "../../common/errors/APIError.js";
 import { DatabaseError } from "../../common/errors/DatabaseError.js";
 import { ErrorMessage } from "../../common/enums.js";
+import {
+  PaginationRequest,
+  PaginationResponse,
+  CertificationResponse,
+} from "@seenelm/train-core";
 
 export interface ISearchService {
   searchCertifications(

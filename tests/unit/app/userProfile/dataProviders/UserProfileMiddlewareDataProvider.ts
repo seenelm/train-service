@@ -1,5 +1,5 @@
 import UserProfileTestFixture from "../../../../fixtures/UserProfileTestFixture.js";
-import { CustomSectionType, CustomSectionRequest } from "@seenelm/train-core";
+import { CustomSectionType } from "@seenelm/train-core";
 import { APIError } from "../../../../../src/common/errors/APIError.js";
 import { Types } from "mongoose";
 import { ErrorResponse } from "../../../../../src/common/errors/types.js";
@@ -13,7 +13,6 @@ interface ErrorTestCase {
   };
   error: Error;
   validationErrors: string[];
-  expectedErrorResponse?: Partial<ErrorResponse>;
 }
 
 interface SuccessTestCase {
@@ -56,11 +55,6 @@ export default class UserProfileMiddlewareDataProvider {
           ValidationErrorMessage.USER_ID_REQUIRED,
         ]),
         validationErrors: [ValidationErrorMessage.USER_ID_REQUIRED],
-        expectedErrorResponse: {
-          message: "Validation failed",
-          errorCode: "BAD_REQUEST",
-          details: [ValidationErrorMessage.USER_ID_REQUIRED],
-        },
       },
       {
         description: "should throw BadRequest when userId is invalid format",
@@ -72,11 +66,6 @@ export default class UserProfileMiddlewareDataProvider {
           ValidationErrorMessage.USER_ID_INVALID_FORMAT,
         ]),
         validationErrors: [ValidationErrorMessage.USER_ID_INVALID_FORMAT],
-        expectedErrorResponse: {
-          message: "Validation failed",
-          errorCode: "BAD_REQUEST",
-          details: [ValidationErrorMessage.USER_ID_INVALID_FORMAT],
-        },
       },
       {
         description: "should throw BadRequest when userId is empty string",
@@ -88,11 +77,6 @@ export default class UserProfileMiddlewareDataProvider {
           ValidationErrorMessage.USER_ID_REQUIRED,
         ]),
         validationErrors: [ValidationErrorMessage.USER_ID_REQUIRED],
-        expectedErrorResponse: {
-          message: "Validation failed",
-          errorCode: "BAD_REQUEST",
-          details: [ValidationErrorMessage.USER_ID_REQUIRED],
-        },
       },
     ];
   }
@@ -176,11 +160,6 @@ export default class UserProfileMiddlewareDataProvider {
           ValidationErrorMessage.USER_ID_REQUIRED,
         ]),
         validationErrors: [ValidationErrorMessage.USER_ID_REQUIRED],
-        expectedErrorResponse: {
-          message: "Validation failed",
-          errorCode: "BAD_REQUEST",
-          details: [ValidationErrorMessage.USER_ID_REQUIRED],
-        },
       },
       {
         description: "should throw BadRequest when userId is invalid format",
@@ -194,11 +173,6 @@ export default class UserProfileMiddlewareDataProvider {
           ValidationErrorMessage.USER_ID_INVALID_FORMAT,
         ]),
         validationErrors: [ValidationErrorMessage.USER_ID_INVALID_FORMAT],
-        expectedErrorResponse: {
-          message: "Validation failed",
-          errorCode: "BAD_REQUEST",
-          details: [ValidationErrorMessage.USER_ID_INVALID_FORMAT],
-        },
       },
       {
         description: "should throw BadRequest when sectionTitle is missing",
@@ -211,11 +185,6 @@ export default class UserProfileMiddlewareDataProvider {
         validationErrors: [
           ValidationErrorMessage.CUSTOM_SECTION_TITLE_REQUIRED,
         ],
-        expectedErrorResponse: {
-          message: "Validation failed",
-          errorCode: "BAD_REQUEST",
-          details: [ValidationErrorMessage.CUSTOM_SECTION_TITLE_REQUIRED],
-        },
       },
       {
         description: "should throw BadRequest when sectionTitle is invalid",
@@ -229,11 +198,6 @@ export default class UserProfileMiddlewareDataProvider {
           ValidationErrorMessage.CUSTOM_SECTION_TITLE_INVALID,
         ]),
         validationErrors: [ValidationErrorMessage.CUSTOM_SECTION_TITLE_INVALID],
-        expectedErrorResponse: {
-          message: "Validation failed",
-          errorCode: "BAD_REQUEST",
-          details: [ValidationErrorMessage.CUSTOM_SECTION_TITLE_INVALID],
-        },
       },
       {
         description:
@@ -249,14 +213,6 @@ export default class UserProfileMiddlewareDataProvider {
           ValidationErrorMessage.USER_ID_REQUIRED,
           ValidationErrorMessage.CUSTOM_SECTION_TITLE_REQUIRED,
         ],
-        expectedErrorResponse: {
-          message: "Validation failed",
-          errorCode: "BAD_REQUEST",
-          details: [
-            ValidationErrorMessage.USER_ID_REQUIRED,
-            ValidationErrorMessage.CUSTOM_SECTION_TITLE_REQUIRED,
-          ],
-        },
       },
     ];
   }
@@ -402,11 +358,6 @@ export default class UserProfileMiddlewareDataProvider {
           ValidationErrorMessage.CUSTOM_SECTION_TITLE_INVALID,
         ]),
         validationErrors: [ValidationErrorMessage.CUSTOM_SECTION_TITLE_INVALID],
-        expectedErrorResponse: {
-          message: "Validation failed",
-          errorCode: "BAD_REQUEST",
-          details: [ValidationErrorMessage.CUSTOM_SECTION_TITLE_INVALID],
-        },
       },
       {
         description: "should throw BadRequest when details is empty array",
@@ -727,11 +678,6 @@ export default class UserProfileMiddlewareDataProvider {
           ValidationErrorMessage.CUSTOM_SECTION_TITLE_INVALID,
         ]),
         validationErrors: [ValidationErrorMessage.CUSTOM_SECTION_TITLE_INVALID],
-        expectedErrorResponse: {
-          message: "Validation failed",
-          errorCode: "BAD_REQUEST",
-          details: [ValidationErrorMessage.CUSTOM_SECTION_TITLE_INVALID],
-        },
       },
       {
         description: "should throw BadRequest when details is empty array",
@@ -903,6 +849,147 @@ export default class UserProfileMiddlewareDataProvider {
         ]),
         validationErrors: [
           ValidationErrorMessage.STRING_ARRAY_ITEM_INVALID_FORMAT,
+        ],
+      },
+    ];
+  }
+
+  static validateBasicProfileUpdateSuccessCases(): SuccessTestCase[] {
+    return [
+      {
+        description:
+          "should pass validation for valid basic profile update with all fields",
+        request: {
+          params: { userId: new Types.ObjectId().toString() },
+          body: UserProfileTestFixture.createBasicUserProfileInfoRequest(),
+        },
+      },
+      {
+        description:
+          "should pass validation for valid basic profile update with minimal fields",
+        request: {
+          params: { userId: new Types.ObjectId().toString() },
+          body: UserProfileTestFixture.createBasicUserProfileInfoRequest({
+            bio: undefined,
+            location: undefined,
+            role: undefined,
+            profilePicture: undefined,
+          }),
+        },
+      },
+    ];
+  }
+
+  static validateBasicProfileUpdateErrorCases(): ErrorTestCase[] {
+    return [
+      {
+        description: "should throw BadRequest when userId is missing",
+        request: {
+          params: {},
+          body: UserProfileTestFixture.createBasicUserProfileInfoRequest(),
+        },
+        error: APIError.BadRequest("Validation failed", [
+          ValidationErrorMessage.USER_ID_REQUIRED,
+        ]),
+        validationErrors: [ValidationErrorMessage.USER_ID_REQUIRED],
+      },
+      {
+        description: "should throw BadRequest when userId is invalid format",
+        request: {
+          params: { userId: "invalid-user-id" },
+          body: UserProfileTestFixture.createBasicUserProfileInfoRequest(),
+        },
+        error: APIError.BadRequest("Validation failed", [
+          ValidationErrorMessage.USER_ID_INVALID_FORMAT,
+        ]),
+        validationErrors: [ValidationErrorMessage.USER_ID_INVALID_FORMAT],
+      },
+      {
+        description: "should throw BadRequest when username is missing",
+        request: {
+          params: { userId: new Types.ObjectId().toString() },
+          body: UserProfileTestFixture.createBasicUserProfileInfoRequest({
+            username: undefined,
+          }),
+        },
+        error: APIError.BadRequest("Validation failed", [
+          ValidationErrorMessage.USERNAME_REQUIRED,
+        ]),
+        validationErrors: [ValidationErrorMessage.USERNAME_REQUIRED],
+      },
+      {
+        description: "should throw BadRequest when name is missing",
+        request: {
+          params: { userId: new Types.ObjectId().toString() },
+          body: UserProfileTestFixture.createBasicUserProfileInfoRequest({
+            name: undefined,
+          }),
+        },
+        error: APIError.BadRequest("Validation failed", [
+          ValidationErrorMessage.NAME_REQUIRED,
+        ]),
+        validationErrors: [ValidationErrorMessage.NAME_REQUIRED],
+      },
+      {
+        description: "should throw BadRequest when accountType is missing",
+        request: {
+          params: { userId: new Types.ObjectId().toString() },
+          body: UserProfileTestFixture.createBasicUserProfileInfoRequest({
+            accountType: undefined,
+          }),
+        },
+        error: APIError.BadRequest("Validation failed", [
+          ValidationErrorMessage.ACCOUNT_TYPE_REQUIRED,
+        ]),
+        validationErrors: [ValidationErrorMessage.ACCOUNT_TYPE_REQUIRED],
+      },
+      {
+        description: "should throw BadRequest when accountType is null",
+        request: {
+          params: { userId: new Types.ObjectId().toString() },
+          body: UserProfileTestFixture.createBasicUserProfileInfoRequest({
+            accountType: null as any,
+          }),
+        },
+        error: APIError.BadRequest("Validation failed", [
+          ValidationErrorMessage.ACCOUNT_TYPE_REQUIRED,
+        ]),
+        validationErrors: [ValidationErrorMessage.ACCOUNT_TYPE_REQUIRED],
+      },
+      {
+        description: "should throw BadRequest when accountType is invalid",
+        request: {
+          params: { userId: new Types.ObjectId().toString() },
+          body: UserProfileTestFixture.createBasicUserProfileInfoRequest({
+            accountType: 2 as any, // Invalid value
+          }),
+        },
+        error: APIError.BadRequest("Validation failed", [
+          ValidationErrorMessage.ACCOUNT_TYPE_INVALID,
+        ]),
+        validationErrors: [ValidationErrorMessage.ACCOUNT_TYPE_INVALID],
+      },
+      {
+        description: "should throw BadRequest when multiple fields are invalid",
+        request: {
+          params: { userId: "invalid-id" },
+          body: UserProfileTestFixture.createBasicUserProfileInfoRequest({
+            username: undefined,
+            name: undefined,
+            accountType: 2 as any,
+          }),
+        },
+        error: APIError.BadRequest("Validation failed", [
+          ValidationErrorMessage.USER_ID_INVALID_FORMAT,
+          ValidationErrorMessage.USERNAME_REQUIRED,
+          ValidationErrorMessage.NAME_REQUIRED,
+          ValidationErrorMessage.ACCOUNT_TYPE_INVALID,
+        ]),
+        validationErrors: [
+          ValidationErrorMessage.USER_ID_INVALID_FORMAT,
+          ValidationErrorMessage.USERNAME_REQUIRED,
+          ValidationErrorMessage.NAME_REQUIRED,
+          ValidationErrorMessage.ACCOUNT_TYPE_INVALID,
         ],
       },
     ];

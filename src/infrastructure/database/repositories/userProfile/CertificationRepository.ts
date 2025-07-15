@@ -6,7 +6,7 @@ import {
   PaginationRequest,
   PaginationResponse,
   CertificationResponse,
-} from "../../../../app/userProfile/userProfileDto.js";
+} from "@seenelm/train-core";
 
 export interface ICertificationRepository
   extends IBaseRepository<Certification, CertificationDocument> {

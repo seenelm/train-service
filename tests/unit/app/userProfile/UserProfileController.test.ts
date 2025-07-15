@@ -101,6 +101,74 @@ describe("UserProfileController", () => {
     });
   });
 
+  describe("updateBasicUserProfile", () => {
+    describe("success cases", () => {
+      it.each(
+        UserProfileControllerDataProvider.updateBasicUserProfileSuccessCases()
+      )("$description", async ({ request }) => {
+        // Arrange
+        mockRequest.params = request.params;
+        mockRequest.body = request.body;
+
+        vi.spyOn(
+          mockUserProfileService,
+          "updateBasicUserProfileInfo"
+        ).mockResolvedValue();
+
+        // Act
+        await userProfileController.updateBasicUserProfile(
+          mockRequest as Request,
+          mockResponse as Response,
+          mockNext as NextFunction
+        );
+
+        // Assert
+        expect(
+          mockUserProfileService.updateBasicUserProfileInfo
+        ).toHaveBeenCalledWith(
+          new Types.ObjectId(request.params.userId),
+          request.body
+        );
+        expect(mockResponse.status).toHaveBeenCalledWith(HttpStatusCode.OK);
+        expect(mockResponse.json).toHaveBeenCalledWith({ success: true });
+        expect(mockNext).not.toHaveBeenCalled();
+      });
+    });
+
+    describe("error cases", () => {
+      it.each(
+        UserProfileControllerDataProvider.updateBasicUserProfileErrorCases()
+      )("$description", async ({ request, error }) => {
+        // Arrange
+        mockRequest.params = request.params;
+        mockRequest.body = request.body;
+
+        vi.spyOn(
+          mockUserProfileService,
+          "updateBasicUserProfileInfo"
+        ).mockRejectedValue(error);
+
+        // Act
+        await userProfileController.updateBasicUserProfile(
+          mockRequest as Request,
+          mockResponse as Response,
+          mockNext as NextFunction
+        );
+
+        // Assert
+        expect(
+          mockUserProfileService.updateBasicUserProfileInfo
+        ).toHaveBeenCalledWith(
+          new Types.ObjectId(request.params.userId),
+          request.body
+        );
+        expect(mockResponse.status).not.toHaveBeenCalled();
+        expect(mockResponse.json).not.toHaveBeenCalled();
+        expect(mockNext).toHaveBeenCalledWith(error);
+      });
+    });
+  });
+
   describe("createCustomSection", () => {
     it("should create a custom section successfully and return 201 status", async () => {
       // Arrange

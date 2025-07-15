@@ -12,13 +12,13 @@ import {
   CustomSectionRequest,
   CustomSectionResponse,
   BasicUserProfileInfoRequest,
+  StatsItem,
+  AchievementItem,
 } from "@seenelm/train-core";
 import {
   SocialLink,
   Certification,
-  StatsItem,
   CustomSection,
-  AchievementItem,
 } from "../../src/infrastructure/database/models/userProfile/userProfileModel.js";
 
 export default class UserProfileTestFixture {
