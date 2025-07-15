@@ -1,24 +1,17 @@
 import admin from "firebase-admin";
-import { readFile } from "fs/promises";
-import { fileURLToPath } from "url";
-import { dirname, resolve } from "path";
+import dotenv from "dotenv";
 
-// Get the current file's directory
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = dirname(__filename);
+dotenv.config();
 
 // Function to initialize Firebase
-async function initializeFirebase() {
+function initializeFirebase() {
   try {
-    // Read the JSON file using fs/promises
-    const configPath = resolve(
-      __dirname,
-      "../../../../config/firebase-config.json"
-    );
-    const serviceAccountJson = await readFile(configPath, "utf8");
-    const serviceAccount = JSON.parse(serviceAccountJson);
+    const base64 = process.env.FIREBASE_SERVICE_ACCOUNT_BASE64;
+    if (!base64) throw new Error("Missing FIREBASE_SERVICE_ACCOUNT_BASE64 env var");
 
-    // Initialize the app
+    const jsonString = Buffer.from(base64, "base64").toString("utf8");
+    const serviceAccount = JSON.parse(jsonString);
+
     admin.initializeApp({
       credential: admin.credential.cert(serviceAccount),
     });
@@ -30,7 +23,6 @@ async function initializeFirebase() {
   }
 }
 
-// Initialize Firebase immediately
 initializeFirebase();
 
 export default admin;
