@@ -2,6 +2,7 @@ import { ISearchService } from "./SearchService.js";
 import { Request, Response, NextFunction } from "express";
 import { PaginationRequest } from "../userProfile/userProfileDto.js";
 import { StatusCodes as HttpStatusCode } from "http-status-codes";
+import { SearchQuery } from "./SearchSchema.js";
 
 export default class SearchController {
   private searchService: ISearchService;
@@ -16,16 +17,13 @@ export default class SearchController {
     next: NextFunction
   ) => {
     try {
-      const { searchTerm } = req.params;
-      const paginationRequest: PaginationRequest = {
-        page: parseInt(req.query.page as string) || 1,
-        limit: parseInt(req.query.limit as string) || 20,
-      };
+      const { searchTerm, page, limit } = (req as any)
+        .validatedQuery as SearchQuery;
 
-      const result = await this.searchService.searchCertifications(
-        searchTerm,
-        paginationRequest
-      );
+      const result = await this.searchService.searchCertifications(searchTerm, {
+        page,
+        limit,
+      });
 
       res.status(HttpStatusCode.OK).json(result);
     } catch (error) {

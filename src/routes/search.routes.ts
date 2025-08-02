@@ -1,6 +1,7 @@
 import { Router } from "express";
 import SearchController from "../app/search/SearchController.js";
 import SearchService from "../app/search/SearchService.js";
+import SearchMiddleware from "../app/search/SearchMiddleware.js";
 import CertificationRepository from "../infrastructure/database/repositories/userProfile/CertificationRepository.js";
 import { CertificationModel } from "../infrastructure/database/models/userProfile/certificationModel.js";
 
@@ -11,7 +12,8 @@ const searchController = new SearchController(
 );
 
 router.get(
-  "/certifications/:searchTerm",
+  "/certifications",
+  SearchMiddleware.validateSearchCertifications,
   searchController.searchCertifications
 );
 
