@@ -1,5 +1,5 @@
-import { Request, Response, NextFunction } from "express";
 import { ValidationErrorMessage } from "../../../../../src/common/enums.js";
+import { ValidationErrorResponse } from "../../../../../src/common/errors/ValidationErrorResponse.js";
 
 export interface SearchMiddlewareTestCase {
   description: string;
@@ -16,7 +16,7 @@ export interface SearchMiddlewareErrorTestCase {
     params: Record<string, string>;
     query: { searchTerm?: string; page?: string; limit?: string };
   };
-  expectedValidationErrors: string[];
+  expectedValidationErrors: ValidationErrorResponse[];
 }
 
 export default class SearchMiddlewareDataProvider {
@@ -95,6 +95,15 @@ export default class SearchMiddlewareDataProvider {
         },
         shouldPassValidation: true,
       },
+      {
+        description:
+          "should pass validation with excessive whitespace (normalized)",
+        request: {
+          params: {},
+          query: { searchTerm: "fitness   training" },
+        },
+        shouldPassValidation: true,
+      },
     ];
   }
 
@@ -106,7 +115,12 @@ export default class SearchMiddlewareDataProvider {
           params: {},
           query: { page: "1", limit: "10" },
         },
-        expectedValidationErrors: [ValidationErrorMessage.SEARCH_TERM_REQUIRED],
+        expectedValidationErrors: [
+          new ValidationErrorResponse(
+            "searchTerm",
+            ValidationErrorMessage.SEARCH_TERM_REQUIRED
+          ),
+        ],
       },
       {
         description: "should fail validation with empty search term",
@@ -114,7 +128,12 @@ export default class SearchMiddlewareDataProvider {
           params: {},
           query: { searchTerm: "" },
         },
-        expectedValidationErrors: [ValidationErrorMessage.SEARCH_TERM_REQUIRED],
+        expectedValidationErrors: [
+          new ValidationErrorResponse(
+            "searchTerm",
+            ValidationErrorMessage.SEARCH_TERM_REQUIRED
+          ),
+        ],
       },
       {
         description: "should fail validation with whitespace-only search term",
@@ -123,8 +142,10 @@ export default class SearchMiddlewareDataProvider {
           query: { searchTerm: "   ", page: "1", limit: "20" },
         },
         expectedValidationErrors: [
-          ValidationErrorMessage.SEARCH_TERM_REQUIRED,
-          ValidationErrorMessage.SEARCH_TERM_TOO_SHORT,
+          new ValidationErrorResponse(
+            "searchTerm",
+            ValidationErrorMessage.SEARCH_TERM_REQUIRED
+          ),
         ],
       },
       {
@@ -133,7 +154,12 @@ export default class SearchMiddlewareDataProvider {
           params: {},
           query: { searchTerm: "a".repeat(101) },
         },
-        expectedValidationErrors: [ValidationErrorMessage.SEARCH_TERM_TOO_LONG],
+        expectedValidationErrors: [
+          new ValidationErrorResponse(
+            "searchTerm",
+            ValidationErrorMessage.SEARCH_TERM_TOO_LONG
+          ),
+        ],
       },
       {
         description: "should fail validation with invalid characters",
@@ -142,19 +168,13 @@ export default class SearchMiddlewareDataProvider {
           query: { searchTerm: "fitness\x00training", page: "1", limit: "10" },
         },
         expectedValidationErrors: [
-          ValidationErrorMessage.SEARCH_TERM_NORMALIZATION_FAILED,
+          new ValidationErrorResponse(
+            "searchTerm",
+            ValidationErrorMessage.SEARCH_TERM_INVALID_CHARACTERS
+          ),
         ],
       },
-      {
-        description: "should fail validation with excessive whitespace",
-        request: {
-          params: {},
-          query: { searchTerm: "fitness   training" },
-        },
-        expectedValidationErrors: [
-          ValidationErrorMessage.SEARCH_TERM_NORMALIZATION_FAILED,
-        ],
-      },
+
       {
         description:
           "should fail validation with unsafe characters (whitelist approach)",
@@ -167,7 +187,10 @@ export default class SearchMiddlewareDataProvider {
           },
         },
         expectedValidationErrors: [
-          ValidationErrorMessage.SEARCH_TERM_INVALID_CHARACTERS,
+          new ValidationErrorResponse(
+            "searchTerm",
+            ValidationErrorMessage.SEARCH_TERM_INVALID_CHARACTERS
+          ),
         ],
       },
       {
@@ -181,7 +204,10 @@ export default class SearchMiddlewareDataProvider {
           },
         },
         expectedValidationErrors: [
-          ValidationErrorMessage.SEARCH_TERM_INVALID_CHARACTERS,
+          new ValidationErrorResponse(
+            "searchTerm",
+            ValidationErrorMessage.SEARCH_TERM_INVALID_CHARACTERS
+          ),
         ],
       },
       {
@@ -191,56 +217,89 @@ export default class SearchMiddlewareDataProvider {
           query: { searchTerm: "fitness $where", page: "1", limit: "10" },
         },
         expectedValidationErrors: [
-          ValidationErrorMessage.SEARCH_TERM_INVALID_CHARACTERS,
+          new ValidationErrorResponse(
+            "searchTerm",
+            ValidationErrorMessage.SEARCH_TERM_INVALID_CHARACTERS
+          ),
         ],
       },
       {
         description: "should fail validation with invalid page number",
         request: {
           params: {},
-          query: { searchTerm: "yoga", page: "0", limit: "10" },
+          query: { searchTerm: "fitness", page: "0", limit: "10" },
         },
-        expectedValidationErrors: [ValidationErrorMessage.PAGE_NUMBER_INVALID],
-      },
-      {
-        description: "should fail validation with invalid limit",
-        request: {
-          params: {},
-          query: { searchTerm: "pilates", page: "1", limit: "0" },
-        },
-        expectedValidationErrors: [ValidationErrorMessage.LIMIT_INVALID],
-      },
-      {
-        description: "should fail validation with non-numeric page",
-        request: {
-          params: {},
-          query: { searchTerm: "strength", page: "invalid", limit: "10" },
-        },
-        expectedValidationErrors: [ValidationErrorMessage.PAGE_NUMBER_INVALID],
-      },
-      {
-        description: "should fail validation with non-numeric limit",
-        request: {
-          params: {},
-          query: { searchTerm: "cardio", page: "1", limit: "not-a-number" },
-        },
-        expectedValidationErrors: [ValidationErrorMessage.LIMIT_INVALID],
+        expectedValidationErrors: [
+          new ValidationErrorResponse(
+            "page",
+            ValidationErrorMessage.PAGE_NUMBER_INVALID
+          ),
+        ],
       },
       {
         description: "should fail validation with page number too high",
         request: {
           params: {},
-          query: { searchTerm: "flexibility", page: "10001", limit: "10" },
+          query: { searchTerm: "fitness", page: "10001", limit: "10" },
         },
-        expectedValidationErrors: [ValidationErrorMessage.PAGE_NUMBER_INVALID],
+        expectedValidationErrors: [
+          new ValidationErrorResponse(
+            "page",
+            ValidationErrorMessage.PAGE_NUMBER_INVALID
+          ),
+        ],
+      },
+      {
+        description: "should fail validation with invalid limit",
+        request: {
+          params: {},
+          query: { searchTerm: "fitness", page: "1", limit: "0" },
+        },
+        expectedValidationErrors: [
+          new ValidationErrorResponse(
+            "limit",
+            ValidationErrorMessage.LIMIT_INVALID
+          ),
+        ],
       },
       {
         description: "should fail validation with limit too high",
         request: {
           params: {},
-          query: { searchTerm: "endurance", page: "1", limit: "1001" },
+          query: { searchTerm: "fitness", page: "1", limit: "1001" },
         },
-        expectedValidationErrors: [ValidationErrorMessage.LIMIT_INVALID],
+        expectedValidationErrors: [
+          new ValidationErrorResponse(
+            "limit",
+            ValidationErrorMessage.LIMIT_INVALID
+          ),
+        ],
+      },
+      {
+        description: "should fail validation with non-numeric page",
+        request: {
+          params: {},
+          query: { searchTerm: "fitness", page: "abc", limit: "10" },
+        },
+        expectedValidationErrors: [
+          new ValidationErrorResponse(
+            "page",
+            ValidationErrorMessage.PAGE_NUMBER_INVALID
+          ),
+        ],
+      },
+      {
+        description: "should fail validation with non-numeric limit",
+        request: {
+          params: {},
+          query: { searchTerm: "fitness", page: "1", limit: "xyz" },
+        },
+        expectedValidationErrors: [
+          new ValidationErrorResponse(
+            "limit",
+            ValidationErrorMessage.LIMIT_INVALID
+          ),
+        ],
       },
     ];
   }

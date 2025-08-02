@@ -210,14 +210,14 @@ export enum ValidationErrorMessage {
   STATS_ITEM_INVALID_FORMAT = "Stats item has invalid format",
   STRING_ARRAY_ITEM_INVALID_FORMAT = "String array item has invalid format",
 
-  // Search validation messages
-  SEARCH_TERM_REQUIRED = "Search term is required",
-  SEARCH_TERM_TOO_LONG = "Search term must be 100 characters or less",
-  SEARCH_TERM_TOO_SHORT = "Search term must be at least 1 character",
-  SEARCH_TERM_INVALID_CHARACTERS = "Search term contains invalid characters",
-  SEARCH_TERM_CONTAINS_INVALID_PATTERNS = "Search term contains invalid patterns",
-  SEARCH_TERM_CONTAINS_XSS_PATTERNS = "Search term contains potentially harmful content",
-  SEARCH_TERM_NORMALIZATION_FAILED = "Search term normalization failed",
-  PAGE_NUMBER_INVALID = "Page number must be between 1 and 10000",
-  LIMIT_INVALID = "Limit must be between 1 and 1000",
+  // Search validation messages (PRODUCTION-GRADE GENERIC)
+  SEARCH_TERM_REQUIRED = "Invalid search input",
+  SEARCH_TERM_TOO_LONG = "Invalid search input",
+  SEARCH_TERM_TOO_SHORT = "Invalid search input",
+  SEARCH_TERM_INVALID_CHARACTERS = "Invalid search input",
+  SEARCH_TERM_CONTAINS_INVALID_PATTERNS = "Invalid search input",
+  SEARCH_TERM_CONTAINS_XSS_PATTERNS = "Invalid search input",
+  SEARCH_TERM_NORMALIZATION_FAILED = "Invalid search input",
+  PAGE_NUMBER_INVALID = "Invalid pagination parameter",
+  LIMIT_INVALID = "Invalid pagination parameter",
 }

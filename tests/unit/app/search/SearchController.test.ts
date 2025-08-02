@@ -49,6 +49,13 @@ describe("SearchController", () => {
           mockRequest.params = request.params;
           mockRequest.query = request.query;
 
+          // Mock the validatedQuery that would be set by middleware
+          (mockRequest as any).validatedQuery = {
+            searchTerm: request.query.searchTerm,
+            page: parseInt(request.query.page as string) || 1,
+            limit: parseInt(request.query.limit as string) || 20,
+          };
+
           vi.spyOn(mockSearchService, "searchCertifications").mockResolvedValue(
             expectedResponse
           );
@@ -82,6 +89,13 @@ describe("SearchController", () => {
           // Arrange
           mockRequest.params = request.params;
           mockRequest.query = request.query;
+
+          // Mock the validatedQuery that would be set by middleware
+          (mockRequest as any).validatedQuery = {
+            searchTerm: request.query.searchTerm,
+            page: parseInt(request.query.page as string) || 1,
+            limit: parseInt(request.query.limit as string) || 20,
+          };
 
           vi.spyOn(mockSearchService, "searchCertifications").mockRejectedValue(
             error

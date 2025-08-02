@@ -1,5 +1,6 @@
 import { NextFunction, Request, Response } from "express";
 import { searchQuerySchema } from "./SearchSchema.js";
+import { ValidationErrorResponse } from "../../common/errors/ValidationErrorResponse.js";
 
 export default class SearchMiddleware {
   public static validateSearchCertifications = (
@@ -14,17 +15,18 @@ export default class SearchMiddleware {
 
     const result = searchQuerySchema.safeParse(req.query);
     if (!result.success) {
+      const validationErrors = ValidationErrorResponse.fromZodError(
+        result.error
+      );
+
       return res.status(400).json({
         message: "Search validation failed",
-        errors: result.error.issues.map((issue) => ({
-          field: issue.path[0],
-          message: issue.message,
-        })),
+        errors: validationErrors.map((error) => error.toJSON()),
       });
     }
 
     // Attach parsed and typed data to request for downstream use (optional)
-    (req as any).validatedQuery = result.data;
+    req.validatedQuery = result.data;
     next();
   };
 }
