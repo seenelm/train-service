@@ -287,4 +287,22 @@ export default class UserProfileController {
       next(error);
     }
   };
+
+  public fetchUserGroups = async (
+    req: Request<{ userId: string }>,
+    res: Response,
+    next: NextFunction
+  ) => {
+    try {
+      const { userId } = req.params;
+
+      const userGroups = await this.userProfileService.fetchUserGroups(
+        new Types.ObjectId(userId)
+      );
+
+      res.status(HttpStatusCode.OK).json(userGroups);
+    } catch (error) {
+      next(error);
+    }
+  };
 }

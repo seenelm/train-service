@@ -1,6 +1,6 @@
 import { Request, Response, NextFunction } from "express";
 import { IGroupService } from "./GroupService.js";
-import { CreateGroupRequest } from "./groupDto.js";
+import { CreateGroupRequest, UpdateGroupProfileRequest } from "./groupDto.js";
 import { APIError } from "../../common/errors/APIError.js";
 import { StatusCodes as HttpStatusCode } from "http-status-codes";
 import { Types } from "mongoose";
@@ -181,6 +181,30 @@ export default class GroupController {
       await this.groupService.deleteGroup(group, ownerId);
 
       res.status(HttpStatusCode.OK).json({ success: true });
+    } catch (error) {
+      next(error);
+    }
+  };
+
+  public updateGroupProfile = async (
+    req: Request<{ groupId: string }, {}, UpdateGroupProfileRequest>,
+    res: Response,
+    next: NextFunction
+  ) => {
+    try {
+      const updateRequest = req.body;
+      const ownerId = req.user.getId();
+
+      // Group is already validated and passed from middleware
+      const group = req.group;
+
+      const updatedGroup = await this.groupService.updateGroupProfile(
+        group,
+        updateRequest,
+        ownerId
+      );
+
+      res.status(HttpStatusCode.OK).json(updatedGroup);
     } catch (error) {
       next(error);
     }

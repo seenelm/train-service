@@ -1,5 +1,9 @@
 import { IGroupRepository } from "../../infrastructure/database/repositories/group/GroupRepository.js";
-import { CreateGroupRequest, GroupResponse } from "./groupDto.js";
+import {
+  CreateGroupRequest,
+  GroupResponse,
+  UpdateGroupProfileRequest,
+} from "./groupDto.js";
 import Group from "../../infrastructure/database/entity/group/Group.js";
 import { APIError } from "../../common/errors/APIError.js";
 import { MongooseError } from "mongoose";
@@ -35,6 +39,11 @@ export interface IGroupService {
     ownerId: Types.ObjectId
   ): Promise<void>;
   deleteGroup(group: Group, ownerId: Types.ObjectId): Promise<void>;
+  updateGroupProfile(
+    group: Group,
+    updateRequest: UpdateGroupProfileRequest,
+    ownerId: Types.ObjectId
+  ): Promise<void>;
 }
 
 export default class GroupService implements IGroupService {
@@ -573,6 +582,38 @@ export default class GroupService implements IGroupService {
     } finally {
       if (session) {
         session.endSession();
+      }
+    }
+  }
+
+  public async updateGroupProfile(
+    group: Group,
+    updateRequest: UpdateGroupProfileRequest,
+    ownerId: Types.ObjectId
+  ): Promise<void> {
+    try {
+      await this.groupRepository.updateOne(
+        { _id: group.getId() },
+        updateRequest
+      );
+
+      this.logger.info("Group profile updated successfully", {
+        groupId: group.getId(),
+        updateRequest,
+      });
+    } catch (error) {
+      this.logger.error("Failed to update group profile", {
+        error,
+        groupId: group.getId(),
+        ownerId,
+      });
+
+      if (error instanceof MongooseError || error instanceof MongoServerError) {
+        throw DatabaseError.handleMongoDBError(error);
+      } else if (error instanceof APIError) {
+        throw error;
+      } else {
+        throw APIError.InternalServerError("Failed to update group profile");
       }
     }
   }

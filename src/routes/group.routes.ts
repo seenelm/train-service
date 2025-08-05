@@ -84,4 +84,12 @@ router.delete(
   groupController.deleteGroup
 );
 
+router.put(
+  "/:groupId/profile",
+  authMiddleware.authenticateToken,
+  GroupMiddleware.validateUpdateGroupProfile,
+  GroupAuthorizationMiddleware.checkUserIsOwner(groupRepository),
+  groupController.updateGroupProfile
+);
+
 export default router;

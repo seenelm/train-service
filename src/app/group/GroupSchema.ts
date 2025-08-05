@@ -168,3 +168,36 @@ export const deleteGroupSchema = z.object({
 });
 
 export type DeleteGroupRequest = z.infer<typeof deleteGroupSchema>;
+
+// Update Group Profile Schema
+export const updateGroupProfileSchema = z.object({
+  params: z.object({
+    groupId: z
+      .string()
+      .min(1, ValidationErrorMessage.GROUP_ID_REQUIRED)
+      .refine((val) => Types.ObjectId.isValid(val), {
+        message: ValidationErrorMessage.GROUP_ID_INVALID_FORMAT,
+      }),
+  }),
+  body: z.object({
+    groupName: z
+      .string()
+      .min(1, ValidationErrorMessage.GROUP_NAME_REQUIRED)
+      .max(50, ValidationErrorMessage.GROUP_NAME_TOO_LONG)
+      .trim()
+      .refine((val) => /^[a-zA-Z0-9\s\-_]+$/.test(val), {
+        message: ValidationErrorMessage.GROUP_NAME_INVALID_CHARACTERS,
+      })
+      .optional(),
+    bio: z
+      .string()
+      .max(500, ValidationErrorMessage.BIO_TOO_LONG)
+      .trim()
+      .optional(),
+    accountType: z.nativeEnum(ProfileAccess).optional(),
+  }),
+});
+
+export type UpdateGroupProfileRequest = z.infer<
+  typeof updateGroupProfileSchema
+>;

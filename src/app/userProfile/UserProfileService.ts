@@ -1,5 +1,7 @@
 import { IUserProfileRepository } from "../../infrastructure/database/repositories/user/UserProfileRepository.js";
 import { IFollowRepository } from "../../infrastructure/database/repositories/user/FollowRepository.js";
+import { IUserGroupsRepository } from "../../infrastructure/database/repositories/user/UserGroupsRepository.js";
+import { IGroupRepository } from "../../infrastructure/database/repositories/group/GroupRepository.js";
 import { UserProfileRequest } from "@seenelm/train-core";
 import { APIError } from "../../common/errors/APIError.js";
 import { MongooseError } from "mongoose";
@@ -17,6 +19,7 @@ import {
   BasicUserProfileInfoRequest,
   ProfileAccess,
 } from "@seenelm/train-core";
+import { GroupResponse, UserGroupsResponse } from "../group/groupDto.js";
 
 export interface IUserProfileService {
   updateUserProfile(userProfileRequest: UserProfileRequest): Promise<void>;
@@ -61,19 +64,26 @@ export interface IUserProfileService {
     followeeId: Types.ObjectId,
     followerId: Types.ObjectId
   ): Promise<void>;
+  fetchUserGroups(userId: Types.ObjectId): Promise<UserGroupsResponse>;
 }
 
 export default class UserProfileService implements IUserProfileService {
   private userProfileRepository: IUserProfileRepository;
   private followRepository: IFollowRepository;
+  private userGroupsRepository: IUserGroupsRepository;
+  private groupRepository: IGroupRepository;
   private logger: Logger;
 
   constructor(
     userProfileRepository: IUserProfileRepository,
-    followRepository: IFollowRepository
+    followRepository: IFollowRepository,
+    userGroupsRepository: IUserGroupsRepository,
+    groupRepository: IGroupRepository
   ) {
     this.userProfileRepository = userProfileRepository;
     this.followRepository = followRepository;
+    this.userGroupsRepository = userGroupsRepository;
+    this.groupRepository = groupRepository;
     this.logger = Logger.getInstance();
   }
 
@@ -871,6 +881,60 @@ export default class UserProfileService implements IUserProfileService {
     } finally {
       if (session) {
         session.endSession();
+      }
+    }
+  }
+
+  public async fetchUserGroups(
+    userId: Types.ObjectId
+  ): Promise<UserGroupsResponse> {
+    try {
+      // Get user's groups from userGroupsModel
+      const userGroups = await this.userGroupsRepository.findOne({ userId });
+
+      if (!userGroups) {
+        this.logger.warn("User groups not found", { userId });
+        throw APIError.NotFound("User groups not found");
+      }
+
+      // Get group details for each group ID
+      const groupIds = userGroups.getGroups();
+      const groups: GroupResponse[] = [];
+
+      if (groupIds.length > 0) {
+        const groupEntities = await this.groupRepository.find({
+          _id: { $in: groupIds },
+        });
+
+        // Convert to GroupResponse format
+        groups.push(
+          ...groupEntities.map((group) =>
+            this.groupRepository.toResponse(group)
+          )
+        );
+      }
+
+      this.logger.info("User groups fetched successfully", {
+        userId,
+        groupCount: groups.length,
+      });
+
+      return {
+        userId: userId.toString(),
+        groups,
+      };
+    } catch (error) {
+      this.logger.error("Failed to fetch user groups", {
+        error,
+        userId,
+      });
+
+      if (error instanceof MongooseError || error instanceof MongoServerError) {
+        throw DatabaseError.handleMongoDBError(error);
+      } else if (error instanceof APIError) {
+        throw error;
+      } else {
+        throw APIError.InternalServerError("Failed to fetch user groups");
       }
     }
   }

@@ -14,42 +14,10 @@ export interface CreateGroupRequest {
  * Update Group Request DTO
  * Used for updating existing groups
  */
-export interface UpdateGroupRequest {
-  groupName?: string; // Optional
-  bio?: string; // Optional
-  accountType?: ProfileAccess; // Optional
-}
-
-/**
- * Add Members Request DTO
- * Used for adding members to a group
- */
-export interface AddMembersRequest {
-  memberIds: string[]; // Required
-}
-
-/**
- * Remove Members Request DTO
- * Used for removing members from a group
- */
-export interface RemoveMembersRequest {
-  memberIds: string[]; // Required
-}
-
-/**
- * Add Owners Request DTO
- * Used for adding owners to a group
- */
-export interface AddOwnersRequest {
-  ownerIds: string[]; // Required
-}
-
-/**
- * Remove Owners Request DTO
- * Used for removing owners from a group
- */
-export interface RemoveOwnersRequest {
-  ownerIds: string[]; // Required
+export interface UpdateGroupProfileRequest {
+  groupName: string; // Optional
+  bio: string; // Optional
+  accountType: ProfileAccess; // Optional
 }
 
 /**
@@ -64,6 +32,9 @@ export interface GroupResponse {
   members: string[];
   requests: string[];
   accountType: ProfileAccess;
-  createdAt?: Date;
-  updatedAt?: Date;
+}
+
+export interface UserGroupsResponse {
+  userId: string;
+  groups: GroupResponse[];
 }

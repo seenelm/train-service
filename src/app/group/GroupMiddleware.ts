@@ -8,6 +8,7 @@ import {
   leaveGroupSchema,
   removeMemberFromGroupSchema,
   deleteGroupSchema,
+  updateGroupProfileSchema,
 } from "./GroupSchema.js";
 import { ValidationErrorResponse } from "../../common/errors/ValidationErrorResponse.js";
 import { Logger } from "../../common/logger.js";
@@ -233,6 +234,35 @@ export default class GroupMiddleware {
       }
 
       this.logger.info("Delete group validation successful");
+      next();
+    } catch (error) {
+      next(error);
+    }
+  };
+
+  public static validateUpdateGroupProfile = (
+    req: Request<{ groupId: string }, {}, any>,
+    res: Response,
+    next: NextFunction
+  ) => {
+    try {
+      const result = updateGroupProfileSchema.safeParse({
+        params: req.params,
+        body: req.body,
+      });
+
+      if (!result.success) {
+        const validationErrors = ValidationErrorResponse.fromZodError(
+          result.error
+        );
+
+        return res.status(400).json({
+          message: "Update group profile validation failed",
+          errors: validationErrors.map((error) => error.toJSON()),
+        });
+      }
+
+      this.logger.info("Update group profile validation successful");
       next();
     } catch (error) {
       next(error);
