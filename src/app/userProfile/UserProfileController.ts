@@ -2,6 +2,7 @@ import { IUserProfileService } from "./UserProfileService.js";
 import { NextFunction, Request, Response } from "express";
 import { UserProfileRequest } from "@seenelm/train-core";
 import { StatusCodes as HttpStatusCode } from "http-status-codes";
+import { APIError } from "../../common/errors/APIError.js";
 import {
   CustomSectionRequest,
   CustomSectionType,
@@ -123,6 +124,165 @@ export default class UserProfileController {
       );
 
       res.status(HttpStatusCode.OK).json({ success: true });
+    } catch (error) {
+      next(error);
+    }
+  };
+
+  public followUser = async (
+    req: Request<{ followeeId: string }>,
+    res: Response,
+    next: NextFunction
+  ) => {
+    try {
+      const { followeeId } = req.params;
+      const followerId = req.user?.getId();
+
+      if (!followerId) {
+        throw APIError.BadRequest("User not authenticated");
+      }
+
+      await this.userProfileService.followUser(
+        followerId,
+        new Types.ObjectId(followeeId)
+      );
+
+      res.status(HttpStatusCode.OK).json({ success: true });
+    } catch (error) {
+      next(error);
+    }
+  };
+
+  public requestToFollowUser = async (
+    req: Request<{ followeeId: string }>,
+    res: Response,
+    next: NextFunction
+  ) => {
+    try {
+      const { followeeId } = req.params;
+      const followerId = req.user?.getId();
+
+      if (!followerId) {
+        throw APIError.BadRequest("User not authenticated");
+      }
+
+      await this.userProfileService.requestToFollowUser(
+        followerId,
+        new Types.ObjectId(followeeId)
+      );
+
+      res.status(HttpStatusCode.OK).json({
+        success: true,
+        message: "Follow request sent successfully",
+      });
+    } catch (error) {
+      next(error);
+    }
+  };
+
+  public acceptFollowRequest = async (
+    req: Request<{ followerId: string }>,
+    res: Response,
+    next: NextFunction
+  ) => {
+    try {
+      const { followerId } = req.params;
+      const followeeId = req.user?.getId();
+
+      if (!followeeId) {
+        throw APIError.BadRequest("User not authenticated");
+      }
+
+      await this.userProfileService.acceptFollowRequest(
+        followeeId,
+        new Types.ObjectId(followerId)
+      );
+
+      res.status(HttpStatusCode.OK).json({
+        success: true,
+        message: "Follow request accepted successfully",
+      });
+    } catch (error) {
+      next(error);
+    }
+  };
+
+  public rejectFollowRequest = async (
+    req: Request<{ followerId: string }>,
+    res: Response,
+    next: NextFunction
+  ) => {
+    try {
+      const { followerId } = req.params;
+      const followeeId = req.user?.getId();
+
+      if (!followeeId) {
+        throw APIError.BadRequest("User not authenticated");
+      }
+
+      await this.userProfileService.rejectFollowRequest(
+        followeeId,
+        new Types.ObjectId(followerId)
+      );
+
+      res.status(HttpStatusCode.OK).json({
+        success: true,
+        message: "Follow request rejected successfully",
+      });
+    } catch (error) {
+      next(error);
+    }
+  };
+
+  public unfollowUser = async (
+    req: Request<{ followeeId: string }>,
+    res: Response,
+    next: NextFunction
+  ) => {
+    try {
+      const { followeeId } = req.params;
+      const followerId = req.user?.getId();
+
+      if (!followerId) {
+        throw APIError.BadRequest("User not authenticated");
+      }
+
+      await this.userProfileService.unfollowUser(
+        followerId,
+        new Types.ObjectId(followeeId)
+      );
+
+      res.status(HttpStatusCode.OK).json({
+        success: true,
+        message: "User unfollowed successfully",
+      });
+    } catch (error) {
+      next(error);
+    }
+  };
+
+  public removeFollower = async (
+    req: Request<{ followerId: string }>,
+    res: Response,
+    next: NextFunction
+  ) => {
+    try {
+      const { followerId } = req.params;
+      const followeeId = req.user?.getId();
+
+      if (!followeeId) {
+        throw APIError.BadRequest("User not authenticated");
+      }
+
+      await this.userProfileService.removeFollower(
+        followeeId,
+        new Types.ObjectId(followerId)
+      );
+
+      res.status(HttpStatusCode.OK).json({
+        success: true,
+        message: "Follower removed successfully",
+      });
     } catch (error) {
       next(error);
     }

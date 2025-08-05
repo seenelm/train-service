@@ -14,6 +14,7 @@ import {
   CustomSectionResponse,
   CustomSectionType,
   BasicUserProfileInfoRequest,
+  ProfileAccess,
 } from "@seenelm/train-core";
 
 export interface IUserProfileService {
@@ -34,6 +35,30 @@ export interface IUserProfileService {
   deleteCustomSection(
     userId: Types.ObjectId,
     sectionTitle: CustomSectionType
+  ): Promise<void>;
+  followUser(
+    followerId: Types.ObjectId,
+    followeeId: Types.ObjectId
+  ): Promise<void>;
+  requestToFollowUser(
+    followerId: Types.ObjectId,
+    followeeId: Types.ObjectId
+  ): Promise<void>;
+  acceptFollowRequest(
+    followeeId: Types.ObjectId,
+    followerId: Types.ObjectId
+  ): Promise<void>;
+  rejectFollowRequest(
+    followeeId: Types.ObjectId,
+    followerId: Types.ObjectId
+  ): Promise<void>;
+  unfollowUser(
+    followerId: Types.ObjectId,
+    followeeId: Types.ObjectId
+  ): Promise<void>;
+  removeFollower(
+    followeeId: Types.ObjectId,
+    followerId: Types.ObjectId
   ): Promise<void>;
 }
 
@@ -356,6 +381,431 @@ export default class UserProfileService implements IUserProfileService {
         throw error;
       } else {
         throw APIError.InternalServerError("Failed to delete custom section");
+      }
+    }
+  }
+
+  public async followUser(
+    followerId: Types.ObjectId,
+    followeeId: Types.ObjectId
+  ): Promise<void> {
+    try {
+      // Check if follower exists and get their follow document
+      const follower = await this.followRepository.findOne({
+        userId: followerId,
+      });
+      if (!follower) {
+        this.logger.warn(ErrorMessage.FOLLOWER_NOT_FOUND, { followerId });
+        throw APIError.NotFound(ErrorMessage.FOLLOWER_NOT_FOUND);
+      }
+
+      // Check if followee exists and get their follow document
+      const followee = await this.followRepository.findOne({
+        userId: followeeId,
+      });
+      if (!followee) {
+        this.logger.warn(ErrorMessage.FOLLOWEE_NOT_FOUND, { followeeId });
+        throw APIError.NotFound(ErrorMessage.FOLLOWEE_NOT_FOUND);
+      }
+
+      // Check if already following
+      const isAlreadyFollowing = follower
+        .getFollowing()
+        .some((id) => id.equals(followeeId));
+      if (isAlreadyFollowing) {
+        this.logger.warn(ErrorMessage.ALREADY_FOLLOWING, {
+          followerId,
+          followeeId,
+        });
+        throw APIError.Conflict(ErrorMessage.ALREADY_FOLLOWING);
+      }
+
+      // Add followee to follower's following list
+      await this.followRepository.updateOne(
+        { userId: followerId },
+        { $addToSet: { following: followeeId } }
+      );
+
+      // Add follower to followee's followers list
+      await this.followRepository.updateOne(
+        { userId: followeeId },
+        { $addToSet: { followers: followerId } }
+      );
+
+      this.logger.info("User followed successfully", {
+        followerId,
+        followeeId,
+      });
+    } catch (error) {
+      this.logger.error("Failed to follow user", {
+        error,
+        followerId,
+        followeeId,
+      });
+
+      if (error instanceof MongooseError || error instanceof MongoServerError) {
+        throw DatabaseError.handleMongoDBError(error);
+      } else if (error instanceof APIError) {
+        throw error;
+      } else {
+        throw APIError.InternalServerError("Failed to follow user");
+      }
+    }
+  }
+
+  public async requestToFollowUser(
+    followerId: Types.ObjectId,
+    followeeId: Types.ObjectId
+  ): Promise<void> {
+    try {
+      // Check if follower exists and get their follow document
+      const follower = await this.followRepository.findOne({
+        userId: followerId,
+      });
+      if (!follower) {
+        this.logger.warn(ErrorMessage.FOLLOWER_NOT_FOUND, { followerId });
+        throw APIError.NotFound(ErrorMessage.FOLLOWER_NOT_FOUND);
+      }
+
+      // Check if followee exists and get their follow document
+      const followee = await this.followRepository.findOne({
+        userId: followeeId,
+      });
+      if (!followee) {
+        this.logger.warn(ErrorMessage.FOLLOWEE_NOT_FOUND, { followeeId });
+        throw APIError.NotFound(ErrorMessage.FOLLOWEE_NOT_FOUND);
+      }
+
+      // Check if already following
+      const isAlreadyFollowing = follower
+        .getFollowing()
+        .some((id) => id.equals(followeeId));
+      if (isAlreadyFollowing) {
+        this.logger.warn(ErrorMessage.ALREADY_FOLLOWING, {
+          followerId,
+          followeeId,
+        });
+        throw APIError.Conflict(ErrorMessage.ALREADY_FOLLOWING);
+      }
+
+      // Check if already requested
+      const isAlreadyRequested = followee!
+        .getRequests()
+        .some((id) => id.equals(followerId));
+      if (isAlreadyRequested) {
+        this.logger.warn(ErrorMessage.FOLLOW_REQUEST_ALREADY_SENT, {
+          followerId,
+          followeeId,
+        });
+        throw APIError.Conflict(ErrorMessage.FOLLOW_REQUEST_ALREADY_SENT);
+      }
+
+      // Add follower to followee's requests list
+      await this.followRepository.updateOne(
+        { userId: followeeId },
+        { $addToSet: { requests: followerId } }
+      );
+
+      this.logger.info("Follow request sent successfully", {
+        followerId,
+        followeeId,
+      });
+    } catch (error) {
+      this.logger.error("Failed to send follow request", {
+        error,
+        followerId,
+        followeeId,
+      });
+
+      if (error instanceof MongooseError || error instanceof MongoServerError) {
+        throw DatabaseError.handleMongoDBError(error);
+      } else if (error instanceof APIError) {
+        throw error;
+      } else {
+        throw APIError.InternalServerError("Failed to send follow request");
+      }
+    }
+  }
+
+  public async acceptFollowRequest(
+    followeeId: Types.ObjectId,
+    followerId: Types.ObjectId
+  ): Promise<void> {
+    try {
+      // Check if followee exists and get their follow document
+      const followee = await this.followRepository.findOne({
+        userId: followeeId,
+      });
+      if (!followee) {
+        this.logger.warn(ErrorMessage.FOLLOWEE_NOT_FOUND, { followeeId });
+        throw APIError.NotFound(ErrorMessage.FOLLOWEE_NOT_FOUND);
+      }
+
+      // Check if follower exists and get their follow document
+      const follower = await this.followRepository.findOne({
+        userId: followerId,
+      });
+      if (!follower) {
+        this.logger.warn(ErrorMessage.FOLLOWER_NOT_FOUND, { followerId });
+        throw APIError.NotFound(ErrorMessage.FOLLOWER_NOT_FOUND);
+      }
+
+      // Check if the request exists
+      const hasRequest = followee
+        .getRequests()
+        .some((id) => id.equals(followerId));
+      if (!hasRequest) {
+        this.logger.warn(ErrorMessage.FOLLOW_REQUEST_NOT_FOUND, {
+          followeeId,
+          followerId,
+        });
+        throw APIError.NotFound(ErrorMessage.FOLLOW_REQUEST_NOT_FOUND);
+      }
+
+      // Check if already following
+      const isAlreadyFollowing = follower
+        .getFollowing()
+        .some((id) => id.equals(followeeId));
+      if (isAlreadyFollowing) {
+        this.logger.warn(ErrorMessage.ALREADY_FOLLOWING, {
+          followerId,
+          followeeId,
+        });
+        throw APIError.Conflict(ErrorMessage.ALREADY_FOLLOWING);
+      }
+
+      // Remove follower from followee's requests list
+      await this.followRepository.updateOne(
+        { userId: followeeId },
+        {
+          $addToSet: { followers: followerId },
+          $pull: { requests: followerId },
+        }
+      );
+
+      // Add followee to follower's following list
+      await this.followRepository.updateOne(
+        { userId: followerId },
+        { $addToSet: { following: followeeId } }
+      );
+
+      this.logger.info("Follow request accepted successfully", {
+        followeeId,
+        followerId,
+      });
+    } catch (error) {
+      this.logger.error("Failed to accept follow request", {
+        error,
+        followeeId,
+        followerId,
+      });
+
+      if (error instanceof MongooseError || error instanceof MongoServerError) {
+        throw DatabaseError.handleMongoDBError(error);
+      } else if (error instanceof APIError) {
+        throw error;
+      } else {
+        throw APIError.InternalServerError("Failed to accept follow request");
+      }
+    }
+  }
+
+  public async rejectFollowRequest(
+    followeeId: Types.ObjectId,
+    followerId: Types.ObjectId
+  ): Promise<void> {
+    try {
+      // Check if followee exists and get their follow document
+      const followee = await this.followRepository.findOne({
+        userId: followeeId,
+      });
+      if (!followee) {
+        this.logger.warn(ErrorMessage.FOLLOWEE_NOT_FOUND, { followeeId });
+        throw APIError.NotFound(ErrorMessage.FOLLOWEE_NOT_FOUND);
+      }
+
+      // Check if follower exists and get their follow document
+      const follower = await this.followRepository.findOne({
+        userId: followerId,
+      });
+      if (!follower) {
+        this.logger.warn(ErrorMessage.FOLLOWER_NOT_FOUND, { followerId });
+        throw APIError.NotFound(ErrorMessage.FOLLOWER_NOT_FOUND);
+      }
+
+      // Check if the request exists
+      const hasRequest = followee
+        .getRequests()
+        .some((id) => id.equals(followerId));
+      if (!hasRequest) {
+        this.logger.warn(ErrorMessage.FOLLOW_REQUEST_NOT_FOUND, {
+          followeeId,
+          followerId,
+        });
+        throw APIError.NotFound(ErrorMessage.FOLLOW_REQUEST_NOT_FOUND);
+      }
+
+      // Remove follower from followee's requests list
+      await this.followRepository.updateOne(
+        { userId: followeeId },
+        { $pull: { requests: followerId } }
+      );
+
+      this.logger.info("Follow request rejected successfully", {
+        followeeId,
+        followerId,
+      });
+    } catch (error) {
+      this.logger.error("Failed to reject follow request", {
+        error,
+        followeeId,
+        followerId,
+      });
+
+      if (error instanceof MongooseError || error instanceof MongoServerError) {
+        throw DatabaseError.handleMongoDBError(error);
+      } else if (error instanceof APIError) {
+        throw error;
+      } else {
+        throw APIError.InternalServerError("Failed to reject follow request");
+      }
+    }
+  }
+
+  public async unfollowUser(
+    followerId: Types.ObjectId,
+    followeeId: Types.ObjectId
+  ): Promise<void> {
+    try {
+      // Check if follower exists and get their follow document
+      const follower = await this.followRepository.findOne({
+        userId: followerId,
+      });
+      if (!follower) {
+        this.logger.warn(ErrorMessage.FOLLOWER_NOT_FOUND, { followerId });
+        throw APIError.NotFound(ErrorMessage.FOLLOWER_NOT_FOUND);
+      }
+
+      // Check if followee exists and get their follow document
+      const followee = await this.followRepository.findOne({
+        userId: followeeId,
+      });
+      if (!followee) {
+        this.logger.warn(ErrorMessage.FOLLOWEE_NOT_FOUND, { followeeId });
+        throw APIError.NotFound(ErrorMessage.FOLLOWEE_NOT_FOUND);
+      }
+
+      // Check if currently following
+      const isCurrentlyFollowing = follower
+        .getFollowing()
+        .some((id) => id.equals(followeeId));
+      if (!isCurrentlyFollowing) {
+        this.logger.warn(ErrorMessage.NOT_CURRENTLY_FOLLOWING, {
+          followerId,
+          followeeId,
+        });
+        throw APIError.BadRequest(ErrorMessage.NOT_CURRENTLY_FOLLOWING);
+      }
+
+      // Remove followee from follower's following list
+      await this.followRepository.updateOne(
+        { userId: followerId },
+        { $pull: { following: followeeId } }
+      );
+
+      // Remove follower from followee's followers list
+      await this.followRepository.updateOne(
+        { userId: followeeId },
+        { $pull: { followers: followerId } }
+      );
+
+      this.logger.info("User unfollowed successfully", {
+        followerId,
+        followeeId,
+      });
+    } catch (error) {
+      this.logger.error("Failed to unfollow user", {
+        error,
+        followerId,
+        followeeId,
+      });
+
+      if (error instanceof MongooseError || error instanceof MongoServerError) {
+        throw DatabaseError.handleMongoDBError(error);
+      } else if (error instanceof APIError) {
+        throw error;
+      } else {
+        throw APIError.InternalServerError("Failed to unfollow user");
+      }
+    }
+  }
+
+  public async removeFollower(
+    followeeId: Types.ObjectId,
+    followerId: Types.ObjectId
+  ): Promise<void> {
+    try {
+      // Check if followee exists and get their follow document
+      const followee = await this.followRepository.findOne({
+        userId: followeeId,
+      });
+      if (!followee) {
+        this.logger.warn(ErrorMessage.FOLLOWEE_NOT_FOUND, { followeeId });
+        throw APIError.NotFound(ErrorMessage.FOLLOWEE_NOT_FOUND);
+      }
+
+      // Check if follower exists and get their follow document
+      const follower = await this.followRepository.findOne({
+        userId: followerId,
+      });
+      if (!follower) {
+        this.logger.warn(ErrorMessage.FOLLOWER_NOT_FOUND, { followerId });
+        throw APIError.NotFound(ErrorMessage.FOLLOWER_NOT_FOUND);
+      }
+
+      // Check if follower is currently following the followee
+      const isCurrentlyFollowing = followee
+        .getFollowers()
+        .some((id) => id.equals(followerId));
+      if (!isCurrentlyFollowing) {
+        this.logger.warn(ErrorMessage.FOLLOWER_NOT_CURRENTLY_FOLLOWING, {
+          followeeId,
+          followerId,
+        });
+        throw APIError.BadRequest(
+          ErrorMessage.FOLLOWER_NOT_CURRENTLY_FOLLOWING
+        );
+      }
+
+      // Remove follower from followee's followers list
+      await this.followRepository.updateOne(
+        { userId: followeeId },
+        { $pull: { followers: followerId } }
+      );
+
+      // Remove followee from follower's following list
+      await this.followRepository.updateOne(
+        { userId: followerId },
+        { $pull: { following: followeeId } }
+      );
+
+      this.logger.info("Follower removed successfully", {
+        followeeId,
+        followerId,
+      });
+    } catch (error) {
+      this.logger.error("Failed to remove follower", {
+        error,
+        followeeId,
+        followerId,
+      });
+
+      if (error instanceof MongooseError || error instanceof MongoServerError) {
+        throw DatabaseError.handleMongoDBError(error);
+      } else if (error instanceof APIError) {
+        throw error;
+      } else {
+        throw APIError.InternalServerError("Failed to remove follower");
       }
     }
   }

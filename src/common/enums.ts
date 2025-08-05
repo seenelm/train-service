@@ -148,6 +148,15 @@ export enum ErrorMessage {
   CUSTOM_SECTION_ALREADY_EXISTS = "Custom section already exists",
   CUSTOM_SECTION_NOT_FOUND = "Custom section not found",
   INVALID_CUSTOM_SECTION_FORMAT = "Invalid custom section format",
+  FOLLOWER_NOT_FOUND = "Follower not found",
+  FOLLOWEE_NOT_FOUND = "User to follow not found",
+  ALREADY_FOLLOWING = "Already following this user",
+  CANNOT_FOLLOW_SELF = "Cannot follow yourself",
+  PRIVATE_ACCOUNT_FOLLOW_REQUEST = "Cannot follow private account directly",
+  FOLLOW_REQUEST_ALREADY_SENT = "Follow request already sent",
+  FOLLOW_REQUEST_NOT_FOUND = "Follow request not found",
+  NOT_CURRENTLY_FOLLOWING = "Not currently following this user",
+  FOLLOWER_NOT_CURRENTLY_FOLLOWING = "Follower is not currently following this user",
 
   // Authentication messages
   INVALID_TOKEN = "Invalid authentication token",
