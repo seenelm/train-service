@@ -7,6 +7,7 @@ import { MongoServerError } from "mongodb";
 import { DatabaseError } from "../../common/errors/DatabaseError.js";
 import { Logger } from "../../common/logger.js";
 import { Types } from "mongoose";
+import mongoose from "mongoose";
 import { CustomSectionRequest } from "@seenelm/train-core";
 import { ErrorMessage } from "../../common/enums.js";
 import { CustomSection } from "../../infrastructure/database/models/userProfile/userProfileModel.js";
@@ -389,7 +390,11 @@ export default class UserProfileService implements IUserProfileService {
     followerId: Types.ObjectId,
     followeeId: Types.ObjectId
   ): Promise<void> {
+    const session = await mongoose.startSession();
+
     try {
+      session.startTransaction();
+
       // Check if follower exists and get their follow document
       const follower = await this.followRepository.findOne({
         userId: followerId,
@@ -423,14 +428,18 @@ export default class UserProfileService implements IUserProfileService {
       // Add followee to follower's following list
       await this.followRepository.updateOne(
         { userId: followerId },
-        { $addToSet: { following: followeeId } }
+        { $addToSet: { following: followeeId } },
+        { session }
       );
 
       // Add follower to followee's followers list
       await this.followRepository.updateOne(
         { userId: followeeId },
-        { $addToSet: { followers: followerId } }
+        { $addToSet: { followers: followerId } },
+        { session }
       );
+
+      await session.commitTransaction();
 
       this.logger.info("User followed successfully", {
         followerId,
@@ -443,12 +452,20 @@ export default class UserProfileService implements IUserProfileService {
         followeeId,
       });
 
+      if (session) {
+        await session.abortTransaction();
+      }
+
       if (error instanceof MongooseError || error instanceof MongoServerError) {
         throw DatabaseError.handleMongoDBError(error);
       } else if (error instanceof APIError) {
         throw error;
       } else {
         throw APIError.InternalServerError("Failed to follow user");
+      }
+    } finally {
+      if (session) {
+        session.endSession();
       }
     }
   }
@@ -531,7 +548,11 @@ export default class UserProfileService implements IUserProfileService {
     followeeId: Types.ObjectId,
     followerId: Types.ObjectId
   ): Promise<void> {
+    const session = await mongoose.startSession();
+
     try {
+      session.startTransaction();
+
       // Check if followee exists and get their follow document
       const followee = await this.followRepository.findOne({
         userId: followeeId,
@@ -580,14 +601,18 @@ export default class UserProfileService implements IUserProfileService {
         {
           $addToSet: { followers: followerId },
           $pull: { requests: followerId },
-        }
+        },
+        { session }
       );
 
       // Add followee to follower's following list
       await this.followRepository.updateOne(
         { userId: followerId },
-        { $addToSet: { following: followeeId } }
+        { $addToSet: { following: followeeId } },
+        { session }
       );
+
+      await session.commitTransaction();
 
       this.logger.info("Follow request accepted successfully", {
         followeeId,
@@ -600,12 +625,20 @@ export default class UserProfileService implements IUserProfileService {
         followerId,
       });
 
+      if (session) {
+        await session.abortTransaction();
+      }
+
       if (error instanceof MongooseError || error instanceof MongoServerError) {
         throw DatabaseError.handleMongoDBError(error);
       } else if (error instanceof APIError) {
         throw error;
       } else {
         throw APIError.InternalServerError("Failed to accept follow request");
+      }
+    } finally {
+      if (session) {
+        session.endSession();
       }
     }
   }
@@ -676,7 +709,11 @@ export default class UserProfileService implements IUserProfileService {
     followerId: Types.ObjectId,
     followeeId: Types.ObjectId
   ): Promise<void> {
+    const session = await mongoose.startSession();
+
     try {
+      session.startTransaction();
+
       // Check if follower exists and get their follow document
       const follower = await this.followRepository.findOne({
         userId: followerId,
@@ -710,14 +747,18 @@ export default class UserProfileService implements IUserProfileService {
       // Remove followee from follower's following list
       await this.followRepository.updateOne(
         { userId: followerId },
-        { $pull: { following: followeeId } }
+        { $pull: { following: followeeId } },
+        { session }
       );
 
       // Remove follower from followee's followers list
       await this.followRepository.updateOne(
         { userId: followeeId },
-        { $pull: { followers: followerId } }
+        { $pull: { followers: followerId } },
+        { session }
       );
+
+      await session.commitTransaction();
 
       this.logger.info("User unfollowed successfully", {
         followerId,
@@ -730,12 +771,20 @@ export default class UserProfileService implements IUserProfileService {
         followeeId,
       });
 
+      if (session) {
+        await session.abortTransaction();
+      }
+
       if (error instanceof MongooseError || error instanceof MongoServerError) {
         throw DatabaseError.handleMongoDBError(error);
       } else if (error instanceof APIError) {
         throw error;
       } else {
         throw APIError.InternalServerError("Failed to unfollow user");
+      }
+    } finally {
+      if (session) {
+        session.endSession();
       }
     }
   }
@@ -744,7 +793,11 @@ export default class UserProfileService implements IUserProfileService {
     followeeId: Types.ObjectId,
     followerId: Types.ObjectId
   ): Promise<void> {
+    const session = await mongoose.startSession();
+
     try {
+      session.startTransaction();
+
       // Check if followee exists and get their follow document
       const followee = await this.followRepository.findOne({
         userId: followeeId,
@@ -780,14 +833,18 @@ export default class UserProfileService implements IUserProfileService {
       // Remove follower from followee's followers list
       await this.followRepository.updateOne(
         { userId: followeeId },
-        { $pull: { followers: followerId } }
+        { $pull: { followers: followerId } },
+        { session }
       );
 
       // Remove followee from follower's following list
       await this.followRepository.updateOne(
         { userId: followerId },
-        { $pull: { following: followeeId } }
+        { $pull: { following: followeeId } },
+        { session }
       );
+
+      await session.commitTransaction();
 
       this.logger.info("Follower removed successfully", {
         followeeId,
@@ -800,12 +857,20 @@ export default class UserProfileService implements IUserProfileService {
         followerId,
       });
 
+      if (session) {
+        await session.abortTransaction();
+      }
+
       if (error instanceof MongooseError || error instanceof MongoServerError) {
         throw DatabaseError.handleMongoDBError(error);
       } else if (error instanceof APIError) {
         throw error;
       } else {
         throw APIError.InternalServerError("Failed to remove follower");
+      }
+    } finally {
+      if (session) {
+        session.endSession();
       }
     }
   }

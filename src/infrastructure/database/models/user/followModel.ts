@@ -19,19 +19,19 @@ const followSchema: Schema = new Schema(
     following: [
       {
         type: Schema.Types.ObjectId,
-        ref: "UserProfile",
+        ref: "User",
       },
     ],
     followers: [
       {
         type: Schema.Types.ObjectId,
-        ref: "UserProfile",
+        ref: "User",
       },
     ],
     requests: [
       {
         type: Schema.Types.ObjectId,
-        ref: "UserProfile",
+        ref: "User",
       },
     ],
   },

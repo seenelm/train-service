@@ -229,4 +229,12 @@ export enum ValidationErrorMessage {
   SEARCH_TERM_NORMALIZATION_FAILED = "Invalid search input",
   PAGE_NUMBER_INVALID = "Invalid pagination parameter",
   LIMIT_INVALID = "Invalid pagination parameter",
+
+  // Group validation messages
+  GROUP_NAME_REQUIRED = "Group name is required",
+  GROUP_NAME_TOO_LONG = "Group name must be 100 characters or less",
+  GROUP_NAME_INVALID_CHARACTERS = "Group name contains invalid characters",
+  GROUP_ID_REQUIRED = "Group ID is required",
+  GROUP_ID_INVALID_FORMAT = "Invalid group ID format",
+  BIO_TOO_LONG = "Bio must be 500 characters or less",
 }
