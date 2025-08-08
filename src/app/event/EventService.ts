@@ -1,8 +1,7 @@
 import { Types } from "mongoose";
 import { IEventRepository } from "../../infrastructure/database/repositories/event/EventRepository.js";
 import { IUserEventRepository } from "../../infrastructure/database/repositories/event/UserEventRepository.js";
-import Event from "../../infrastructure/database/entity/event/Event.js";
-import UserEvent from "../../infrastructure/database/entity/event/UserEvent.js";
+import UserEventDetails from "../../infrastructure/database/entity/event/UserEventDetails.js";
 import { EventStatus } from "../../common/enums.js";
 import { APIError } from "../../common/errors/APIError.js";
 import { DatabaseError } from "../../common/errors/DatabaseError.js";
@@ -13,12 +12,32 @@ import {
   EventRequest,
   EventResponse,
   UserEventResponse,
+  UserEventRequest,
 } from "@seenelm/train-core";
 import mongoose from "mongoose";
 
 export interface IEventService {
   addEvent(request: EventRequest): Promise<EventResponse>;
   getUserEvents(userId: Types.ObjectId): Promise<UserEventResponse[]>;
+  getUserEventById(
+    userId: Types.ObjectId,
+    eventId: Types.ObjectId
+  ): Promise<UserEventResponse>;
+  updateEvent(eventId: Types.ObjectId, request: EventRequest): Promise<void>;
+  updateUserEventStatus(
+    userId: Types.ObjectId,
+    request: UserEventRequest
+  ): Promise<void>;
+  deleteEvent(eventId: Types.ObjectId): Promise<void>;
+  deleteUserEvent(
+    userId: Types.ObjectId,
+    eventId: Types.ObjectId
+  ): Promise<void>;
+  removeUserFromEvent(
+    adminId: Types.ObjectId,
+    userId: Types.ObjectId,
+    eventId: Types.ObjectId
+  ): Promise<void>;
 }
 
 export default class EventService implements IEventService {
@@ -106,45 +125,18 @@ export default class EventService implements IEventService {
 
   async getUserEvents(userId: Types.ObjectId): Promise<UserEventResponse[]> {
     try {
-      // Get user's events from UserEventRepository
-      const userEvents = await this.userEventRepository.findByUserId(userId);
+      const userEvents =
+        await this.userEventRepository.getUserEventsWithDetails(userId);
 
       if (!userEvents || userEvents.length === 0) {
         return [];
       }
 
-      // Get all event IDs from user events
-      const eventIds = userEvents.flatMap((userEvent: UserEvent) =>
-        userEvent
-          .getEvents()
-          .map(
-            (event: { eventId: Types.ObjectId; status: EventStatus }) =>
-              event.eventId
-          )
-      );
-
-      // Fetch all events in one query
-      const events = await this.eventRepository.findByIds(eventIds);
-
-      // Create a map for quick lookup
-      const eventMap = new Map(
-        events.map((event: Event) => [event.getId().toString(), event])
-      );
-
-      // Build UserEventResponse array
-      const userEventResponses: UserEventResponse[] = [];
-
-      for (const userEvent of userEvents) {
-        for (const eventEntry of userEvent.getEvents()) {
-          const event = eventMap.get(eventEntry.eventId.toString());
-          if (event) {
-            userEventResponses.push({
-              event: this.eventRepository.toResponse(event),
-              status: eventEntry.status,
-            });
-          }
+      const userEventResponses: UserEventResponse[] = userEvents.map(
+        (userEventDetail: UserEventDetails) => {
+          return this.userEventRepository.toResponse(userEventDetail);
         }
-      }
+      );
 
       this.logger.info("User events retrieved successfully", {
         userId: userId.toString(),
@@ -162,6 +154,279 @@ export default class EventService implements IEventService {
         throw DatabaseError.handleMongoDBError(error);
       } else {
         throw APIError.InternalServerError("Failed to get user events");
+      }
+    }
+  }
+
+  async getUserEventById(
+    userId: Types.ObjectId,
+    eventId: Types.ObjectId
+  ): Promise<UserEventResponse> {
+    try {
+      const userEventWithDetails =
+        await this.userEventRepository.getUserEventWithDetails(userId, eventId);
+
+      if (!userEventWithDetails) {
+        this.logger.warn("User event not found", {
+          userId: userId.toString(),
+          eventId: eventId.toString(),
+        });
+        throw APIError.NotFound("User event not found");
+      }
+
+      this.logger.info("User event retrieved successfully", {
+        userId: userId.toString(),
+        eventId: eventId.toString(),
+        status: userEventWithDetails.getStatus(),
+      });
+
+      return this.userEventRepository.toResponse(userEventWithDetails);
+    } catch (error) {
+      this.logger.error("Failed to get user event", {
+        error: error instanceof Error ? error.message : "Unknown error",
+        userId: userId.toString(),
+        eventId: eventId.toString(),
+      });
+
+      if (error instanceof APIError) {
+        throw error;
+      } else if (
+        error instanceof MongooseError ||
+        error instanceof MongoServerError
+      ) {
+        throw DatabaseError.handleMongoDBError(error);
+      } else {
+        throw APIError.InternalServerError("Failed to get user event");
+      }
+    }
+  }
+
+  async updateEvent(
+    eventId: Types.ObjectId,
+    request: EventRequest
+  ): Promise<void> {
+    try {
+      const eventDoc = this.eventRepository.toDocument(request);
+
+      await this.eventRepository.updateOne(
+        { _id: eventId },
+        { $set: eventDoc }
+      );
+
+      this.logger.info("Event updated successfully", {
+        eventId: eventId.toString(),
+        updatedFields: Object.keys(eventDoc),
+      });
+    } catch (error) {
+      this.logger.error("Failed to update event", {
+        error: error instanceof Error ? error.message : "Unknown error",
+        eventId: eventId.toString(),
+        request,
+      });
+
+      if (error instanceof APIError) {
+        throw error;
+      } else if (
+        error instanceof MongooseError ||
+        error instanceof MongoServerError
+      ) {
+        throw DatabaseError.handleMongoDBError(error);
+      } else {
+        throw APIError.InternalServerError("Failed to update event");
+      }
+    }
+  }
+
+  async updateUserEventStatus(
+    userId: Types.ObjectId,
+    request: UserEventRequest
+  ): Promise<void> {
+    try {
+      const eventId = new Types.ObjectId(request.eventId);
+
+      await this.userEventRepository.updateUserEventStatus(
+        userId,
+        eventId,
+        request.status
+      );
+
+      this.logger.info("User event status updated successfully", {
+        userId: userId.toString(),
+        eventId: eventId.toString(),
+        status: request.status,
+      });
+    } catch (error) {
+      this.logger.error("Failed to update user event status", {
+        error: error instanceof Error ? error.message : "Unknown error",
+        userId: userId.toString(),
+        eventId: request.eventId,
+        status: request.status,
+      });
+
+      if (error instanceof APIError) {
+        throw error;
+      } else if (
+        error instanceof MongooseError ||
+        error instanceof MongoServerError
+      ) {
+        throw DatabaseError.handleMongoDBError(error);
+      } else {
+        throw APIError.InternalServerError(
+          "Failed to update user event status"
+        );
+      }
+    }
+  }
+
+  async deleteEvent(eventId: Types.ObjectId): Promise<void> {
+    const session = await mongoose.startSession();
+
+    try {
+      session.startTransaction();
+
+      await this.eventRepository.deleteOne({ _id: eventId }, { session });
+
+      await this.userEventRepository.removeEventFromAllUsers(eventId, {
+        session,
+      });
+
+      await session.commitTransaction();
+
+      this.logger.info("Event deleted successfully", {
+        eventId: eventId.toString(),
+      });
+    } catch (error) {
+      this.logger.error("Failed to delete event", {
+        error: error instanceof Error ? error.message : "Unknown error",
+        eventId: eventId.toString(),
+      });
+
+      if (session) {
+        await session.abortTransaction();
+      }
+
+      if (error instanceof APIError) {
+        throw error;
+      } else if (
+        error instanceof MongooseError ||
+        error instanceof MongoServerError
+      ) {
+        throw DatabaseError.handleMongoDBError(error);
+      } else {
+        throw APIError.InternalServerError("Failed to delete event");
+      }
+    } finally {
+      if (session) {
+        session.endSession();
+      }
+    }
+  }
+
+  async deleteUserEvent(
+    userId: Types.ObjectId,
+    eventId: Types.ObjectId
+  ): Promise<void> {
+    const session = await mongoose.startSession();
+
+    try {
+      session.startTransaction();
+
+      await this.userEventRepository.removeEventFromUser(userId, eventId, {
+        session,
+      });
+
+      await this.eventRepository.updateOne(
+        { _id: eventId },
+        { $pull: { invitees: userId } },
+        { session }
+      );
+
+      await session.commitTransaction();
+
+      this.logger.info("User event deleted successfully", {
+        userId: userId.toString(),
+        eventId: eventId.toString(),
+      });
+    } catch (error) {
+      this.logger.error("Failed to delete user event", {
+        error: error instanceof Error ? error.message : "Unknown error",
+        userId: userId.toString(),
+        eventId: eventId.toString(),
+      });
+
+      if (session) {
+        await session.abortTransaction();
+      }
+
+      if (error instanceof APIError) {
+        throw error;
+      } else if (
+        error instanceof MongooseError ||
+        error instanceof MongoServerError
+      ) {
+        throw DatabaseError.handleMongoDBError(error);
+      } else {
+        throw APIError.InternalServerError("Failed to delete user event");
+      }
+    } finally {
+      if (session) {
+        session.endSession();
+      }
+    }
+  }
+
+  async removeUserFromEvent(
+    adminId: Types.ObjectId,
+    userId: Types.ObjectId,
+    eventId: Types.ObjectId
+  ): Promise<void> {
+    const session = await mongoose.startSession();
+
+    try {
+      session.startTransaction();
+
+      await this.userEventRepository.removeEventFromUser(userId, eventId, {
+        session,
+      });
+
+      await this.eventRepository.updateOne(
+        { _id: eventId },
+        { $pull: { invitees: userId } },
+        { session }
+      );
+
+      await session.commitTransaction();
+
+      this.logger.info("User removed from event by admin successfully", {
+        adminId: adminId.toString(),
+        userId: userId.toString(),
+        eventId: eventId.toString(),
+      });
+    } catch (error) {
+      this.logger.error("Failed to remove user from event", {
+        error: error instanceof Error ? error.message : "Unknown error",
+        adminId: adminId.toString(),
+        userId: userId.toString(),
+        eventId: eventId.toString(),
+      });
+
+      if (session) {
+        await session.abortTransaction();
+      }
+
+      if (error instanceof APIError) {
+        throw error;
+      } else if (
+        error instanceof MongooseError ||
+        error instanceof MongoServerError
+      ) {
+        throw DatabaseError.handleMongoDBError(error);
+      } else {
+        throw APIError.InternalServerError("Failed to remove user from event");
+      }
+    } finally {
+      if (session) {
+        session.endSession();
       }
     }
   }

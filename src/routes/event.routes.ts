@@ -14,6 +14,8 @@ const router = Router();
 
 const authMiddleware = new AuthMiddleware(new UserRepository(UserModel));
 
+const eventRepository = new EventRepository(Event);
+
 const eventController = new EventController(
   new EventService(
     new EventRepository(Event),
@@ -33,6 +35,47 @@ router.get(
   "/user/:userId",
   authMiddleware.authenticateToken,
   eventController.getUserEvents
+);
+
+router.get(
+  "/user/event/:eventId",
+  authMiddleware.authenticateToken,
+  eventController.getUserEventById
+);
+
+router.put(
+  "/:eventId",
+  authMiddleware.authenticateToken,
+  EventMiddleware.validateUpdateEvent,
+  EventMiddleware.checkEventOwnership(eventRepository),
+  eventController.updateEvent
+);
+
+router.put(
+  "/user/status",
+  authMiddleware.authenticateToken,
+  EventMiddleware.validateUpdateUserEventStatus,
+  eventController.updateUserEventStatus
+);
+
+router.delete(
+  "/:eventId",
+  authMiddleware.authenticateToken,
+  EventMiddleware.checkEventOwnership(eventRepository),
+  eventController.deleteEvent
+);
+
+router.delete(
+  "/user/event/:eventId",
+  authMiddleware.authenticateToken,
+  eventController.deleteUserEvent
+);
+
+router.delete(
+  "/:eventId/user/:userId",
+  authMiddleware.authenticateToken,
+  EventMiddleware.checkEventOwnership(eventRepository),
+  eventController.removeUserFromEvent
 );
 
 export default router;

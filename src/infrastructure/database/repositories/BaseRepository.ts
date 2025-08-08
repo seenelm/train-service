@@ -36,6 +36,7 @@ export interface IBaseRepository<T, TDocument> {
     options?: object
   ): Promise<UpdateQuery<T>>;
   findByIdAndDelete(id: Types.ObjectId, options?: object): Promise<void>;
+  deleteOne(query: FilterQuery<TDocument>, options?: object): Promise<void>;
   deleteMany(query: FilterQuery<TDocument>, options?: object): Promise<void>;
   countDocuments(
     query: FilterQuery<TDocument>,
@@ -145,6 +146,13 @@ export abstract class BaseRepository<T, TDocument extends Document>
     options?: object
   ): Promise<void> {
     await this.model.deleteMany(query, options).exec();
+  }
+
+  public async deleteOne(
+    query: FilterQuery<TDocument>,
+    options?: object
+  ): Promise<void> {
+    await this.model.deleteOne(query, options).exec();
   }
 
   public async countDocuments(
