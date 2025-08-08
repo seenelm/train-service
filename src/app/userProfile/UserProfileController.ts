@@ -9,6 +9,7 @@ import {
   BasicUserProfileInfoRequest,
 } from "@seenelm/train-core";
 import { Types } from "mongoose";
+import { CursorPaginationRequest } from "./followDto.js";
 
 export default class UserProfileController {
   private userProfileService: IUserProfileService;
@@ -301,6 +302,125 @@ export default class UserProfileController {
       );
 
       res.status(HttpStatusCode.OK).json(userGroups);
+    } catch (error) {
+      next(error);
+    }
+  };
+
+  // Cursor-based pagination methods
+  public getFollowStats = async (
+    req: Request<{ userId: string }>,
+    res: Response,
+    next: NextFunction
+  ) => {
+    try {
+      const { userId } = req.params;
+      const stats = await this.userProfileService.getFollowStats(
+        new Types.ObjectId(userId)
+      );
+      res.status(HttpStatusCode.OK).json(stats);
+    } catch (error) {
+      next(error);
+    }
+  };
+
+  public getFollowers = async (
+    req: Request<{ userId: string }>,
+    res: Response,
+    next: NextFunction
+  ) => {
+    try {
+      const { userId } = req.params;
+      const validatedData = (req as any).validatedPagination;
+
+      const pagination: CursorPaginationRequest = {
+        limit: validatedData.limit,
+        cursor: validatedData.cursor,
+      };
+
+      const followers = await this.userProfileService.getFollowers(
+        new Types.ObjectId(userId),
+        pagination
+      );
+
+      res.status(HttpStatusCode.OK).json(followers);
+    } catch (error) {
+      next(error);
+    }
+  };
+
+  public getFollowing = async (
+    req: Request<{ userId: string }>,
+    res: Response,
+    next: NextFunction
+  ) => {
+    try {
+      const { userId } = req.params;
+      const validatedData = (req as any).validatedPagination;
+
+      const pagination: CursorPaginationRequest = {
+        limit: validatedData.limit,
+        cursor: validatedData.cursor,
+      };
+
+      const following = await this.userProfileService.getFollowing(
+        new Types.ObjectId(userId),
+        pagination
+      );
+
+      res.status(HttpStatusCode.OK).json(following);
+    } catch (error) {
+      next(error);
+    }
+  };
+
+  public searchFollowers = async (
+    req: Request<{ userId: string }>,
+    res: Response,
+    next: NextFunction
+  ) => {
+    try {
+      const { userId } = req.params;
+      const validatedData = (req as any).validatedSearch;
+
+      const pagination: CursorPaginationRequest = {
+        limit: validatedData.limit,
+        cursor: validatedData.cursor,
+      };
+
+      const results = await this.userProfileService.searchFollowers(
+        new Types.ObjectId(userId),
+        validatedData.searchTerm,
+        pagination
+      );
+
+      res.status(HttpStatusCode.OK).json(results);
+    } catch (error) {
+      next(error);
+    }
+  };
+
+  public searchFollowing = async (
+    req: Request<{ userId: string }>,
+    res: Response,
+    next: NextFunction
+  ) => {
+    try {
+      const { userId } = req.params;
+      const validatedData = (req as any).validatedSearch;
+
+      const pagination: CursorPaginationRequest = {
+        limit: validatedData.limit,
+        cursor: validatedData.cursor,
+      };
+
+      const results = await this.userProfileService.searchFollowing(
+        new Types.ObjectId(userId),
+        validatedData.searchTerm,
+        pagination
+      );
+
+      res.status(HttpStatusCode.OK).json(results);
     } catch (error) {
       next(error);
     }

@@ -194,7 +194,7 @@ export const updateGroupProfileSchema = z.object({
       .max(500, ValidationErrorMessage.BIO_TOO_LONG)
       .trim()
       .optional(),
-    accountType: z.nativeEnum(ProfileAccess).optional(),
+    accountType: z.enum(ProfileAccess).optional(),
   }),
 });
 

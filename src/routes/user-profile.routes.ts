@@ -19,9 +19,11 @@ const router = Router();
 
 const authMiddleware = new AuthMiddleware(new UserRepository(UserModel));
 
+const userProfileRepository = new UserProfileRepository(UserProfileModel);
+
 const userProfileController = new UserProfileController(
   new UserProfileService(
-    new UserProfileRepository(UserProfileModel),
+    userProfileRepository,
     new FollowRepository(FollowModel),
     new UserGroupsRepository(UserGroupsModel),
     new GroupRepository(GroupModel)
@@ -108,6 +110,41 @@ router.get(
   "/:userId/groups",
   authMiddleware.authenticateToken,
   userProfileController.fetchUserGroups
+);
+
+// Cursor-based pagination routes for followers/following
+router.get(
+  "/:userId/follow-stats",
+  authMiddleware.authenticateToken,
+  userProfileController.getFollowStats
+);
+
+router.get(
+  "/:userId/followers",
+  authMiddleware.authenticateToken,
+  UserProfileMiddleware.validateCursorPagination,
+  userProfileController.getFollowers
+);
+
+router.get(
+  "/:userId/following",
+  authMiddleware.authenticateToken,
+  UserProfileMiddleware.validateCursorPagination,
+  userProfileController.getFollowing
+);
+
+router.get(
+  "/:userId/followers/search",
+  authMiddleware.authenticateToken,
+  UserProfileMiddleware.validateSearchWithCursor,
+  userProfileController.searchFollowers
+);
+
+router.get(
+  "/:userId/following/search",
+  authMiddleware.authenticateToken,
+  UserProfileMiddleware.validateSearchWithCursor,
+  userProfileController.searchFollowing
 );
 
 export default router;

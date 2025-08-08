@@ -2,11 +2,16 @@ import { UserProfileDocument } from "../../models/userProfile/userProfileModel.j
 import UserProfile from "../../entity/user/UserProfile.js";
 import { IBaseRepository, BaseRepository } from "../BaseRepository.js";
 import { Model, Types } from "mongoose";
-import { UserProfileRequest, SocialPlatform } from "@seenelm/train-core";
+import {
+  UserProfileRequest,
+  SocialPlatform,
+  UserProfileResponse,
+} from "@seenelm/train-core";
 
 export interface IUserProfileRepository
   extends IBaseRepository<UserProfile, UserProfileDocument> {
   toDocument(request: UserProfileRequest): Partial<UserProfileDocument>;
+  toResponse(profile: UserProfile): UserProfileResponse;
 }
 
 export default class UserProfileRepository
@@ -55,6 +60,22 @@ export default class UserProfileRepository
         receivedDate: certification.receivedDate,
       })),
       customSections: request.customSections,
+    };
+  }
+
+  toResponse(profile: UserProfile): UserProfileResponse {
+    return {
+      userId: profile.getUserId().toString(),
+      username: profile.getUsername(),
+      name: profile.getName(),
+      bio: profile.getBio(),
+      accountType: profile.getAccountType(),
+      profilePicture: profile.getProfilePicture(),
+      role: profile.getRole(),
+      location: profile.getLocation(),
+      socialLinks: profile.getSocialLinks(),
+      certifications: [], // TODO: FIX
+      customSections: profile.getCustomSections(),
     };
   }
 }

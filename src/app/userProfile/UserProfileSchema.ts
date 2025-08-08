@@ -74,6 +74,40 @@ export const removeFollowerSchema = z.object({
   }),
 });
 
+// Schema for cursor pagination query parameters
+export const cursorPaginationSchema = z.object({
+  limit: z
+    .string()
+    .optional()
+    .transform((val) => (val ? parseInt(val, 10) : 50))
+    .pipe(
+      z
+        .number()
+        .min(1, "Limit must be at least 1")
+        .max(100, "Limit must be at most 100")
+    ),
+  cursor: z.string().optional(),
+});
+
+// Schema for search with cursor pagination
+export const searchWithCursorSchema = z.object({
+  limit: z
+    .string()
+    .optional()
+    .transform((val) => (val ? parseInt(val, 10) : 50))
+    .pipe(
+      z
+        .number()
+        .min(1, "Limit must be at least 1")
+        .max(100, "Limit must be at most 100")
+    ),
+  cursor: z.string().optional(),
+  searchTerm: z
+    .string()
+    .min(1, "Search term is required")
+    .max(100, "Search term must be at most 100 characters"),
+});
+
 // Type exports
 export type FollowUserRequest = z.infer<typeof followUserSchema>;
 export type RequestToFollowUserRequest = z.infer<

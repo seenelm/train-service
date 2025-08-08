@@ -10,10 +10,6 @@ import {
 
 export interface ICertificationRepository
   extends IBaseRepository<Certification, CertificationDocument> {
-  //   findWithPagination(
-  //     paginationRequest: PaginationRequest
-  //   ): Promise<PaginationResponse<Certification>>;
-
   searchCertifications(
     searchTerm: string,
     paginationRequest: PaginationRequest
@@ -109,16 +105,4 @@ export default class CertificationRepository
       },
     };
   }
-
-  //   async searchCertifications(
-  //     searchTerm: string,
-  //     paginationRequest: PaginationRequest
-  //   ): Promise<PaginationResponse<Certification>> {
-  //     const searchRequest = {
-  //       ...paginationRequest,
-  //       search: searchTerm,
-  //     };
-
-  //     return this.findWithPagination(searchRequest);
-  //   }
 }

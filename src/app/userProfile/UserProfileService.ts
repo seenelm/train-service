@@ -20,6 +20,14 @@ import {
   ProfileAccess,
 } from "@seenelm/train-core";
 import { GroupResponse, UserGroupsResponse } from "../group/groupDto.js";
+import {
+  CursorPaginationRequest,
+  FollowStatsResponse,
+  FollowersResponse,
+  FollowingResponse,
+  FollowSearchRequest,
+  FollowSearchResponse,
+} from "./followDto.js";
 
 export interface IUserProfileService {
   updateUserProfile(userProfileRequest: UserProfileRequest): Promise<void>;
@@ -65,6 +73,27 @@ export interface IUserProfileService {
     followerId: Types.ObjectId
   ): Promise<void>;
   fetchUserGroups(userId: Types.ObjectId): Promise<UserGroupsResponse>;
+
+  // Cursor-based pagination methods
+  getFollowStats(userId: Types.ObjectId): Promise<FollowStatsResponse>;
+  getFollowers(
+    userId: Types.ObjectId,
+    pagination: CursorPaginationRequest
+  ): Promise<FollowersResponse>;
+  getFollowing(
+    userId: Types.ObjectId,
+    pagination: CursorPaginationRequest
+  ): Promise<FollowingResponse>;
+  searchFollowers(
+    userId: Types.ObjectId,
+    searchTerm: string,
+    pagination: CursorPaginationRequest
+  ): Promise<FollowSearchResponse>;
+  searchFollowing(
+    userId: Types.ObjectId,
+    searchTerm: string,
+    pagination: CursorPaginationRequest
+  ): Promise<FollowSearchResponse>;
 }
 
 export default class UserProfileService implements IUserProfileService {
@@ -935,6 +964,201 @@ export default class UserProfileService implements IUserProfileService {
         throw error;
       } else {
         throw APIError.InternalServerError("Failed to fetch user groups");
+      }
+    }
+  }
+
+  // Cursor-based pagination methods
+  async getFollowStats(userId: Types.ObjectId): Promise<FollowStatsResponse> {
+    try {
+      const [followersCount, followingCount] = await Promise.all([
+        this.followRepository.getFollowersCount(userId),
+        this.followRepository.getFollowingCount(userId),
+      ]);
+
+      this.logger.info("Follow stats retrieved", {
+        userId,
+        followersCount,
+        followingCount,
+      });
+
+      return {
+        userId: userId.toString(),
+        followersCount,
+        followingCount,
+      };
+    } catch (error) {
+      this.logger.error("Failed to get follow stats", { error, userId });
+      if (error instanceof MongooseError || error instanceof MongoServerError) {
+        throw DatabaseError.handleMongoDBError(error);
+      } else {
+        throw APIError.InternalServerError("Failed to get follow stats");
+      }
+    }
+  }
+
+  async getFollowers(
+    userId: Types.ObjectId,
+    pagination: CursorPaginationRequest
+  ): Promise<FollowersResponse> {
+    try {
+      const { limit, cursor } = pagination;
+
+      const result = await this.followRepository.getFollowersPaginated(
+        userId,
+        limit,
+        cursor
+      );
+
+      this.logger.info("Followers retrieved", {
+        userId,
+        count: result.users.length,
+        hasNextPage: result.hasNextPage,
+      });
+
+      return {
+        data: result.users,
+        pagination: {
+          hasNextPage: result.hasNextPage,
+          hasPreviousPage: !!cursor,
+          nextCursor: result.nextCursor,
+          previousCursor: cursor,
+        },
+      };
+    } catch (error) {
+      this.logger.error("Failed to get followers", { error, userId });
+      if (error instanceof MongooseError || error instanceof MongoServerError) {
+        throw DatabaseError.handleMongoDBError(error);
+      } else {
+        throw APIError.InternalServerError("Failed to get followers");
+      }
+    }
+  }
+
+  async getFollowing(
+    userId: Types.ObjectId,
+    pagination: CursorPaginationRequest
+  ): Promise<FollowingResponse> {
+    try {
+      const { limit, cursor } = pagination;
+
+      const result = await this.followRepository.getFollowingPaginated(
+        userId,
+        limit,
+        cursor
+      );
+
+      this.logger.info("Following retrieved", {
+        userId,
+        count: result.users.length,
+        hasNextPage: result.hasNextPage,
+      });
+
+      return {
+        data: result.users,
+        pagination: {
+          hasNextPage: result.hasNextPage,
+          hasPreviousPage: !!cursor,
+          nextCursor: result.nextCursor,
+          previousCursor: cursor,
+        },
+      };
+    } catch (error) {
+      this.logger.error("Failed to get following", { error, userId });
+      if (error instanceof MongooseError || error instanceof MongoServerError) {
+        throw DatabaseError.handleMongoDBError(error);
+      } else {
+        throw APIError.InternalServerError("Failed to get following");
+      }
+    }
+  }
+
+  async searchFollowers(
+    userId: Types.ObjectId,
+    searchTerm: string,
+    pagination: CursorPaginationRequest
+  ): Promise<FollowSearchResponse> {
+    try {
+      const { limit, cursor } = pagination;
+
+      const result = await this.followRepository.searchFollowers(
+        userId,
+        searchTerm,
+        limit,
+        cursor
+      );
+
+      this.logger.info("Followers search completed", {
+        userId,
+        searchTerm,
+        count: result.users.length,
+        hasNextPage: result.hasNextPage,
+      });
+
+      return {
+        data: result.users,
+        pagination: {
+          hasNextPage: result.hasNextPage,
+          hasPreviousPage: !!cursor,
+          nextCursor: result.nextCursor,
+          previousCursor: cursor,
+        },
+      };
+    } catch (error) {
+      this.logger.error("Failed to search followers", {
+        error,
+        userId,
+        searchTerm,
+      });
+      if (error instanceof MongooseError || error instanceof MongoServerError) {
+        throw DatabaseError.handleMongoDBError(error);
+      } else {
+        throw APIError.InternalServerError("Failed to search followers");
+      }
+    }
+  }
+
+  async searchFollowing(
+    userId: Types.ObjectId,
+    searchTerm: string,
+    pagination: CursorPaginationRequest
+  ): Promise<FollowSearchResponse> {
+    try {
+      const { limit, cursor } = pagination;
+
+      const result = await this.followRepository.searchFollowing(
+        userId,
+        searchTerm,
+        limit,
+        cursor
+      );
+
+      this.logger.info("Following search completed", {
+        userId,
+        searchTerm,
+        count: result.users.length,
+        hasNextPage: result.hasNextPage,
+      });
+
+      return {
+        data: result.users,
+        pagination: {
+          hasNextPage: result.hasNextPage,
+          hasPreviousPage: !!cursor,
+          nextCursor: result.nextCursor,
+          previousCursor: cursor,
+        },
+      };
+    } catch (error) {
+      this.logger.error("Failed to search following", {
+        error,
+        userId,
+        searchTerm,
+      });
+      if (error instanceof MongooseError || error instanceof MongoServerError) {
+        throw DatabaseError.handleMongoDBError(error);
+      } else {
+        throw APIError.InternalServerError("Failed to search following");
       }
     }
   }

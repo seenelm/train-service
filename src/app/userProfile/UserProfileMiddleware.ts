@@ -15,8 +15,11 @@ import {
   rejectFollowRequestSchema,
   unfollowUserSchema,
   removeFollowerSchema,
+  cursorPaginationSchema,
+  searchWithCursorSchema,
 } from "./UserProfileSchema.js";
 import { ValidationErrorResponse } from "../../common/errors/ValidationErrorResponse.js";
+import { z } from "zod";
 
 export default class UserProfileMiddleware {
   private static logger = Logger.getInstance();
@@ -374,6 +377,48 @@ export default class UserProfileMiddleware {
       next();
     } catch (error) {
       next(error);
+    }
+  };
+
+  static validateCursorPagination = (
+    req: Request,
+    res: Response,
+    next: NextFunction
+  ) => {
+    try {
+      const validatedData = cursorPaginationSchema.parse(req.query);
+      // Store validated data in req.body for controller access
+      (req as any).validatedPagination = validatedData;
+      next();
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        const errorMessage =
+          (error as any).errors[0]?.message || "Invalid pagination parameters";
+        next(APIError.BadRequest(errorMessage));
+      } else {
+        next(APIError.BadRequest("Invalid pagination parameters"));
+      }
+    }
+  };
+
+  static validateSearchWithCursor = (
+    req: Request,
+    res: Response,
+    next: NextFunction
+  ) => {
+    try {
+      const validatedData = searchWithCursorSchema.parse(req.query);
+      // Store validated data in req.body for controller access
+      (req as any).validatedSearch = validatedData;
+      next();
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        const errorMessage =
+          (error as any).errors[0]?.message || "Invalid search parameters";
+        next(APIError.BadRequest(errorMessage));
+      } else {
+        next(APIError.BadRequest("Invalid search parameters"));
+      }
     }
   };
 }
