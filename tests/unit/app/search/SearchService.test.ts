@@ -4,14 +4,24 @@ import SearchServiceDataProvider from "./dataProviders/SearchServiceDataProvider
 import { MongooseError } from "mongoose";
 import { MongoServerError } from "mongodb";
 import { DatabaseError } from "../../../../src/common/errors/DatabaseError.js";
-import { mockCertificationRepository } from "../../../mocks/searchMocks.js";
+import {
+  mockCertificationRepository,
+  mockSearchRepository,
+} from "../../../mocks/searchMocks.js";
 import { APIError } from "../../../../src/common/errors/APIError.js";
+import { mockUserProfileRepository } from "../../../mocks/userMocks.js";
+import { mockGroupRepository } from "../../../mocks/groupMocks.js";
 
 describe("SearchService", () => {
   let searchService: SearchService;
 
   beforeEach(() => {
-    searchService = new SearchService(mockCertificationRepository);
+    searchService = new SearchService(
+      mockCertificationRepository,
+      mockSearchRepository,
+      mockUserProfileRepository,
+      mockGroupRepository
+    );
   });
 
   afterEach(() => {

@@ -13,6 +13,8 @@ import UserProfileTestFixture from "../../../fixtures/UserProfileTestFixture.js"
 import { DatabaseError } from "../../../../src/common/errors/DatabaseError.js";
 import { CustomSectionType } from "@seenelm/train-core";
 import { ErrorMessage } from "../../../../src/common/enums.js";
+import { mockUserGroupsRepository } from "../../../mocks/userMocks.js";
+import { mockGroupRepository } from "../../../mocks/groupMocks.js";
 
 describe("UserProfileService", () => {
   let userProfileService: UserProfileService;
@@ -20,7 +22,9 @@ describe("UserProfileService", () => {
   beforeEach(() => {
     userProfileService = new UserProfileService(
       mockUserProfileRepository,
-      mockFollowRepository
+      mockFollowRepository,
+      mockUserGroupsRepository,
+      mockGroupRepository
     );
   });
 

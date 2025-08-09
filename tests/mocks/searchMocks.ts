@@ -1,5 +1,6 @@
 import { ICertificationRepository } from "../../src/infrastructure/database/repositories/userProfile/CertificationRepository.js";
 import { ISearchService } from "../../src/app/search/SearchService.js";
+import { ISearchRepository } from "../../src/infrastructure/database/repositories/search/SearchRepository.js";
 import { vi } from "vitest";
 
 export const mockCertificationRepository: ICertificationRepository = {
@@ -16,8 +17,15 @@ export const mockCertificationRepository: ICertificationRepository = {
   updateMany: vi.fn(),
   findByIdAndDelete: vi.fn(),
   deleteMany: vi.fn(),
+  deleteOne: vi.fn(),
+  countDocuments: vi.fn(),
+};
+
+export const mockSearchRepository: ISearchRepository = {
+  searchProfiles: vi.fn(),
 };
 
 export const mockSearchService: ISearchService = {
   searchCertifications: vi.fn(),
+  searchProfiles: vi.fn(),
 };

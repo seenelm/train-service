@@ -70,34 +70,12 @@ export default class UserProfileDataProvider {
         description: "should create specialization section successfully",
         createRequest: UserProfileTestFixture.createCustomSectionRequest({
           title: CustomSectionType.SPECIALIZATION,
-          details: [
-            {
-              specialization: "Weight Training",
-              level: "Advanced",
-              yearsOfExperience: 5,
-            },
-            {
-              specialization: "Cardio Training",
-              level: "Intermediate",
-              yearsOfExperience: 3,
-            },
-          ],
+          details: ["Weight Training", "Cardio Training"],
         }),
         expectedResponse: [
           UserProfileTestFixture.createCustomSectionResponse({
             title: CustomSectionType.SPECIALIZATION,
-            details: [
-              {
-                specialization: "Weight Training",
-                level: "Advanced",
-                yearsOfExperience: 5,
-              },
-              {
-                specialization: "Cardio Training",
-                level: "Intermediate",
-                yearsOfExperience: 3,
-              },
-            ],
+            details: ["Weight Training", "Cardio Training"],
           }),
         ],
       },
@@ -106,22 +84,18 @@ export default class UserProfileDataProvider {
         createRequest: UserProfileTestFixture.createCustomSectionRequest({
           title: CustomSectionType.PHILOSOPHY,
           details: [
-            {
-              philosophy: "Consistency over perfection",
-              approach: "Progressive overload",
-              mindset: "Growth-oriented",
-            },
+            "Consistency over perfection",
+            "Progressive overload",
+            "Growth-oriented",
           ],
         }),
         expectedResponse: [
           UserProfileTestFixture.createCustomSectionResponse({
             title: CustomSectionType.PHILOSOPHY,
             details: [
-              {
-                philosophy: "Consistency over perfection",
-                approach: "Progressive overload",
-                mindset: "Growth-oriented",
-              },
+              "Consistency over perfection",
+              "Progressive overload",
+              "Growth-oriented",
             ],
           }),
         ],
@@ -130,20 +104,12 @@ export default class UserProfileDataProvider {
         description: "should create identity section successfully",
         createRequest: UserProfileTestFixture.createCustomSectionRequest({
           title: CustomSectionType.IDENTITY,
-          details: [
-            {
-              identity: "I am a personal trainer",
-            },
-          ],
+          details: ["I am a personal trainer"],
         }),
         expectedResponse: [
           UserProfileTestFixture.createCustomSectionResponse({
             title: CustomSectionType.IDENTITY,
-            details: [
-              {
-                identity: "I am a personal trainer",
-              },
-            ],
+            details: ["I am a personal trainer"],
           }),
         ],
       },
@@ -151,20 +117,12 @@ export default class UserProfileDataProvider {
         description: "should create goals section successfully",
         createRequest: UserProfileTestFixture.createCustomSectionRequest({
           title: CustomSectionType.GOALS,
-          details: [
-            {
-              goal: "To help clients achieve their fitness goals",
-            },
-          ],
+          details: ["To help clients achieve their fitness goals"],
         }),
         expectedResponse: [
           UserProfileTestFixture.createCustomSectionResponse({
             title: CustomSectionType.GOALS,
-            details: [
-              {
-                goal: "To help clients achieve their fitness goals",
-              },
-            ],
+            details: ["To help clients achieve their fitness goals"],
           }),
         ],
       },
@@ -172,20 +130,12 @@ export default class UserProfileDataProvider {
         description: "should create stats section successfully",
         createRequest: UserProfileTestFixture.createCustomSectionRequest({
           title: CustomSectionType.STATS,
-          details: [
-            {
-              stat: "100 clients trained",
-            },
-          ],
+          details: ["100 clients trained"],
         }),
         expectedResponse: [
           UserProfileTestFixture.createCustomSectionResponse({
             title: CustomSectionType.STATS,
-            details: [
-              {
-                stat: "100 clients trained",
-              },
-            ],
+            details: ["100 clients trained"],
           }),
         ],
       },
@@ -253,58 +203,19 @@ export default class UserProfileDataProvider {
         description: "should update specialization section successfully",
         createRequest: UserProfileTestFixture.createCustomSectionRequest({
           title: CustomSectionType.SPECIALIZATION,
-          details: [
-            {
-              specialization: "Weight Training",
-              level: "Advanced",
-              yearsOfExperience: 5,
-            },
-            {
-              specialization: "Cardio Training",
-              level: "Intermediate",
-              yearsOfExperience: 3,
-            },
-          ],
+          details: ["Weight Training", "Cardio Training"],
         }),
         updateRequest: UserProfileTestFixture.createCustomSectionRequest({
           title: CustomSectionType.SPECIALIZATION,
-          details: [
-            {
-              specialization: "Weight Training",
-              level: "Advanced",
-              yearsOfExperience: 5,
-            },
-            {
-              specialization: "Cardio Training",
-              level: "Advanced",
-              yearsOfExperience: 5,
-            },
-            {
-              specialization: "Nutrition Coaching",
-              level: "Intermediate",
-              yearsOfExperience: 3,
-            },
-          ],
+          details: ["Weight Training", "Cardio Training", "Nutrition Coaching"],
         }),
         expectedResponse: [
           UserProfileTestFixture.createCustomSectionResponse({
             title: CustomSectionType.SPECIALIZATION,
             details: [
-              {
-                specialization: "Weight Training",
-                level: "Advanced",
-                yearsOfExperience: 5,
-              },
-              {
-                specialization: "Cardio Training",
-                level: "Advanced",
-                yearsOfExperience: 5,
-              },
-              {
-                specialization: "Nutrition Coaching",
-                level: "Intermediate",
-                yearsOfExperience: 3,
-              },
+              "Weight Training",
+              "Cardio Training",
+              "Nutrition Coaching",
             ],
           }),
         ],
@@ -313,43 +224,21 @@ export default class UserProfileDataProvider {
         description: "should update philosophy section successfully",
         createRequest: UserProfileTestFixture.createCustomSectionRequest({
           title: CustomSectionType.PHILOSOPHY,
-          details: [
-            {
-              philosophy: "Consistency over perfection",
-              approach: "Progressive overload",
-              mindset: "Growth-oriented",
-            },
-          ],
+          details: ["Consistency over perfection"],
         }),
         updateRequest: UserProfileTestFixture.createCustomSectionRequest({
           title: CustomSectionType.PHILOSOPHY,
           details: [
-            {
-              philosophy: "Consistency over perfection",
-              approach: "Progressive overload",
-              mindset: "Growth-oriented",
-            },
-            {
-              philosophy: "Bodyweight training over Bodybuilding",
-              approach: "Progressive overload",
-              mindset: "Growth-oriented",
-            },
+            "Consistency over perfection",
+            "Bodyweight training over Bodybuilding",
           ],
         }),
         expectedResponse: [
           UserProfileTestFixture.createCustomSectionResponse({
             title: CustomSectionType.PHILOSOPHY,
             details: [
-              {
-                philosophy: "Consistency over perfection",
-                approach: "Progressive overload",
-                mindset: "Growth-oriented",
-              },
-              {
-                philosophy: "Bodyweight training over Bodybuilding",
-                approach: "Progressive overload",
-                mindset: "Growth-oriented",
-              },
+              "Consistency over perfection",
+              "Bodyweight training over Bodybuilding",
             ],
           }),
         ],
@@ -358,28 +247,16 @@ export default class UserProfileDataProvider {
         description: "should update identity section successfully",
         createRequest: UserProfileTestFixture.createCustomSectionRequest({
           title: CustomSectionType.IDENTITY,
-          details: [
-            {
-              identity: "I am a personal trainer",
-            },
-          ],
+          details: ["I am a personal trainer"],
         }),
         updateRequest: UserProfileTestFixture.createCustomSectionRequest({
           title: CustomSectionType.IDENTITY,
-          details: [
-            {
-              identity: "I am a certified personal trainer",
-            },
-          ],
+          details: ["I am a certified personal trainer"],
         }),
         expectedResponse: [
           UserProfileTestFixture.createCustomSectionResponse({
             title: CustomSectionType.IDENTITY,
-            details: [
-              {
-                identity: "I am a certified personal trainer",
-              },
-            ],
+            details: ["I am a certified personal trainer"],
           }),
         ],
       },
@@ -387,33 +264,21 @@ export default class UserProfileDataProvider {
         description: "should update goals section successfully",
         createRequest: UserProfileTestFixture.createCustomSectionRequest({
           title: CustomSectionType.GOALS,
-          details: [
-            {
-              goal: "To help clients achieve their fitness goals",
-            },
-          ],
+          details: ["To help clients achieve their fitness goals"],
         }),
         updateRequest: UserProfileTestFixture.createCustomSectionRequest({
           title: CustomSectionType.GOALS,
           details: [
-            {
-              goal: "To help clients achieve their fitness goals",
-            },
-            {
-              goal: "To bench press 315lbs",
-            },
+            "To help clients achieve their fitness goals",
+            "To bench press 315lbs",
           ],
         }),
         expectedResponse: [
           UserProfileTestFixture.createCustomSectionResponse({
             title: CustomSectionType.GOALS,
             details: [
-              {
-                goal: "To help clients achieve their fitness goals",
-              },
-              {
-                goal: "To bench press 315lbs",
-              },
+              "To help clients achieve their fitness goals",
+              "To bench press 315lbs",
             ],
           }),
         ],
@@ -422,28 +287,16 @@ export default class UserProfileDataProvider {
         description: "should create stats section successfully",
         createRequest: UserProfileTestFixture.createCustomSectionRequest({
           title: CustomSectionType.STATS,
-          details: [
-            {
-              stat: "100 clients trained",
-            },
-          ],
+          details: ["100 clients trained"],
         }),
         updateRequest: UserProfileTestFixture.createCustomSectionRequest({
           title: CustomSectionType.STATS,
-          details: [
-            {
-              benchPress: "315lbs",
-            },
-          ],
+          details: ["Bench press 315lbs"],
         }),
         expectedResponse: [
           UserProfileTestFixture.createCustomSectionResponse({
             title: CustomSectionType.STATS,
-            details: [
-              {
-                benchPress: "315lbs",
-              },
-            ],
+            details: ["Bench press 315lbs"],
           }),
         ],
       },
@@ -474,13 +327,7 @@ export default class UserProfileDataProvider {
         description: "should delete specialization section successfully",
         createRequest: UserProfileTestFixture.createCustomSectionRequest({
           title: CustomSectionType.SPECIALIZATION,
-          details: [
-            {
-              specialization: "Weight Training",
-              level: "Advanced",
-              yearsOfExperience: 5,
-            },
-          ],
+          details: ["Weight Training"],
         }),
         sectionTitleToDelete: CustomSectionType.SPECIALIZATION,
       },
@@ -488,12 +335,7 @@ export default class UserProfileDataProvider {
         description: "should delete philosophy section successfully",
         createRequest: UserProfileTestFixture.createCustomSectionRequest({
           title: CustomSectionType.PHILOSOPHY,
-          details: [
-            {
-              philosophy: "Consistency over perfection",
-              approach: "Progressive overload",
-            },
-          ],
+          details: ["Consistency over perfection"],
         }),
         sectionTitleToDelete: CustomSectionType.PHILOSOPHY,
       },

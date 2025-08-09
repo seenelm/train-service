@@ -3,7 +3,7 @@ import { PaginationRequest, PaginationResponse } from "@seenelm/train-core";
 import Certification, {
   CertificationBuilder,
 } from "../../src/infrastructure/database/entity/userProfile/Certification.js";
-import { CertificationResponse } from "../../src/app/userProfile/userProfileDto.js";
+import { CertificationResponse } from "@seenelm/train-core";
 
 export default class SearchTestFixture {
   public static ID: Types.ObjectId = new Types.ObjectId();
@@ -46,8 +46,6 @@ export default class SearchTestFixture {
       imageURL: this.IMAGE_URL,
       certType: this.CERT_TYPE,
       specializations: this.SPECIALIZATIONS,
-      createdAt: this.CREATED_AT,
-      updatedAt: this.UPDATED_AT,
       ...updatedData,
     };
   }
