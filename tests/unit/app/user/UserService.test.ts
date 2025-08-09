@@ -14,30 +14,30 @@ import {
   mockFollowRepository,
   mockPasswordResetRepository,
   mockEmailService,
-} from "../../mocks/userMocks.js";
-import UserService from "../../../src/app/user/UserService.js";
+} from "../../../mocks/userMocks.js";
+import UserService from "../../../../src/app/user/UserService.js";
 import { ClientSession } from "mongoose";
 import mongoose from "mongoose";
-import UserTestFixture from "../../fixtures/UserTestFixture.js";
-import { UserRequest } from "../../../src/app/user/userDto.js";
-import User from "../../../src/infrastructure/database/entity/user/User.js";
-import BcryptUtil from "../../../src/common/utils/BcryptUtil.js";
-import JWTUtil from "../../../src/common/utils/JWTUtil.js";
-import { APIError } from "../../../src/common/errors/APIError.js";
-import { AuthError } from "../../../src/common/errors/AuthError.js";
+import UserTestFixture from "../../../fixtures/UserTestFixture.js";
+import { UserRequest } from "../../../../src/app/user/userDto.js";
+import User from "../../../../src/infrastructure/database/entity/user/User.js";
+import BcryptUtil from "../../../../src/common/utils/BcryptUtil.js";
+import JWTUtil from "../../../../src/common/utils/JWTUtil.js";
+import { APIError } from "../../../../src/common/errors/APIError.js";
+import { AuthError } from "../../../../src/common/errors/AuthError.js";
 import { JsonWebTokenError } from "jsonwebtoken";
 import { Error as MongooseError } from "mongoose";
-import { DatabaseError } from "../../../src/common/errors/DatabaseError.js";
-import { IRefreshToken } from "../../../src/infrastructure/database/models/user/userModel.js";
+import { DatabaseError } from "../../../../src/common/errors/DatabaseError.js";
+import { IRefreshToken } from "../../../../src/infrastructure/database/models/user/userModel.js";
 import {
   RegisterUserAPIError,
   LoginUserAPIError,
   GoogleAuthAPIError,
   AuthErrorType,
   APIErrorType,
-} from "../../../src/common/enums.js";
+} from "../../../../src/common/enums.js";
 import { MongoServerError } from "mongodb";
-import PasswordReset from "../../../src/infrastructure/database/entity/user/PasswordReset.js";
+import PasswordReset from "../../../../src/infrastructure/database/entity/user/PasswordReset.js";
 import { Types } from "mongoose";
 
 describe("UserService", () => {

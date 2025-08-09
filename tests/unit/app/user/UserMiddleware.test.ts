@@ -8,7 +8,7 @@ import {
   afterEach,
 } from "vitest";
 import { NextFunction, Request, Response } from "express";
-import UserMiddleware from "../../../src/app/user/UserMiddleware.js";
+import UserMiddleware from "../../../../src/app/user/UserMiddleware.js";
 import { StatusCodes as HttpStatusCode } from "http-status-codes";
 import {
   UserRequest,
@@ -16,7 +16,7 @@ import {
   GoogleAuthRequest,
   RequestPasswordResetRequest,
   ResetPasswordWithCodeRequest,
-} from "../../../src/app/user/userDto.js";
+} from "../../../../src/app/user/userDto.js";
 import {
   ValidateRegisterUser,
   ValidateLoginUser,
@@ -24,11 +24,11 @@ import {
   ValidateRefreshTokens,
   ValidateGoogleAuth,
   ValidatePasswordReset,
-} from "../../../src/common/enums.js";
-import { CreateValidator } from "../../../src/common/utils/requestValidation.js";
-import UserTestFixture from "../../fixtures/UserTestFixture.js";
-import UserRequestRules from "../../../src/app/user/UserRequestRules.js";
-import { APIError } from "../../../src/common/errors/APIError.js";
+} from "../../../../src/common/enums.js";
+import { CreateValidator } from "../../../../src/common/utils/requestValidation.js";
+import UserTestFixture from "../../../fixtures/UserTestFixture.js";
+import UserRequestRules from "../../../../src/app/user/UserRequestRules.js";
+import { APIError } from "../../../../src/common/errors/APIError.js";
 
 describe("UserMiddleware", () => {
   let userMiddleware: UserMiddleware;

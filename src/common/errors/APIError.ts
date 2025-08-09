@@ -24,6 +24,15 @@ export class APIError extends ServerError {
     return new APIError(message, HttpStatusCode.CONFLICT, "CONFLICT", details);
   }
 
+  static Forbidden(message: string, details?: unknown): APIError {
+    return new APIError(
+      message,
+      HttpStatusCode.FORBIDDEN,
+      "FORBIDDEN",
+      details
+    );
+  }
+
   static InternalServerError(message: string, details?: unknown): APIError {
     return new APIError(
       message,

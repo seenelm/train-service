@@ -17,7 +17,7 @@ import {
 } from "../../src/app/user/userDto.js";
 import { DecodedIdToken } from "firebase-admin/auth";
 import UserProfile from "../../src/infrastructure/database/entity/user/UserProfile.js";
-import { ProfileAccess } from "../../src/common/enums.js";
+import { ProfileAccess } from "@seenelm/train-core";
 import { v4 as uuidv4 } from "uuid";
 import crypto from "crypto";
 import PasswordReset from "../../src/infrastructure/database/entity/user/PasswordReset.js";

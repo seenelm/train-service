@@ -23,7 +23,7 @@ export class AuthMiddleware {
     this.logger = Logger.getInstance();
   }
 
-  public getAccessToken(authorization: string): string {
+  private getAccessToken(authorization: string): string {
     let token: string;
 
     if (!authorization || authorization.trim() === "") {
