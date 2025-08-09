@@ -13,6 +13,13 @@ import { AuthMiddleware } from "../common/middleware/AuthMiddleware.js";
 import UserRepository from "../infrastructure/database/repositories/user/UserRepository.js";
 import { UserModel } from "../infrastructure/database/models/user/userModel.js";
 
+/**
+ * @swagger
+ * tags:
+ *   name: Search
+ *   description: Search operations for certifications, profiles, and groups
+ */
+
 const router = Router();
 
 const authMiddleware = new AuthMiddleware(new UserRepository(UserModel));
@@ -29,6 +36,58 @@ const searchController = new SearchController(
   )
 );
 
+/**
+ * @swagger
+ * /search/certifications:
+ *   get:
+ *     summary: Search for certifications
+ *     tags: [Search]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: query
+ *         name: query
+ *         schema:
+ *           type: string
+ *         description: Search query string
+ *       - in: query
+ *         name: page
+ *         schema:
+ *           type: integer
+ *           default: 1
+ *         description: Page number for pagination
+ *       - in: query
+ *         name: limit
+ *         schema:
+ *           type: integer
+ *           default: 10
+ *         description: Number of results per page
+ *     responses:
+ *       200:
+ *         description: Certifications retrieved successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/SearchCertificationsResponse'
+ *       400:
+ *         description: Invalid input parameters
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ *       401:
+ *         description: Unauthorized
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ *       500:
+ *         description: Server error
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ */
 router.get(
   "/certifications",
   authMiddleware.authenticateToken,
@@ -36,6 +95,58 @@ router.get(
   searchController.searchCertifications
 );
 
+/**
+ * @swagger
+ * /search/profiles:
+ *   get:
+ *     summary: Search for user profiles and groups
+ *     tags: [Search]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: query
+ *         name: query
+ *         schema:
+ *           type: string
+ *         description: Search query string
+ *       - in: query
+ *         name: page
+ *         schema:
+ *           type: integer
+ *           default: 1
+ *         description: Page number for pagination
+ *       - in: query
+ *         name: limit
+ *         schema:
+ *           type: integer
+ *           default: 10
+ *         description: Number of results per page
+ *     responses:
+ *       200:
+ *         description: Profiles and groups retrieved successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/SearchProfilesResponse'
+ *       400:
+ *         description: Invalid input parameters
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ *       401:
+ *         description: Unauthorized
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ *       500:
+ *         description: Server error
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ */
 router.get(
   "/profiles",
   authMiddleware.authenticateToken,

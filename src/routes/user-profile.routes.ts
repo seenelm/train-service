@@ -15,6 +15,13 @@ import UserProfileMiddleware from "../app/userProfile/UserProfileMiddleware.js";
 import FollowMiddleware from "../app/userProfile/FollowMiddleware.js";
 import { AuthMiddleware } from "../common/middleware/AuthMiddleware.js";
 
+/**
+ * @swagger
+ * tags:
+ *   name: UserProfiles
+ *   description: User profile management and social connections
+ */
+
 const router = Router();
 
 const authMiddleware = new AuthMiddleware(new UserRepository(UserModel));
@@ -30,38 +37,423 @@ const userProfileController = new UserProfileController(
   )
 );
 
+/**
+ * @swagger
+ * /user-profile:
+ *   put:
+ *     summary: Update a user profile
+ *     tags: [UserProfiles]
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             $ref: '#/components/schemas/UserProfile'
+ *     responses:
+ *       200:
+ *         description: User profile updated successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/UserProfile'
+ *       400:
+ *         description: Invalid input data
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ *       401:
+ *         description: Unauthorized
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ *       404:
+ *         description: User profile not found
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ *       500:
+ *         description: Server error
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ */
 router.put("/", userProfileController.updateUserProfile);
 
+/**
+ * @swagger
+ * /user-profile/{userId}/custom-section:
+ *   post:
+ *     summary: Create a custom section in user profile
+ *     tags: [UserProfiles]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: userId
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: User ID
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             $ref: '#/components/schemas/CustomSection'
+ *     responses:
+ *       201:
+ *         description: Custom section created successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: true
+ *                 message:
+ *                   type: string
+ *                   example: Custom section created successfully
+ *                 section:
+ *                   $ref: '#/components/schemas/CustomSection'
+ *       400:
+ *         description: Invalid input data
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ *       401:
+ *         description: Unauthorized
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ *       404:
+ *         description: User profile not found
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ *       500:
+ *         description: Server error
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ */
 router.post(
   "/:userId/custom-section",
   authMiddleware.authenticateToken,
   UserProfileMiddleware.validateCreateCustomSection,
   userProfileController.createCustomSection
 );
+/**
+ * @swagger
+ * /user-profile/{userId}/custom-sections:
+ *   get:
+ *     summary: Get all custom sections for a user profile
+ *     tags: [UserProfiles]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: userId
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: User ID
+ *     responses:
+ *       200:
+ *         description: Custom sections retrieved successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 customSections:
+ *                   type: array
+ *                   items:
+ *                     $ref: '#/components/schemas/CustomSection'
+ *       401:
+ *         description: Unauthorized
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ *       404:
+ *         description: User profile not found
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ *       500:
+ *         description: Server error
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ */
 router.get(
   "/:userId/custom-sections",
   authMiddleware.authenticateToken,
   UserProfileMiddleware.validateGetCustomSections,
   userProfileController.getCustomSections
 );
+/**
+ * @swagger
+ * /user-profile/{userId}/custom-section/{sectionTitle}:
+ *   delete:
+ *     summary: Delete a custom section from user profile
+ *     tags: [UserProfiles]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: userId
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: User ID
+ *       - in: path
+ *         name: sectionTitle
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: Title of the section to delete
+ *     responses:
+ *       200:
+ *         description: Custom section deleted successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: true
+ *                 message:
+ *                   type: string
+ *                   example: Custom section deleted successfully
+ *       401:
+ *         description: Unauthorized
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ *       404:
+ *         description: User profile or section not found
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ *       500:
+ *         description: Server error
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ */
 router.delete(
   "/:userId/custom-section/:sectionTitle",
   authMiddleware.authenticateToken,
   UserProfileMiddleware.validateDeleteCustomSection,
   userProfileController.deleteCustomSection
 );
+/**
+ * @swagger
+ * /user-profile/{userId}/custom-section:
+ *   patch:
+ *     summary: Update a custom section in user profile
+ *     tags: [UserProfiles]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: userId
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: User ID
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             $ref: '#/components/schemas/CustomSection'
+ *     responses:
+ *       200:
+ *         description: Custom section updated successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: true
+ *                 message:
+ *                   type: string
+ *                   example: Custom section updated successfully
+ *                 section:
+ *                   $ref: '#/components/schemas/CustomSection'
+ *       400:
+ *         description: Invalid input data
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ *       401:
+ *         description: Unauthorized
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ *       404:
+ *         description: User profile or section not found
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ *       500:
+ *         description: Server error
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ */
 router.patch(
   "/:userId/custom-section",
   authMiddleware.authenticateToken,
   UserProfileMiddleware.validateUpdateCustomSection,
   userProfileController.updateCustomSection
 );
+/**
+ * @swagger
+ * /user-profile/{userId}/basic-info:
+ *   patch:
+ *     summary: Update basic user profile information
+ *     tags: [UserProfiles]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: userId
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: User ID
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             $ref: '#/components/schemas/BasicProfileUpdate'
+ *     responses:
+ *       200:
+ *         description: Basic profile information updated successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: true
+ *                 message:
+ *                   type: string
+ *                   example: Basic profile updated successfully
+ *                 profile:
+ *                   $ref: '#/components/schemas/UserProfile'
+ *       400:
+ *         description: Invalid input data
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ *       401:
+ *         description: Unauthorized
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ *       404:
+ *         description: User profile not found
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ *       500:
+ *         description: Server error
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ */
 router.patch(
   "/:userId/basic-info",
   authMiddleware.authenticateToken,
   UserProfileMiddleware.validateBasicProfileUpdate,
   userProfileController.updateBasicUserProfile
 );
+/**
+ * @swagger
+ * /user-profile/{followeeId}/follow:
+ *   put:
+ *     summary: Follow a user with public account
+ *     tags: [UserProfiles]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: followeeId
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: ID of the user to follow
+ *     responses:
+ *       200:
+ *         description: Successfully followed user
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/FollowResponse'
+ *       400:
+ *         description: Invalid request or already following
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ *       401:
+ *         description: Unauthorized
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ *       403:
+ *         description: Cannot follow private account directly
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ *       404:
+ *         description: User not found
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ *       500:
+ *         description: Server error
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ */
 router.put(
   "/:followeeId/follow",
   authMiddleware.authenticateToken,
@@ -70,6 +462,69 @@ router.put(
   userProfileController.followUser
 );
 
+/**
+ * @swagger
+ * /user-profile/{followeeId}/follow-request:
+ *   post:
+ *     summary: Request to follow a user with private account
+ *     tags: [UserProfiles]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: followeeId
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: ID of the user to request to follow
+ *     responses:
+ *       200:
+ *         description: Follow request sent successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: true
+ *                 message:
+ *                   type: string
+ *                   example: Follow request sent successfully
+ *                 requestId:
+ *                   type: string
+ *                   description: ID of the follow request
+ *       400:
+ *         description: Invalid request or request already sent
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ *       401:
+ *         description: Unauthorized
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ *       403:
+ *         description: Cannot request to follow public account
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ *       404:
+ *         description: User not found
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ *       500:
+ *         description: Server error
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ */
 router.post(
   "/:followeeId/follow-request",
   authMiddleware.authenticateToken,
@@ -78,6 +533,63 @@ router.post(
   userProfileController.requestToFollowUser
 );
 
+/**
+ * @swagger
+ * /user-profile/{followerId}/accept-follow-request:
+ *   put:
+ *     summary: Accept a follow request from another user
+ *     tags: [UserProfiles]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: followerId
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: ID of the user who sent the follow request
+ *     responses:
+ *       200:
+ *         description: Follow request accepted successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: true
+ *                 message:
+ *                   type: string
+ *                   example: Follow request accepted successfully
+ *                 followId:
+ *                   type: string
+ *                   description: ID of the new follow relationship
+ *       400:
+ *         description: Invalid request or no pending request
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ *       401:
+ *         description: Unauthorized
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ *       404:
+ *         description: User or follow request not found
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ *       500:
+ *         description: Server error
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ */
 router.put(
   "/:followerId/accept-follow-request",
   authMiddleware.authenticateToken,
@@ -85,6 +597,60 @@ router.put(
   userProfileController.acceptFollowRequest
 );
 
+/**
+ * @swagger
+ * /user-profile/{followerId}/reject-follow-request:
+ *   delete:
+ *     summary: Reject a follow request from another user
+ *     tags: [UserProfiles]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: followerId
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: ID of the user who sent the follow request
+ *     responses:
+ *       200:
+ *         description: Follow request rejected successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: true
+ *                 message:
+ *                   type: string
+ *                   example: Follow request rejected successfully
+ *       400:
+ *         description: Invalid request or no pending request
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ *       401:
+ *         description: Unauthorized
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ *       404:
+ *         description: User or follow request not found
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ *       500:
+ *         description: Server error
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ */
 router.delete(
   "/:followerId/reject-follow-request",
   authMiddleware.authenticateToken,
