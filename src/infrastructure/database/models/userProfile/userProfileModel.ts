@@ -59,7 +59,6 @@ const customSectionSchema = new Schema(
   {
     title: {
       type: String,
-      unique: true,
       enum: Object.values(CustomSectionType),
       required: true,
     },
