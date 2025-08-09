@@ -1,6 +1,7 @@
 import swaggerJSDoc from 'swagger-jsdoc';
 import swaggerUi from 'swagger-ui-express';
-import { Application } from 'express';
+import { Application, Request, Response, NextFunction } from 'express';
+import dotenv from 'dotenv';
 
 // Swagger definition
 const swaggerDefinition = {
@@ -48,15 +49,47 @@ const options = {
 // Initialize swagger-jsdoc
 const swaggerSpec = swaggerJSDoc(options);
 
+// Load environment variables
+dotenv.config();
+
+// Basic authentication middleware for Swagger docs
+const swaggerAuth = (req: Request, res: Response, next: NextFunction) => {
+  // Get credentials from environment variables or use defaults
+  const SWAGGER_USER = process.env.SWAGGER_USER || 'admin';
+  const SWAGGER_PASSWORD = process.env.SWAGGER_PASSWORD || 'password';
+
+  // Check for basic auth header
+  const authHeader = req.headers.authorization;
+
+  if (!authHeader || !authHeader.startsWith('Basic ')) {
+    res.setHeader('WWW-Authenticate', 'Basic');
+    res.status(401).json({ message: 'Authentication required to access API documentation' });
+    return;
+  }
+
+  // Verify credentials
+  const base64Credentials = authHeader.split(' ')[1];
+  const credentials = Buffer.from(base64Credentials, 'base64').toString('ascii');
+  const [username, password] = credentials.split(':');
+
+  if (username !== SWAGGER_USER || password !== SWAGGER_PASSWORD) {
+    res.setHeader('WWW-Authenticate', 'Basic');
+    res.status(401).json({ message: 'Invalid credentials' });
+    return;
+  }
+
+  next();
+};
+
 export const setupSwagger = (app: Application): void => {
-  // Serve swagger docs
-  app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec));
+  // Apply authentication middleware to Swagger routes
+  app.use('/api-docs', swaggerAuth, swaggerUi.serve, swaggerUi.setup(swaggerSpec));
   
-  // Serve swagger spec as JSON
-  app.get('/api-docs.json', (req, res) => {
+  // Secure the JSON spec endpoint as well
+  app.get('/api-docs.json', swaggerAuth, (req, res) => {
     res.setHeader('Content-Type', 'application/json');
     res.send(swaggerSpec);
   });
   
-  console.log('Swagger documentation available at /api-docs');
+  console.log('Secured Swagger documentation available at /api-docs');
 };
