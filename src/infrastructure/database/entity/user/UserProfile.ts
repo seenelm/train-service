@@ -13,7 +13,6 @@ export default class UserProfile {
   private name: string;
   private bio?: string;
   private accountType: ProfileAccess;
-  private profilePicture?: string;
   private role?: string;
   private location?: string;
   private socialLinks?: SocialLink[];
@@ -29,7 +28,6 @@ export default class UserProfile {
     this.name = builder.name;
     this.bio = builder.bio;
     this.accountType = builder.accountType;
-    this.profilePicture = builder.profilePicture;
     this.role = builder.role;
     this.location = builder.location;
     this.socialLinks = builder.socialLinks;
@@ -65,10 +63,6 @@ export default class UserProfile {
 
   public getAccountType(): ProfileAccess {
     return this.accountType;
-  }
-
-  public getProfilePicture(): string | undefined {
-    return this.profilePicture;
   }
 
   public getRole(): string | undefined {
@@ -131,7 +125,6 @@ export class UserProfileBuilder {
   name: string = "";
   bio?: string;
   accountType: ProfileAccess = ProfileAccess.Public;
-  profilePicture?: string;
   role?: string;
   location?: string;
   socialLinks?: SocialLink[];
@@ -167,11 +160,6 @@ export class UserProfileBuilder {
 
   public setAccountType(accountType: ProfileAccess): this {
     this.accountType = accountType;
-    return this;
-  }
-
-  public setProfilePicture(profilePicture?: string): this {
-    this.profilePicture = profilePicture;
     return this;
   }
 

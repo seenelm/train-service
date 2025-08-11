@@ -3,8 +3,10 @@ import { ProfileAccess } from "@seenelm/train-core";
 
 export default class Group {
   private id: Types.ObjectId;
-  private groupName: string;
-  private bio: string;
+  private name: string;
+  private description?: string;
+  private location?: string;
+  private tags?: string[];
   private owners: Types.ObjectId[];
   private members: Types.ObjectId[];
   private requests: Types.ObjectId[];
@@ -14,8 +16,10 @@ export default class Group {
 
   constructor(builder: GroupBuilder) {
     this.id = builder.id;
-    this.groupName = builder.groupName;
-    this.bio = builder.bio;
+    this.name = builder.name;
+    this.description = builder.description;
+    this.location = builder.location;
+    this.tags = builder.tags;
     this.owners = builder.owners;
     this.members = builder.members;
     this.requests = builder.requests;
@@ -32,12 +36,20 @@ export default class Group {
     return this.id;
   }
 
-  public getGroupName(): string {
-    return this.groupName;
+  public getName(): string {
+    return this.name;
   }
 
-  public getBio(): string {
-    return this.bio;
+  public getDescription(): string | undefined {
+    return this.description;
+  }
+
+  public getLocation(): string | undefined {
+    return this.location;
+  }
+
+  public getTags(): string[] | undefined {
+    return this.tags;
   }
 
   public getOwners(): Types.ObjectId[] {
@@ -68,12 +80,20 @@ export default class Group {
     this.id = id;
   }
 
-  public setGroupName(groupName: string): void {
-    this.groupName = groupName;
+  public setName(name: string): void {
+    this.name = name;
   }
 
-  public setBio(bio: string): void {
-    this.bio = bio;
+  public setDescription(description?: string): void {
+    this.description = description;
+  }
+
+  public setLocation(location?: string): void {
+    this.location = location;
+  }
+
+  public setTags(tags?: string[]): void {
+    this.tags = tags;
   }
 
   public setOwners(owners: Types.ObjectId[]): void {
@@ -146,8 +166,10 @@ export default class Group {
 
 export class GroupBuilder {
   id: Types.ObjectId = new Types.ObjectId();
-  groupName: string = "";
-  bio: string = "";
+  name: string = "";
+  description?: string;
+  location?: string;
+  tags?: string[];
   owners: Types.ObjectId[] = [];
   members: Types.ObjectId[] = [];
   requests: Types.ObjectId[] = [];
@@ -160,13 +182,23 @@ export class GroupBuilder {
     return this;
   }
 
-  public setGroupName(groupName: string): this {
-    this.groupName = groupName;
+  public setName(name: string): this {
+    this.name = name;
     return this;
   }
 
-  public setBio(bio: string): this {
-    this.bio = bio;
+  public setDescription(description?: string): this {
+    this.description = description;
+    return this;
+  }
+
+  public setLocation(location?: string): this {
+    this.location = location;
+    return this;
+  }
+
+  public setTags(tags?: string[]): this {
+    this.tags = tags;
     return this;
   }
 

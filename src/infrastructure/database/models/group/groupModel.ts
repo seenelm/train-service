@@ -2,8 +2,10 @@ import { Schema, model, Types, Document } from "mongoose";
 import { ProfileAccess } from "@seenelm/train-core";
 
 export interface GroupDocument extends Document {
-  groupName: string;
-  bio: string;
+  name: string;
+  description?: string;
+  location?: string;
+  tags?: string[];
   owners: Types.ObjectId[];
   members: Types.ObjectId[];
   requests: Types.ObjectId[];
@@ -14,12 +16,18 @@ export interface GroupDocument extends Document {
 
 const groupSchema = new Schema(
   {
-    groupName: {
+    name: {
       type: String,
       required: true,
     },
-    bio: {
+    description: {
       type: String,
+    },
+    location: {
+      type: String,
+    },
+    tags: {
+      type: [String],
     },
     owners: [
       {

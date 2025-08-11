@@ -8,11 +8,6 @@ export interface IEventRepository
   extends IBaseRepository<Event, EventDocument> {
   toDocument(request: EventRequest): Partial<EventDocument>;
   toResponse(event: Event): EventResponse;
-  findByIds(eventIds: Types.ObjectId[]): Promise<Event[]>;
-  findEventsByAdmin(adminId: Types.ObjectId): Promise<Event[]>;
-  findEventsByInvitee(inviteeId: Types.ObjectId): Promise<Event[]>;
-  findUpcomingEvents(limit?: number): Promise<Event[]>;
-  findEventsByDateRange(startDate: Date, endDate: Date): Promise<Event[]>;
 }
 
 export default class EventRepository
@@ -29,7 +24,7 @@ export default class EventRepository
   toEntity(doc: EventDocument): Event {
     return Event.builder()
       .setId(doc._id as Types.ObjectId)
-      .setName(doc.name)
+      .setTitle(doc.title)
       .setAdmin(doc.admin as Types.ObjectId[])
       .setInvitees(doc.invitees as Types.ObjectId[])
       .setStartTime(doc.startTime)
@@ -37,6 +32,7 @@ export default class EventRepository
       .setLocation(doc.location)
       .setDescription(doc.description)
       .setAlerts(doc.alerts as Alert[])
+      .setTags(doc.tags)
       .setCreatedAt(doc.createdAt)
       .setUpdatedAt(doc.updatedAt)
       .build();
@@ -44,7 +40,7 @@ export default class EventRepository
 
   toDocument(request: EventRequest): Partial<EventDocument> {
     return {
-      name: request.name,
+      title: request.title,
       admin: request.admin.map((id) => new Types.ObjectId(id)),
       invitees: request.invitees?.map((id) => new Types.ObjectId(id)) || [],
       startTime: request.startTime,
@@ -52,62 +48,22 @@ export default class EventRepository
       location: request.location,
       description: request.description,
       alerts: request.alerts,
+      tags: request.tags,
     };
   }
 
   toResponse(event: Event): EventResponse {
     return {
       id: event.getId().toString(),
-      name: event.getName(),
+      title: event.getTitle(),
       admin: event.getAdmin().map((id) => id.toString()),
-      invitees: event.getInvitees()?.map((id) => id.toString()),
+      invitees: event.getInvitees()?.map((id) => id.toString()) || [],
       startTime: event.getStartTime(),
-      endTime: event.getEndTime(),
-      location: event.getLocation(),
-      description: event.getDescription(),
-      alerts: event.getAlerts(),
+      endTime: event.getEndTime() || new Date(),
+      location: event.getLocation() || "",
+      description: event.getDescription() || "",
+      alerts: event.getAlerts() || [],
+      tags: event.getTags() || [],
     };
-  }
-
-  async findByIds(eventIds: Types.ObjectId[]): Promise<Event[]> {
-    const documents = await this.eventModel.find({
-      _id: { $in: eventIds },
-    });
-    return documents.map((doc) => this.toEntity(doc));
-  }
-
-  async findEventsByAdmin(adminId: Types.ObjectId): Promise<Event[]> {
-    const documents = await this.eventModel.find({
-      admin: adminId,
-    });
-    return documents.map((doc) => this.toEntity(doc));
-  }
-
-  async findEventsByInvitee(inviteeId: Types.ObjectId): Promise<Event[]> {
-    const documents = await this.eventModel.find({
-      invitees: inviteeId,
-    });
-    return documents.map((doc) => this.toEntity(doc));
-  }
-
-  async findUpcomingEvents(limit: number = 10): Promise<Event[]> {
-    const now = new Date();
-    const documents = await this.eventModel
-      .find({
-        startTime: { $gte: now },
-      })
-      .sort({ startTime: 1 })
-      .limit(limit);
-    return documents.map((doc) => this.toEntity(doc));
-  }
-
-  async findEventsByDateRange(
-    startDate: Date,
-    endDate: Date
-  ): Promise<Event[]> {
-    const documents = await this.eventModel.find({
-      startTime: { $gte: startDate, $lte: endDate },
-    });
-    return documents.map((doc) => this.toEntity(doc));
   }
 }

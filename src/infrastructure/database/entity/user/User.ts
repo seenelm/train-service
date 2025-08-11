@@ -10,6 +10,7 @@ export default class User {
   private googleId?: string;
   private email: string;
   private authProvider: string;
+  private agreeToTerms: boolean;
   private refreshTokens: IRefreshToken[];
   private createdAt?: Date;
   private updatedAt?: Date;
@@ -23,6 +24,7 @@ export default class User {
     this.googleId = builder.googleId;
     this.email = builder.email;
     this.authProvider = builder.authProvider;
+    this.agreeToTerms = builder.agreeToTerms;
     this.refreshTokens = builder.refreshTokens;
     this.createdAt = builder.createdAt;
     this.updatedAt = builder.updatedAt;
@@ -66,6 +68,10 @@ export default class User {
 
   public getRefreshTokens(): IRefreshToken[] {
     return this.refreshTokens;
+  }
+
+  public getAgreeToTerms(): boolean {
+    return this.agreeToTerms;
   }
 
   public getCreatedAt(): Date | undefined {
@@ -130,6 +136,7 @@ class UserBuilder {
   googleId?: string;
   email: string = "";
   authProvider: string = "";
+  agreeToTerms: boolean = false;
   refreshTokens: IRefreshToken[] = [];
   createdAt?: Date;
   updatedAt?: Date;
@@ -186,6 +193,11 @@ class UserBuilder {
 
   public setUpdatedAt(updatedAt?: Date): this {
     this.updatedAt = updatedAt;
+    return this;
+  }
+
+  public setAgreeToTerms(agreeToTerms: boolean): this {
+    this.agreeToTerms = agreeToTerms;
     return this;
   }
 

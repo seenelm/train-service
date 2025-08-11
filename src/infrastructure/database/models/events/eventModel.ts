@@ -1,13 +1,14 @@
 import { Schema, model, Document, Types } from "mongoose";
 
 export interface EventDocument extends Document {
-  name: string;
+  title: string;
   admin: Types.ObjectId[];
   invitees?: Types.ObjectId[];
   startTime: Date;
   endTime?: Date;
   location?: string;
   description?: string;
+  tags?: string[];
   alerts?: Alert[];
   createdAt: Date;
   updatedAt: Date;
@@ -35,7 +36,7 @@ const alertSchema = new Schema(
 
 const EventSchema: Schema = new Schema(
   {
-    name: {
+    title: {
       type: String,
       required: true,
     },
@@ -68,6 +69,10 @@ const EventSchema: Schema = new Schema(
     },
     description: {
       type: String,
+      required: false,
+    },
+    tags: {
+      type: [String],
       required: false,
     },
     alerts: {

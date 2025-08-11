@@ -18,8 +18,10 @@ import {
   CustomSectionType,
   BasicUserProfileInfoRequest,
   ProfileAccess,
+  GroupResponse,
+  UserGroupsResponse,
 } from "@seenelm/train-core";
-import { GroupResponse, UserGroupsResponse } from "../group/groupDto.js";
+
 import {
   CursorPaginationRequest,
   FollowStatsResponse,

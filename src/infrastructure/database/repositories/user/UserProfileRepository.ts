@@ -38,8 +38,6 @@ export default class UserProfileRepository
       .setSocialLinks(doc.socialLinks)
       .setCertifications(doc.certifications)
       .setCustomSections(doc.customSections)
-      .setCreatedAt(doc.createdAt)
-      .setUpdatedAt(doc.updatedAt)
       .build();
   }
 
@@ -50,7 +48,6 @@ export default class UserProfileRepository
       name: request.name,
       bio: request.bio,
       accountType: request.accountType,
-      profilePicture: request.profilePicture,
       role: request.role,
       location: request.location,
       socialLinks: request.socialLinks,
@@ -70,7 +67,6 @@ export default class UserProfileRepository
       name: profile.getName(),
       bio: profile.getBio(),
       accountType: profile.getAccountType(),
-      profilePicture: profile.getProfilePicture(),
       role: profile.getRole(),
       location: profile.getLocation(),
       socialLinks: profile.getSocialLinks(),

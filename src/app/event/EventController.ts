@@ -18,7 +18,12 @@ export default class EventController {
   public addEvent = async (req: Request, res: Response, next: NextFunction) => {
     try {
       const createEventRequest: EventRequest = req.body;
-      const event = await this.eventService.addEvent(createEventRequest);
+      const groupId = new Types.ObjectId(req.params.groupId);
+
+      const event = await this.eventService.addEvent(
+        createEventRequest,
+        groupId
+      );
 
       res.status(HttpStatusCode.CREATED).json(event);
     } catch (error) {
@@ -98,7 +103,8 @@ export default class EventController {
   ) => {
     try {
       const eventId = new Types.ObjectId(req.params.eventId);
-      await this.eventService.deleteEvent(eventId);
+      const groupId = new Types.ObjectId(req.params.groupId);
+      await this.eventService.deleteEvent(eventId, groupId);
 
       res.status(HttpStatusCode.OK).json({ success: true });
     } catch (error) {
@@ -134,6 +140,37 @@ export default class EventController {
       await this.eventService.removeUserFromEvent(adminId, userId, eventId);
 
       res.status(HttpStatusCode.OK).json({ success: true });
+    } catch (error) {
+      next(error);
+    }
+  };
+
+  public getGroupEvents = async (
+    req: Request,
+    res: Response,
+    next: NextFunction
+  ) => {
+    try {
+      const groupId = new Types.ObjectId(req.params.groupId);
+      const events = await this.eventService.getGroupEvents(groupId);
+
+      res.status(HttpStatusCode.OK).json(events);
+    } catch (error) {
+      next(error);
+    }
+  };
+
+  public getGroupEventById = async (
+    req: Request,
+    res: Response,
+    next: NextFunction
+  ) => {
+    try {
+      const groupId = new Types.ObjectId(req.params.groupId);
+      const eventId = new Types.ObjectId(req.params.eventId);
+      const event = await this.eventService.getGroupEventById(groupId, eventId);
+
+      res.status(HttpStatusCode.OK).json(event);
     } catch (error) {
       next(error);
     }

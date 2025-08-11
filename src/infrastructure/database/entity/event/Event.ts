@@ -3,20 +3,21 @@ import { Alert } from "../../models/events/eventModel.js";
 
 export default class Event {
   private id: Types.ObjectId;
-  private name: string;
+  private title: string;
   private admin: Types.ObjectId[];
   private invitees?: Types.ObjectId[];
   private startTime: Date;
   private endTime?: Date;
   private location?: string;
   private description?: string;
+  private tags?: string[];
   private alerts?: Alert[];
   private createdAt?: Date;
   private updatedAt?: Date;
 
   constructor(builder: EventBuilder) {
     this.id = builder.id;
-    this.name = builder.name;
+    this.title = builder.title;
     this.admin = builder.admin;
     this.invitees = builder.invitees;
     this.startTime = builder.startTime;
@@ -36,8 +37,8 @@ export default class Event {
     return this.id;
   }
 
-  public getName(): string {
-    return this.name;
+  public getTitle(): string {
+    return this.title;
   }
 
   public getAdmin(): Types.ObjectId[] {
@@ -64,6 +65,10 @@ export default class Event {
     return this.description;
   }
 
+  public getTags(): string[] | undefined {
+    return this.tags;
+  }
+
   public getAlerts(): Alert[] | undefined {
     return this.alerts;
   }
@@ -80,8 +85,8 @@ export default class Event {
     this.id = id;
   }
 
-  public setName(name: string): void {
-    this.name = name;
+  public setTitle(title: string): void {
+    this.title = title;
   }
 
   public setAdmin(admin: Types.ObjectId[]): void {
@@ -106,6 +111,10 @@ export default class Event {
 
   public setDescription(description: string): void {
     this.description = description;
+  }
+
+  public setTags(tags: string[]): void {
+    this.tags = tags;
   }
 
   public setAlerts(alerts: Alert[]): void {
@@ -195,13 +204,14 @@ export default class Event {
 
 class EventBuilder {
   id: Types.ObjectId = new Types.ObjectId();
-  name: string = "";
+  title: string = "";
   admin: Types.ObjectId[] = [];
   invitees?: Types.ObjectId[];
   startTime: Date = new Date();
   endTime?: Date;
   location?: string;
   description?: string;
+  tags?: string[];
   alerts?: Alert[];
   createdAt?: Date;
   updatedAt?: Date;
@@ -211,8 +221,8 @@ class EventBuilder {
     return this;
   }
 
-  public setName(name: string): this {
-    this.name = name;
+  public setTitle(title: string): this {
+    this.title = title;
     return this;
   }
 
@@ -248,6 +258,11 @@ class EventBuilder {
 
   public setAlerts(alerts?: Alert[]): this {
     this.alerts = alerts;
+    return this;
+  }
+
+  public setTags(tags?: string[]): this {
+    this.tags = tags;
     return this;
   }
 

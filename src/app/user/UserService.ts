@@ -8,17 +8,17 @@ import { MongooseError, Types } from "mongoose";
 import User from "../../infrastructure/database/entity/user/User.js";
 
 import {
-  UserLoginRequest,
-  UserResponse,
   UserRequest,
+  UserResponse,
   updateUserRequest,
   GoogleAuthRequest,
-  RefreshTokenResponse,
   RefreshTokenRequest,
-  LogoutRequest,
+  RefreshTokenResponse,
   RequestPasswordResetRequest,
   ResetPasswordWithCodeRequest,
-} from "./userDto.js";
+  LogoutRequest,
+  UserLoginRequest,
+} from "@seenelm/train-core";
 
 import mongoose from "mongoose";
 import { APIError } from "../../common/errors/APIError.js";

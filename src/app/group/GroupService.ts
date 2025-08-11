@@ -1,9 +1,10 @@
 import { IGroupRepository } from "../../infrastructure/database/repositories/group/GroupRepository.js";
+
 import {
   CreateGroupRequest,
   GroupResponse,
   UpdateGroupProfileRequest,
-} from "./groupDto.js";
+} from "@seenelm/train-core";
 import Group from "../../infrastructure/database/entity/group/Group.js";
 import { APIError } from "../../common/errors/APIError.js";
 import { MongooseError } from "mongoose";
@@ -70,13 +71,9 @@ export default class GroupService implements IGroupService {
       session.startTransaction();
 
       // Create group document with creator as the only owner
-      const groupDoc = this.groupRepository.toDocument(
-        createGroupRequest.groupName,
-        createGroupRequest.bio || "",
-        [creatorId], // Creator is the only owner
-        [], // Empty members array
-        [], // Empty requests array for new group
-        createGroupRequest.accountType || ProfileAccess.Public
+      const groupDoc = this.groupRepository.toDocumentFromCreateRequest(
+        createGroupRequest,
+        creatorId
       );
 
       // Create the group
@@ -93,7 +90,7 @@ export default class GroupService implements IGroupService {
 
       this.logger.info("Group created successfully", {
         groupId: group.getId(),
-        groupName: group.getGroupName(),
+        groupName: group.getName(),
         creatorId,
       });
 
@@ -557,7 +554,7 @@ export default class GroupService implements IGroupService {
 
       this.logger.info("Group deleted successfully", {
         groupId: group.getId(),
-        groupName: group.getGroupName(),
+        groupName: group.getName(),
         ownerId,
         membersRemoved: allGroupMembers.length,
       });

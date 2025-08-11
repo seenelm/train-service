@@ -76,20 +76,22 @@ export default class UserEventRepository
     return {
       event: {
         id: entity.getEvent().getId().toString(),
-        name: entity.getEvent().getName(),
+        title: entity.getEvent().getTitle(),
         admin: entity
           .getEvent()
           .getAdmin()
           .map((id) => id.toString()),
-        invitees: entity
-          .getEvent()
-          .getInvitees()
-          ?.map((id) => id.toString()),
+        invitees:
+          entity
+            .getEvent()
+            .getInvitees()
+            ?.map((id) => id.toString()) || [],
         startTime: entity.getEvent().getStartTime(),
-        endTime: entity.getEvent().getEndTime(),
-        location: entity.getEvent().getLocation(),
-        description: entity.getEvent().getDescription(),
-        alerts: entity.getEvent().getAlerts(),
+        endTime: entity.getEvent().getEndTime() || new Date(),
+        location: entity.getEvent().getLocation() || "",
+        description: entity.getEvent().getDescription() || "",
+        alerts: entity.getEvent().getAlerts() || [],
+        tags: entity.getEvent().getTags() || [],
       },
       status: entity.getStatus(),
     };
@@ -129,7 +131,7 @@ export default class UserEventRepository
           _id: 0,
           event: {
             id: "$eventDetails._id",
-            name: "$eventDetails.name",
+            title: "$eventDetails.title",
             admin: "$eventDetails.admin",
             invitees: "$eventDetails.invitees",
             startTime: "$eventDetails.startTime",
@@ -137,6 +139,7 @@ export default class UserEventRepository
             location: "$eventDetails.location",
             description: "$eventDetails.description",
             alerts: "$eventDetails.alerts",
+            tags: "$eventDetails.tags",
           },
           status: "$events.status",
         },
@@ -149,7 +152,7 @@ export default class UserEventRepository
     return results.map((result) => {
       const event = Event.builder()
         .setId(result.event.id)
-        .setName(result.event.name)
+        .setTitle(result.event.title)
         .setAdmin(result.event.admin)
         .setInvitees(result.event.invitees)
         .setStartTime(result.event.startTime)
@@ -157,6 +160,7 @@ export default class UserEventRepository
         .setLocation(result.event.location)
         .setDescription(result.event.description)
         .setAlerts(result.event.alerts)
+        .setTags(result.event.tags)
         .build();
 
       return UserEventDetails.builder()
@@ -199,7 +203,7 @@ export default class UserEventRepository
           _id: 0,
           event: {
             id: "$eventDetails._id",
-            name: "$eventDetails.name",
+            title: "$eventDetails.title",
             admin: "$eventDetails.admin",
             invitees: "$eventDetails.invitees",
             startTime: "$eventDetails.startTime",
@@ -207,6 +211,7 @@ export default class UserEventRepository
             location: "$eventDetails.location",
             description: "$eventDetails.description",
             alerts: "$eventDetails.alerts",
+            tags: "$eventDetails.tags",
           },
           status: "$events.status",
         },
@@ -227,7 +232,7 @@ export default class UserEventRepository
     // Convert aggregation result to UserEventDetails entity
     const event = Event.builder()
       .setId(result.event.id)
-      .setName(result.event.name)
+      .setTitle(result.event.title)
       .setAdmin(result.event.admin)
       .setInvitees(result.event.invitees)
       .setStartTime(result.event.startTime)
@@ -235,6 +240,7 @@ export default class UserEventRepository
       .setLocation(result.event.location)
       .setDescription(result.event.description)
       .setAlerts(result.event.alerts)
+      .setTags(result.event.tags)
       .build();
 
     return UserEventDetails.builder()

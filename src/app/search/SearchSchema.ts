@@ -29,23 +29,23 @@ export const searchQuerySchema = z.object({
       }
 
       // Strict whitelist pattern (production-grade)
-      const safePattern = /^[a-zA-Z0-9\s\-.,!?()&@#%*+=:;]+$/;
-      if (!safePattern.test(val)) {
-        ctx.addIssue({
-          code: "custom",
-          message: ValidationErrorMessage.SEARCH_TERM_INVALID_CHARACTERS, // Use enum value
-        });
-        return; // Stop here if invalid characters
-      }
+      // const safePattern = /^[a-zA-Z0-9\s\-.,!?()&@#%*+=:;]+$/;
+      // if (!safePattern.test(val)) {
+      //   ctx.addIssue({
+      //     code: "custom",
+      //     message: ValidationErrorMessage.SEARCH_TERM_INVALID_CHARACTERS, // Use enum value
+      //   });
+      //   return; // Stop here if invalid characters
+      // }
 
       // Check for control characters and excessive whitespace
-      if (/[\x00-\x1F\x7F]/.test(val) || /\s{3,}/.test(val)) {
-        ctx.addIssue({
-          code: "custom",
-          message: ValidationErrorMessage.SEARCH_TERM_NORMALIZATION_FAILED, // Use enum value
-        });
-        return; // Stop here if normalization fails
-      }
+      // if (/[\x00-\x1F\x7F]/.test(val) || /\s{3,}/.test(val)) {
+      //   ctx.addIssue({
+      //     code: "custom",
+      //     message: ValidationErrorMessage.SEARCH_TERM_NORMALIZATION_FAILED, // Use enum value
+      //   });
+      //   return; // Stop here if normalization fails
+      // }
     }),
   page: z
     .string()

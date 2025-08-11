@@ -14,6 +14,7 @@ export interface UserDocument extends Document {
   googleId?: string;
   email: string;
   authProvider: string;
+  agreeToTerms: boolean;
   refreshTokens: IRefreshToken[];
   createdAt: Date;
   updatedAt: Date;
@@ -60,6 +61,10 @@ const userSchema: Schema = new Schema(
       required: true,
     },
     isActive: {
+      type: Boolean,
+      required: true,
+    },
+    agreeToTerms: {
       type: Boolean,
       required: true,
     },

@@ -9,6 +9,8 @@ import EventMiddleware from "../app/event/EventMiddleware.js";
 import { AuthMiddleware } from "../common/middleware/AuthMiddleware.js";
 import UserRepository from "../infrastructure/database/repositories/user/UserRepository.js";
 import { UserModel } from "../infrastructure/database/models/user/userModel.js";
+import GroupEventRepository from "../infrastructure/database/repositories/event/GroupEventRepository.js";
+import { GroupEvent } from "../infrastructure/database/models/events/groupEventModel.js";
 
 /**
  * @swagger
@@ -26,7 +28,8 @@ const eventRepository = new EventRepository(Event);
 const eventController = new EventController(
   new EventService(
     new EventRepository(Event),
-    new UserEventRepository(UserEvent)
+    new UserEventRepository(UserEvent),
+    new GroupEventRepository(GroupEvent)
   )
 );
 
@@ -72,7 +75,7 @@ const eventController = new EventController(
  *               $ref: '#/components/schemas/Error'
  */
 router.post(
-  "/",
+  "/:groupId",
   authMiddleware.authenticateToken,
   EventMiddleware.validateCreateEvent,
   eventController.addEvent
@@ -368,7 +371,7 @@ router.put(
  *               $ref: '#/components/schemas/Error'
  */
 router.delete(
-  "/:eventId",
+  "/:eventId/:groupId",
   authMiddleware.authenticateToken,
   EventMiddleware.checkEventOwnership(eventRepository),
   eventController.deleteEvent
@@ -493,6 +496,108 @@ router.delete(
   authMiddleware.authenticateToken,
   EventMiddleware.checkEventOwnership(eventRepository),
   eventController.removeUserFromEvent
+);
+
+/**
+ * @swagger
+ * /event/group/{groupId}:
+ *   get:
+ *     summary: Get all events for a specific group
+ *     tags: [Events]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: groupId
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: ID of the group to get events for
+ *     responses:
+ *       200:
+ *         description: List of group events retrieved successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: array
+ *               items:
+ *                 $ref: '#/components/schemas/EventResponse'
+ *       401:
+ *         description: Unauthorized
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ *       404:
+ *         description: Group not found
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ *       500:
+ *         description: Server error
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ */
+router.get(
+  "/group/:groupId",
+  authMiddleware.authenticateToken,
+  eventController.getGroupEvents
+);
+
+/**
+ * @swagger
+ * /event/group/{groupId}/event/{eventId}:
+ *   get:
+ *     summary: Get a specific event from a group
+ *     tags: [Events]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: groupId
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: ID of the group
+ *       - in: path
+ *         name: eventId
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: ID of the event to retrieve
+ *     responses:
+ *       200:
+ *         description: Group event retrieved successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/EventResponse'
+ *       401:
+ *         description: Unauthorized
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ *       404:
+ *         description: Group or event not found
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ *       500:
+ *         description: Server error
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ */
+router.get(
+  "/group/:groupId/event/:eventId",
+  authMiddleware.authenticateToken,
+  eventController.getGroupEventById
 );
 
 export default router;

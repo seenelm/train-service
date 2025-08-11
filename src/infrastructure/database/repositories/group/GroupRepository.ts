@@ -3,20 +3,14 @@ import Group from "../../entity/group/Group.js";
 import { IBaseRepository, BaseRepository } from "../BaseRepository.js";
 import { Model, Types } from "mongoose";
 import { ProfileAccess } from "@seenelm/train-core";
-import { GroupResponse } from "../../../../app/group/groupDto.js";
+import { GroupResponse, CreateGroupRequest } from "@seenelm/train-core";
 
 export interface IGroupRepository
   extends IBaseRepository<Group, GroupDocument> {
-  toDocument(
-    groupName: string,
-    bio: string,
-    owners: Types.ObjectId[],
-    members: Types.ObjectId[],
-    requests: Types.ObjectId[],
-    accountType: ProfileAccess
+  toDocumentFromCreateRequest(
+    request: CreateGroupRequest,
+    creatorId: Types.ObjectId
   ): Partial<GroupDocument>;
-
-  toDocumentFromEntity(group: Group): Partial<GroupDocument>;
 
   toResponse(group: Group): GroupResponse;
 }
@@ -32,40 +26,29 @@ export default class GroupRepository
     this.groupModel = groupModel;
   }
 
-  toDocument(
-    groupName: string,
-    bio: string,
-    owners: Types.ObjectId[],
-    members: Types.ObjectId[],
-    requests: Types.ObjectId[],
-    accountType: ProfileAccess
+  toDocumentFromCreateRequest(
+    request: CreateGroupRequest,
+    creatorId: Types.ObjectId
   ): Partial<GroupDocument> {
     return {
-      groupName,
-      bio,
-      owners,
-      members,
-      requests,
-      accountType,
-    };
-  }
-
-  toDocumentFromEntity(group: Group): Partial<GroupDocument> {
-    return {
-      groupName: group.getGroupName(),
-      bio: group.getBio(),
-      owners: group.getOwners(),
-      members: group.getMembers(),
-      requests: group.getRequests(),
-      accountType: group.getAccountType(),
+      name: request.name,
+      description: request.description || "",
+      location: request.location || "",
+      tags: request.tags || [],
+      accountType: request.accountType || ProfileAccess.Public,
+      owners: [creatorId],
+      members: [],
+      requests: [],
     };
   }
 
   toEntity(doc: GroupDocument): Group {
     return Group.builder()
       .setId(doc._id as Types.ObjectId)
-      .setGroupName(doc.groupName)
-      .setBio(doc.bio)
+      .setName(doc.name)
+      .setDescription(doc.description)
+      .setLocation(doc.location)
+      .setTags(doc.tags)
       .setOwners(doc.owners)
       .setMembers(doc.members)
       .setRequests(doc.requests)
@@ -76,8 +59,10 @@ export default class GroupRepository
   toResponse(group: Group): GroupResponse {
     return {
       id: group.getId().toString(),
-      groupName: group.getGroupName(),
-      bio: group.getBio(),
+      name: group.getName(),
+      description: group.getDescription() || "",
+      location: group.getLocation() || "",
+      tags: group.getTags() || [],
       owners: group.getOwners().map((id) => id.toString()),
       members: group.getMembers().map((id) => id.toString()),
       requests: group.getRequests().map((id) => id.toString()),

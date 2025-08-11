@@ -2,7 +2,7 @@ import { UserDocument, IRefreshToken } from "../../models/user/userModel.js";
 import User from "../../entity/user/User.js";
 import { IBaseRepository, BaseRepository } from "../BaseRepository.js";
 import { Model, Types } from "mongoose";
-import { UserResponse, UserRequest } from "../../../../app/user/userDto.js";
+import { UserRequest, UserResponse } from "@seenelm/train-core";
 
 export interface IUserRepository extends IBaseRepository<User, UserDocument> {
   toDocument(
@@ -50,6 +50,7 @@ export default class UserRepository
       googleId,
       email: request.email,
       authProvider: request.authProvider,
+      agreeToTerms: request.agreeToTerms,
       refreshTokens: refreshToken ? [refreshToken] : [],
     };
   }
@@ -66,6 +67,7 @@ export default class UserRepository
       googleId: user.getGoogleId(),
       email: user.getEmail(),
       authProvider: user.getAuthProvider(),
+      agreeToTerms: user.getAgreeToTerms(),
       refreshTokens: [refreshToken],
     };
   }
@@ -80,6 +82,7 @@ export default class UserRepository
       .setIsActive(doc.isActive)
       .setEmail(doc.email)
       .setAuthProvider(doc.authProvider)
+      .setAgreeToTerms(doc.agreeToTerms)
       .setRefreshTokens(doc.refreshTokens)
       .setCreatedAt(doc.createdAt)
       .setUpdatedAt(doc.updatedAt)
