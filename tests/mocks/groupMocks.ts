@@ -15,7 +15,6 @@ export const mockGroupRepository: IGroupRepository = {
   deleteMany: vi.fn(),
   deleteOne: vi.fn(),
   countDocuments: vi.fn(),
-  toDocument: vi.fn(),
-  toDocumentFromEntity: vi.fn(),
+  toDocumentFromCreateRequest: vi.fn(),
   toResponse: vi.fn(),
 };

@@ -14,7 +14,7 @@ import {
   RefreshTokenResponse,
   RequestPasswordResetRequest,
   ResetPasswordWithCodeRequest,
-} from "../../src/app/user/userDto.js";
+} from "@seenelm/train-core";
 import { DecodedIdToken } from "firebase-admin/auth";
 import UserProfile from "../../src/infrastructure/database/entity/user/UserProfile.js";
 import { ProfileAccess } from "@seenelm/train-core";
@@ -151,6 +151,7 @@ export default class UserTestFixture {
       email: this.EMAIL,
       authProvider: this.AUTH_PROVIDER,
       deviceId: this.DEVICE_ID,
+      agreeToTerms: true,
       ...updatedData,
     };
   }

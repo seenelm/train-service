@@ -63,7 +63,6 @@ export default class UserProfileTestFixture {
       name: this.NAME,
       bio: this.BIO,
       accountType: this.ACCOUNT_TYPE,
-      profilePicture: this.PROFILE_PICTURE,
       role: this.ROLE,
       location: this.LOCATION,
       socialLinks: this.SOCIAL_LINKS,
@@ -143,7 +142,6 @@ export default class UserProfileTestFixture {
       name: this.NAME,
       bio: this.BIO,
       accountType: this.ACCOUNT_TYPE,
-      profilePicture: this.PROFILE_PICTURE,
       role: this.ROLE,
       socialLinks: this.SOCIAL_LINKS_REQUEST,
       certifications: [this.createCertificationRequest()],
@@ -191,7 +189,6 @@ export default class UserProfileTestFixture {
       .setName(this.NAME)
       .setBio(this.BIO)
       .setAccountType(this.ACCOUNT_TYPE)
-      .setProfilePicture(this.PROFILE_PICTURE)
       .setRole(this.ROLE)
       .setLocation(this.LOCATION)
       .setSocialLinks(this.SOCIAL_LINKS)

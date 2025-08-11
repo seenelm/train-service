@@ -44,23 +44,27 @@ export default class SearchRepository implements ISearchRepository {
         { username: { $regex: searchTerm, $options: "i" } },
         { name: { $regex: searchTerm, $options: "i" } },
       ];
-      groupFilter.groupName = { $regex: searchTerm, $options: "i" };
+      groupFilter.name = { $regex: searchTerm, $options: "i" };
     }
 
     // Calculate skip value
     const skip = (page - 1) * limit;
 
     // Execute parallel searches using repository methods
+    // Use full limit for each type to ensure we get enough results
     const [userProfiles, groups, userProfileCount, groupCount] =
       await Promise.all([
         this.userProfileRepository.find(userProfileFilter, {
           skip,
-          limit: Math.ceil(limit / 2),
+          limit,
+          sort: { username: 1 }, // Sort by username for consistent results
         }),
         this.groupRepository.find(groupFilter, {
           skip,
-          limit: Math.ceil(limit / 2),
+          limit,
+          sort: { name: 1 }, // Sort by group name for consistent results
         }),
+
         this.userProfileRepository.countDocuments(userProfileFilter),
         this.groupRepository.countDocuments(groupFilter),
       ]);
@@ -80,14 +84,14 @@ export default class SearchRepository implements ISearchRepository {
 
     groups.sort((a: Group, b: Group) => {
       const aExactMatch =
-        a.getGroupName().toLowerCase() === searchTerm.toLowerCase();
+        a.getName().toLowerCase() === searchTerm.toLowerCase();
       const bExactMatch =
-        b.getGroupName().toLowerCase() === searchTerm.toLowerCase();
+        b.getName().toLowerCase() === searchTerm.toLowerCase();
 
       if (aExactMatch && !bExactMatch) return -1;
       if (!aExactMatch && bExactMatch) return 1;
 
-      return a.getGroupName().localeCompare(b.getGroupName());
+      return a.getName().localeCompare(b.getName());
     });
 
     const totalItems = userProfileCount + groupCount;
@@ -95,11 +99,23 @@ export default class SearchRepository implements ISearchRepository {
     const hasNextPage = page < totalPages;
     const hasPreviousPage = page > 1;
 
+    // Combine and limit results to respect the requested limit
+    const combinedResults = [...userProfiles, ...groups];
+    const limitedResults = combinedResults.slice(0, limit);
+
+    // Separate back into userProfiles and groups for the response
+    const finalUserProfiles = limitedResults.filter(
+      (result) => "getUsername" in result
+    ) as UserProfile[];
+    const finalGroups = limitedResults.filter(
+      (result) => "getName" in result && !("getUsername" in result)
+    ) as Group[];
+
     return {
       data: [
         {
-          userProfiles,
-          groups,
+          userProfiles: finalUserProfiles,
+          groups: finalGroups,
         },
       ],
       pagination: {

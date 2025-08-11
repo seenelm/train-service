@@ -16,7 +16,7 @@ import {
   GoogleAuthRequest,
   RequestPasswordResetRequest,
   ResetPasswordWithCodeRequest,
-} from "../../../../src/app/user/userDto.js";
+} from "@seenelm/train-core";
 import {
   ValidateRegisterUser,
   ValidateLoginUser,

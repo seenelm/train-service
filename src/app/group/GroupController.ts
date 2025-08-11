@@ -1,6 +1,9 @@
 import { Request, Response, NextFunction } from "express";
 import { IGroupService } from "./GroupService.js";
-import { CreateGroupRequest, UpdateGroupProfileRequest } from "./groupDto.js";
+import {
+  CreateGroupRequest,
+  UpdateGroupProfileRequest,
+} from "@seenelm/train-core";
 import { APIError } from "../../common/errors/APIError.js";
 import { StatusCodes as HttpStatusCode } from "http-status-codes";
 import { Types } from "mongoose";

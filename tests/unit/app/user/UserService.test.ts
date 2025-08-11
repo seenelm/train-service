@@ -19,7 +19,7 @@ import UserService from "../../../../src/app/user/UserService.js";
 import { ClientSession } from "mongoose";
 import mongoose from "mongoose";
 import UserTestFixture from "../../../fixtures/UserTestFixture.js";
-import { UserRequest } from "../../../../src/app/user/userDto.js";
+import { UserRequest } from "@seenelm/train-core";
 import User from "../../../../src/infrastructure/database/entity/user/User.js";
 import BcryptUtil from "../../../../src/common/utils/BcryptUtil.js";
 import JWTUtil from "../../../../src/common/utils/JWTUtil.js";

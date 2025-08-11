@@ -15,7 +15,7 @@ import {
   UserProfileResponse,
 } from "@seenelm/train-core";
 import { SearchProfilesResponse } from "./searchDto.js";
-import { GroupResponse } from "../group/groupDto.js";
+import { GroupResponse } from "@seenelm/train-core";
 
 export interface ISearchService {
   searchCertifications(

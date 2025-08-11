@@ -9,7 +9,7 @@ import {
   LogoutRequest,
   RequestPasswordResetRequest,
   ResetPasswordWithCodeRequest,
-} from "./userDto.js";
+} from "@seenelm/train-core";
 import { StatusCodes as HttpStatusCode } from "http-status-codes";
 import { Logger } from "../../common/logger.js";
 

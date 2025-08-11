@@ -46,10 +46,10 @@ const searchController = new SearchController(
  *       - bearerAuth: []
  *     parameters:
  *       - in: query
- *         name: query
+ *         name: searchTerm
  *         schema:
  *           type: string
- *         description: Search query string
+ *         description: Search term string
  *       - in: query
  *         name: page
  *         schema:
@@ -105,10 +105,10 @@ router.get(
  *       - bearerAuth: []
  *     parameters:
  *       - in: query
- *         name: query
+ *         name: searchTerm
  *         schema:
  *           type: string
- *         description: Search query string
+ *         description: Search term string
  *       - in: query
  *         name: page
  *         schema:

@@ -15,7 +15,7 @@ import UserTestFixture from "../../../fixtures/UserTestFixture.js";
 import { StatusCodes as HttpStatusCode } from "http-status-codes";
 import { DatabaseError } from "../../../../src/common/errors/DatabaseError.js";
 import { DecodedIdToken } from "firebase-admin/auth";
-import { GoogleAuthRequest } from "../../../../src/app/user/userDto.js";
+import { GoogleAuthRequest } from "@seenelm/train-core";
 
 describe("UserController", () => {
   let userController: UserController;
