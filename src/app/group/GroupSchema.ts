@@ -3,8 +3,8 @@ import { Types } from "mongoose";
 import { ProfileAccess } from "@seenelm/train-core";
 import { ValidationErrorMessage } from "../../common/enums.js";
 
-// Create Group Schema
-export const createGroupSchema = z.object({
+// Group Profile Schema (used for both create and update)
+export const groupProfileSchema = z.object({
   body: z.object({
     name: z
       .string({ error: ValidationErrorMessage.GROUP_NAME_REQUIRED })
@@ -83,6 +83,9 @@ export const createGroupSchema = z.object({
     accountType: z.enum(ProfileAccess).optional().default(ProfileAccess.Public),
   }),
 });
+
+// Alias for backward compatibility
+export const createGroupSchema = groupProfileSchema;
 
 // Note: CreateGroupRequest is now imported from @seenelm/train-core
 
@@ -208,7 +211,7 @@ export const deleteGroupSchema = z.object({
 
 export type DeleteGroupRequest = z.infer<typeof deleteGroupSchema>;
 
-// Update Group Profile Schema
+// Update Group Profile Schema (uses same body schema as create)
 export const updateGroupProfileSchema = z.object({
   params: z.object({
     groupId: z
@@ -218,37 +221,7 @@ export const updateGroupProfileSchema = z.object({
         message: ValidationErrorMessage.GROUP_ID_INVALID_FORMAT,
       }),
   }),
-  body: z.object({
-    name: z
-      .string()
-      .min(1, ValidationErrorMessage.GROUP_NAME_REQUIRED)
-      .max(100, ValidationErrorMessage.GROUP_NAME_TOO_LONG)
-      .trim()
-      .refine((val) => /^[a-zA-Z0-9\s\-_]+$/.test(val), {
-        message: ValidationErrorMessage.GROUP_NAME_INVALID_CHARACTERS,
-      })
-      .optional(),
-    description: z
-      .string()
-      .max(500, ValidationErrorMessage.DESCRIPTION_TOO_LONG)
-      .trim()
-      .optional(),
-    location: z
-      .string()
-      .max(100, "Location must be 100 characters or less")
-      .trim()
-      .optional(),
-    tags: z
-      .array(z.string())
-      .max(10, "Maximum 10 tags allowed")
-      .optional()
-      .transform((val) =>
-        val
-          ?.map((tag) => tag.trim())
-          .filter((tag) => tag.length > 0 && tag.length <= 20)
-      ),
-    accountType: z.enum(ProfileAccess).optional(),
-  }),
+  body: groupProfileSchema.shape.body,
 });
 
 export type UpdateGroupProfileRequest = z.infer<

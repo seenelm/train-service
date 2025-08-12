@@ -58,6 +58,7 @@ export const mockUserGroupsRepository: IUserGroupsRepository = {
   deleteMany: vi.fn(),
   deleteOne: vi.fn(),
   countDocuments: vi.fn(),
+  getUserGroupsWithDetails: vi.fn(),
 };
 
 export const mockFollowRepository: IFollowRepository = {

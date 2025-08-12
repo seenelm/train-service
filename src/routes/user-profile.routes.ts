@@ -5,12 +5,10 @@ import UserProfileRepository from "../infrastructure/database/repositories/user/
 import UserRepository from "../infrastructure/database/repositories/user/UserRepository.js";
 import FollowRepository from "../infrastructure/database/repositories/user/FollowRepository.js";
 import UserGroupsRepository from "../infrastructure/database/repositories/user/UserGroupsRepository.js";
-import GroupRepository from "../infrastructure/database/repositories/group/GroupRepository.js";
 import { UserProfileModel } from "../infrastructure/database/models/userProfile/userProfileModel.js";
 import { UserModel } from "../infrastructure/database/models/user/userModel.js";
 import { FollowModel } from "../infrastructure/database/models/user/followModel.js";
 import { UserGroupsModel } from "../infrastructure/database/models/user/userGroupsModel.js";
-import { GroupModel } from "../infrastructure/database/models/group/groupModel.js";
 import UserProfileMiddleware from "../app/userProfile/UserProfileMiddleware.js";
 import FollowMiddleware from "../app/userProfile/FollowMiddleware.js";
 import { AuthMiddleware } from "../common/middleware/AuthMiddleware.js";
@@ -32,8 +30,7 @@ const userProfileController = new UserProfileController(
   new UserProfileService(
     userProfileRepository,
     new FollowRepository(FollowModel),
-    new UserGroupsRepository(UserGroupsModel),
-    new GroupRepository(GroupModel)
+    new UserGroupsRepository(UserGroupsModel)
   )
 );
 
@@ -83,7 +80,58 @@ const userProfileController = new UserProfileController(
  *             schema:
  *               $ref: '#/components/schemas/Error'
  */
-router.put("/", userProfileController.updateUserProfile);
+router.put(
+  "/",
+  authMiddleware.authenticateToken,
+  userProfileController.updateUserProfile
+);
+
+/**
+ * @swagger
+ * /user-profile/{userId}:
+ *   get:
+ *     summary: Get a user profile by ID
+ *     tags: [UserProfiles]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: userId
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: User ID to get profile for
+ *     responses:
+ *       200:
+ *         description: User profile retrieved successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/UserProfileResponse'
+ *       401:
+ *         description: Unauthorized
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ *       404:
+ *         description: User profile not found
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ *       500:
+ *         description: Server error
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ */
+router.get(
+  "/:userId",
+  authMiddleware.authenticateToken,
+  userProfileController.getUserProfile
+);
 
 /**
  * @swagger

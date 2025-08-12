@@ -20,4 +20,5 @@ export const mockUserProfileService: IUserProfileService = {
   getFollowing: vi.fn(),
   searchFollowers: vi.fn(),
   searchFollowing: vi.fn(),
+  getUserProfile: vi.fn(),
 };

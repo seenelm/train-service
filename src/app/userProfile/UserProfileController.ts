@@ -10,13 +10,31 @@ import {
 } from "@seenelm/train-core";
 import { Types } from "mongoose";
 import { CursorPaginationRequest } from "./followDto.js";
+import { Logger } from "../../common/logger.js";
 
 export default class UserProfileController {
   private userProfileService: IUserProfileService;
+  private logger: Logger;
 
   constructor(userProfileService: IUserProfileService) {
     this.userProfileService = userProfileService;
+    this.logger = Logger.getInstance();
   }
+
+  public getUserProfile = async (
+    req: Request<{ userId: string }>,
+    res: Response,
+    next: NextFunction
+  ) => {
+    try {
+      const userId = new Types.ObjectId(req.params.userId);
+      const userProfile = await this.userProfileService.getUserProfile(userId);
+
+      res.status(HttpStatusCode.OK).json(userProfile);
+    } catch (error) {
+      next(error);
+    }
+  };
 
   public updateUserProfile = async (
     req: Request,
@@ -296,7 +314,7 @@ export default class UserProfileController {
   ) => {
     try {
       const { userId } = req.params;
-
+      this.logger.info("Fetching user groups", { userId });
       const userGroups = await this.userProfileService.fetchUserGroups(
         new Types.ObjectId(userId)
       );

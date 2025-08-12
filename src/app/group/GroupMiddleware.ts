@@ -1,6 +1,6 @@
 import { Request, Response, NextFunction } from "express";
 import {
-  createGroupSchema,
+  groupProfileSchema,
   joinGroupSchema,
   requestToJoinGroupSchema,
   acceptJoinRequestSchema,
@@ -22,7 +22,7 @@ export default class GroupMiddleware {
     next: NextFunction
   ) => {
     try {
-      const result = createGroupSchema.safeParse({
+      const result = groupProfileSchema.safeParse({
         body: req.body,
       });
 

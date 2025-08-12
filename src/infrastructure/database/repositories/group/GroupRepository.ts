@@ -3,12 +3,12 @@ import Group from "../../entity/group/Group.js";
 import { IBaseRepository, BaseRepository } from "../BaseRepository.js";
 import { Model, Types } from "mongoose";
 import { ProfileAccess } from "@seenelm/train-core";
-import { GroupResponse, CreateGroupRequest } from "@seenelm/train-core";
+import { GroupResponse, GroupRequest } from "@seenelm/train-core";
 
 export interface IGroupRepository
   extends IBaseRepository<Group, GroupDocument> {
   toDocumentFromCreateRequest(
-    request: CreateGroupRequest,
+    request: GroupRequest,
     creatorId: Types.ObjectId
   ): Partial<GroupDocument>;
 
@@ -27,7 +27,7 @@ export default class GroupRepository
   }
 
   toDocumentFromCreateRequest(
-    request: CreateGroupRequest,
+    request: GroupRequest,
     creatorId: Types.ObjectId
   ): Partial<GroupDocument> {
     return {

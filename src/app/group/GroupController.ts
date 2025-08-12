@@ -1,9 +1,6 @@
 import { Request, Response, NextFunction } from "express";
 import { IGroupService } from "./GroupService.js";
-import {
-  CreateGroupRequest,
-  UpdateGroupProfileRequest,
-} from "@seenelm/train-core";
+import { GroupRequest } from "@seenelm/train-core";
 import { APIError } from "../../common/errors/APIError.js";
 import { StatusCodes as HttpStatusCode } from "http-status-codes";
 import { Types } from "mongoose";
@@ -16,12 +13,12 @@ export default class GroupController {
   }
 
   public addGroup = async (
-    req: Request<{}, {}, CreateGroupRequest>,
+    req: Request<{}, {}, GroupRequest>,
     res: Response,
     next: NextFunction
   ) => {
     try {
-      const createGroupRequest: CreateGroupRequest = req.body;
+      const groupRequest: GroupRequest = req.body;
       const creatorId = req.user?.getId();
 
       if (!creatorId) {
@@ -29,7 +26,7 @@ export default class GroupController {
       }
 
       const groupResponse = await this.groupService.createGroup(
-        createGroupRequest,
+        groupRequest,
         creatorId
       );
 
@@ -190,24 +187,19 @@ export default class GroupController {
   };
 
   public updateGroupProfile = async (
-    req: Request<{ groupId: string }, {}, UpdateGroupProfileRequest>,
+    req: Request<{ groupId: string }, {}, GroupRequest>,
     res: Response,
     next: NextFunction
   ) => {
     try {
-      const updateRequest = req.body;
+      const groupRequest = req.body;
       const ownerId = req.user.getId();
 
-      // Group is already validated and passed from middleware
       const group = req.group;
 
-      const updatedGroup = await this.groupService.updateGroupProfile(
-        group,
-        updateRequest,
-        ownerId
-      );
+      await this.groupService.updateGroupProfile(group, groupRequest, ownerId);
 
-      res.status(HttpStatusCode.OK).json(updatedGroup);
+      res.status(HttpStatusCode.OK).json({ success: true });
     } catch (error) {
       next(error);
     }

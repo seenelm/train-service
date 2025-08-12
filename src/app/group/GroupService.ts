@@ -1,10 +1,6 @@
 import { IGroupRepository } from "../../infrastructure/database/repositories/group/GroupRepository.js";
 
-import {
-  CreateGroupRequest,
-  GroupResponse,
-  UpdateGroupProfileRequest,
-} from "@seenelm/train-core";
+import { GroupRequest, GroupResponse } from "@seenelm/train-core";
 import Group from "../../infrastructure/database/entity/group/Group.js";
 import { APIError } from "../../common/errors/APIError.js";
 import { MongooseError } from "mongoose";
@@ -18,7 +14,7 @@ import { IUserGroupsRepository } from "../../infrastructure/database/repositorie
 
 export interface IGroupService {
   createGroup(
-    createGroupRequest: CreateGroupRequest,
+    groupRequest: GroupRequest,
     creatorId: Types.ObjectId
   ): Promise<GroupResponse>;
   joinGroup(group: Group, userId: Types.ObjectId): Promise<void>;
@@ -42,7 +38,7 @@ export interface IGroupService {
   deleteGroup(group: Group, ownerId: Types.ObjectId): Promise<void>;
   updateGroupProfile(
     group: Group,
-    updateRequest: UpdateGroupProfileRequest,
+    groupRequest: GroupRequest,
     ownerId: Types.ObjectId
   ): Promise<void>;
 }
@@ -62,7 +58,7 @@ export default class GroupService implements IGroupService {
   }
 
   public async createGroup(
-    createGroupRequest: CreateGroupRequest,
+    groupRequest: GroupRequest,
     creatorId: Types.ObjectId
   ): Promise<GroupResponse> {
     const session = await mongoose.startSession();
@@ -72,7 +68,7 @@ export default class GroupService implements IGroupService {
 
       // Create group document with creator as the only owner
       const groupDoc = this.groupRepository.toDocumentFromCreateRequest(
-        createGroupRequest,
+        groupRequest,
         creatorId
       );
 
@@ -98,7 +94,7 @@ export default class GroupService implements IGroupService {
     } catch (error) {
       this.logger.error("Failed to create group", {
         error,
-        createGroupRequest,
+        groupRequest,
         creatorId,
       });
 
@@ -585,18 +581,18 @@ export default class GroupService implements IGroupService {
 
   public async updateGroupProfile(
     group: Group,
-    updateRequest: UpdateGroupProfileRequest,
+    groupRequest: GroupRequest,
     ownerId: Types.ObjectId
   ): Promise<void> {
     try {
       await this.groupRepository.updateOne(
         { _id: group.getId() },
-        updateRequest
+        groupRequest
       );
 
       this.logger.info("Group profile updated successfully", {
         groupId: group.getId(),
-        updateRequest,
+        groupRequest,
       });
     } catch (error) {
       this.logger.error("Failed to update group profile", {

@@ -1,7 +1,6 @@
 import { IUserProfileRepository } from "../../infrastructure/database/repositories/user/UserProfileRepository.js";
 import { IFollowRepository } from "../../infrastructure/database/repositories/user/FollowRepository.js";
 import { IUserGroupsRepository } from "../../infrastructure/database/repositories/user/UserGroupsRepository.js";
-import { IGroupRepository } from "../../infrastructure/database/repositories/group/GroupRepository.js";
 import { UserProfileRequest } from "@seenelm/train-core";
 import { APIError } from "../../common/errors/APIError.js";
 import { MongooseError } from "mongoose";
@@ -20,6 +19,7 @@ import {
   ProfileAccess,
   GroupResponse,
   UserGroupsResponse,
+  UserProfileResponse,
 } from "@seenelm/train-core";
 
 import {
@@ -32,6 +32,7 @@ import {
 } from "./followDto.js";
 
 export interface IUserProfileService {
+  getUserProfile(userId: Types.ObjectId): Promise<UserProfileResponse>;
   updateUserProfile(userProfileRequest: UserProfileRequest): Promise<void>;
   updateCustomSection(
     userId: Types.ObjectId,
@@ -102,20 +103,57 @@ export default class UserProfileService implements IUserProfileService {
   private userProfileRepository: IUserProfileRepository;
   private followRepository: IFollowRepository;
   private userGroupsRepository: IUserGroupsRepository;
-  private groupRepository: IGroupRepository;
   private logger: Logger;
 
   constructor(
     userProfileRepository: IUserProfileRepository,
     followRepository: IFollowRepository,
-    userGroupsRepository: IUserGroupsRepository,
-    groupRepository: IGroupRepository
+    userGroupsRepository: IUserGroupsRepository
   ) {
     this.userProfileRepository = userProfileRepository;
     this.followRepository = followRepository;
     this.userGroupsRepository = userGroupsRepository;
-    this.groupRepository = groupRepository;
     this.logger = Logger.getInstance();
+  }
+
+  public async getUserProfile(
+    userId: Types.ObjectId
+  ): Promise<UserProfileResponse> {
+    try {
+      const userProfile = await this.userProfileRepository.findOne({
+        userId,
+      });
+
+      if (!userProfile) {
+        this.logger.warn("User profile not found", {
+          userId: userId.toString(),
+        });
+        throw APIError.NotFound("User profile not found");
+      }
+
+      this.logger.info("User profile retrieved successfully", {
+        userId: userId.toString(),
+        username: userProfile.getUsername(),
+      });
+
+      return this.userProfileRepository.toResponse(userProfile);
+    } catch (error) {
+      this.logger.error("Failed to get user profile", {
+        error: error instanceof Error ? error.message : "Unknown error",
+        userId: userId.toString(),
+      });
+
+      if (error instanceof APIError) {
+        throw error;
+      } else if (
+        error instanceof MongooseError ||
+        error instanceof MongoServerError
+      ) {
+        throw DatabaseError.handleMongoDBError(error);
+      } else {
+        throw APIError.InternalServerError("Failed to get user profile");
+      }
+    }
   }
 
   private toCustomSectionResponse(
@@ -920,32 +958,12 @@ export default class UserProfileService implements IUserProfileService {
     userId: Types.ObjectId
   ): Promise<UserGroupsResponse> {
     try {
-      const userGroups = await this.userGroupsRepository.findOne({ userId });
-
-      if (!userGroups) {
-        this.logger.warn("User groups not found", { userId });
-        throw APIError.NotFound("User groups not found");
-      }
-
-      // Get group details for each group ID
-      const groupIds = userGroups.getGroups();
-      const groups: GroupResponse[] = [];
-
-      if (groupIds.length > 0) {
-        const groupEntities = await this.groupRepository.find({
-          _id: { $in: groupIds },
-        });
-
-        // Convert to GroupResponse format
-        groups.push(
-          ...groupEntities.map((group) =>
-            this.groupRepository.toResponse(group)
-          )
-        );
-      }
+      const groups = await this.userGroupsRepository.getUserGroupsWithDetails(
+        userId
+      );
 
       this.logger.info("User groups fetched successfully", {
-        userId,
+        userId: userId.toString(),
         groupCount: groups.length,
       });
 
@@ -955,8 +973,9 @@ export default class UserProfileService implements IUserProfileService {
       };
     } catch (error) {
       this.logger.error("Failed to fetch user groups", {
-        error,
-        userId,
+        error: error instanceof Error ? error.message : "Unknown error",
+        userId: userId.toString(),
+        stack: error instanceof Error ? error.stack : undefined,
       });
 
       if (error instanceof MongooseError || error instanceof MongoServerError) {
