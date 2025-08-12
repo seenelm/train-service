@@ -236,5 +236,5 @@ export enum ValidationErrorMessage {
   GROUP_NAME_INVALID_CHARACTERS = "Group name contains invalid characters",
   GROUP_ID_REQUIRED = "Group ID is required",
   GROUP_ID_INVALID_FORMAT = "Invalid group ID format",
-  BIO_TOO_LONG = "Bio must be 500 characters or less",
+  DESCRIPTION_TOO_LONG = "Description must be 500 characters or less",
 }

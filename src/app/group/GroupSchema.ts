@@ -6,7 +6,7 @@ import { ValidationErrorMessage } from "../../common/enums.js";
 // Create Group Schema
 export const createGroupSchema = z.object({
   body: z.object({
-    groupName: z
+    name: z
       .string({ error: ValidationErrorMessage.GROUP_NAME_REQUIRED })
       .transform((val) => val.trim())
       .superRefine((val, ctx) => {
@@ -28,7 +28,7 @@ export const createGroupSchema = z.object({
           return; // Stop here if too long
         }
       }),
-    bio: z
+    description: z
       .string()
       .optional()
       .transform((val) => val?.trim())
@@ -36,16 +36,55 @@ export const createGroupSchema = z.object({
         if (val && val.length > 500) {
           ctx.addIssue({
             code: "custom",
-            message: ValidationErrorMessage.BIO_TOO_LONG,
+            message: ValidationErrorMessage.DESCRIPTION_TOO_LONG,
           });
           return; // Stop here if too long
+        }
+      }),
+    location: z
+      .string()
+      .optional()
+      .transform((val) => val?.trim())
+      .superRefine((val, ctx) => {
+        if (val && val.length > 100) {
+          ctx.addIssue({
+            code: "custom",
+            message: "Location must be 100 characters or less",
+          });
+          return;
+        }
+      }),
+    tags: z
+      .array(z.string())
+      .optional()
+      .transform((val) =>
+        val?.map((tag) => tag.trim()).filter((tag) => tag.length > 0)
+      )
+      .superRefine((val, ctx) => {
+        if (val && val.length > 10) {
+          ctx.addIssue({
+            code: "custom",
+            message: "Maximum 10 tags allowed",
+          });
+          return;
+        }
+        if (val) {
+          for (const tag of val) {
+            if (tag.length > 20) {
+              ctx.addIssue({
+                code: "custom",
+                message: "Each tag must be 20 characters or less",
+              });
+              return;
+            }
+          }
         }
       }),
     accountType: z.enum(ProfileAccess).optional().default(ProfileAccess.Public),
   }),
 });
 
-export type CreateGroupRequest = z.infer<typeof createGroupSchema>;
+// Note: CreateGroupRequest is now imported from @seenelm/train-core
 
 // Join Group Schema
 export const joinGroupSchema = z.object({
@@ -180,20 +219,34 @@ export const updateGroupProfileSchema = z.object({
       }),
   }),
   body: z.object({
-    groupName: z
+    name: z
       .string()
       .min(1, ValidationErrorMessage.GROUP_NAME_REQUIRED)
-      .max(50, ValidationErrorMessage.GROUP_NAME_TOO_LONG)
+      .max(100, ValidationErrorMessage.GROUP_NAME_TOO_LONG)
       .trim()
       .refine((val) => /^[a-zA-Z0-9\s\-_]+$/.test(val), {
         message: ValidationErrorMessage.GROUP_NAME_INVALID_CHARACTERS,
       })
       .optional(),
-    bio: z
+    description: z
       .string()
-      .max(500, ValidationErrorMessage.BIO_TOO_LONG)
+      .max(500, ValidationErrorMessage.DESCRIPTION_TOO_LONG)
       .trim()
       .optional(),
+    location: z
+      .string()
+      .max(100, "Location must be 100 characters or less")
+      .trim()
+      .optional(),
+    tags: z
+      .array(z.string())
+      .max(10, "Maximum 10 tags allowed")
+      .optional()
+      .transform((val) =>
+        val
+          ?.map((tag) => tag.trim())
+          .filter((tag) => tag.length > 0 && tag.length <= 20)
+      ),
     accountType: z.enum(ProfileAccess).optional(),
   }),
 });
