@@ -130,6 +130,88 @@ router.post(
  *             schema:
  *               $ref: '#/components/schemas/Error'
  */
+/**
+ * @swagger
+ * /event/user/{userId}:
+ *   get:
+ *     summary: Get user events with cursor-based pagination
+ *     tags: [Events]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: userId
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: ID of the user to get events for
+ *       - in: query
+ *         name: limit
+ *         required: false
+ *         schema:
+ *           type: integer
+ *           minimum: 1
+ *           maximum: 50
+ *           default: 10
+ *         description: Number of events to return (max 50)
+ *       - in: query
+ *         name: cursor
+ *         required: false
+ *         schema:
+ *           type: string
+ *         description: Cursor for pagination (event ID to start after)
+ *     responses:
+ *       200:
+ *         description: User events retrieved successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 data:
+ *                   type: array
+ *                   items:
+ *                     $ref: '#/components/schemas/UserEventResponse'
+ *                 pagination:
+ *                   type: object
+ *                   properties:
+ *                     hasNextPage:
+ *                       type: boolean
+ *                       description: Whether there are more events to fetch
+ *                     hasPreviousPage:
+ *                       type: boolean
+ *                       description: Whether there are previous events
+ *                     nextCursor:
+ *                       type: string
+ *                       description: Cursor for the next page
+ *                     previousCursor:
+ *                       type: string
+ *                       description: Cursor for the previous page
+ *       400:
+ *         description: Invalid pagination parameters
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ *       401:
+ *         description: Unauthorized
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ *       404:
+ *         description: User not found
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ *       500:
+ *         description: Server error
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ */
 router.get(
   "/user/:userId",
   authMiddleware.authenticateToken,

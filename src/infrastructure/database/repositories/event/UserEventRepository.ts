@@ -5,13 +5,21 @@ import Event from "../../entity/event/Event.js";
 import { IBaseRepository, BaseRepository } from "../BaseRepository.js";
 import { Model, Types } from "mongoose";
 import { EventStatus } from "../../../../common/enums.js";
-import { UserEventResponse } from "@seenelm/train-core";
+import {
+  UserEventResponse,
+  CursorPaginationResponse,
+} from "@seenelm/train-core";
 
 export interface IUserEventRepository
   extends IBaseRepository<UserEvent, UserEventDocument> {
   toResponse(entity: UserEventDetails): UserEventResponse;
   findByUserId(userId: Types.ObjectId): Promise<UserEvent[]>;
   getUserEventsWithDetails(userId: Types.ObjectId): Promise<UserEventDetails[]>;
+  getUserEventsWithDetailsPaginated(
+    userId: Types.ObjectId,
+    limit: number,
+    cursor?: string
+  ): Promise<CursorPaginationResponse<UserEventDetails>>;
   getUserEventWithDetails(
     userId: Types.ObjectId,
     eventId: Types.ObjectId
@@ -168,6 +176,113 @@ export default class UserEventRepository
         .setStatus(result.status)
         .build();
     });
+  }
+
+  async getUserEventsWithDetailsPaginated(
+    userId: Types.ObjectId,
+    limit: number,
+    cursor?: string
+  ): Promise<CursorPaginationResponse<UserEventDetails>> {
+    const pipeline: any[] = [
+      // Match user events for the specific user
+      { $match: { userId } },
+
+      // Unwind the events array to work with individual events
+      { $unwind: "$events" },
+
+      // Lookup event details from the events collection
+      {
+        $lookup: {
+          from: "events", // Collection name for events
+          localField: "events.eventId",
+          foreignField: "_id",
+          as: "eventDetails",
+        },
+      },
+
+      // Unwind the eventDetails array (should only have one element)
+      { $unwind: "$eventDetails" },
+
+      // Sort by start time (most recent first)
+      { $sort: { "eventDetails.startTime": -1 } },
+
+      // Apply cursor-based pagination
+      ...(cursor
+        ? [
+            {
+              $match: {
+                "eventDetails._id": { $lt: new Types.ObjectId(cursor) },
+              },
+            },
+          ]
+        : []),
+
+      // Limit results
+      { $limit: limit + 1 }, // Get one extra to determine if there's a next page
+
+      // Project the final structure
+      {
+        $project: {
+          _id: 0,
+          event: {
+            id: "$eventDetails._id",
+            title: "$eventDetails.title",
+            admin: "$eventDetails.admin",
+            invitees: "$eventDetails.invitees",
+            startTime: "$eventDetails.startTime",
+            endTime: "$eventDetails.endTime",
+            location: "$eventDetails.location",
+            description: "$eventDetails.description",
+            alerts: "$eventDetails.alerts",
+            tags: "$eventDetails.tags",
+          },
+          status: "$events.status",
+        },
+      },
+    ];
+
+    const results = await this.userEventModel.aggregate(pipeline);
+
+    // Check if there's a next page
+    const hasNextPage = results.length > limit;
+    const data = hasNextPage ? results.slice(0, limit) : results;
+
+    // Get the next cursor (ID of the last item)
+    const nextCursor =
+      hasNextPage && data.length > 0
+        ? data[data.length - 1].event.id.toString()
+        : undefined;
+
+    // Convert aggregation results to UserEventDetails entities
+    const userEventDetails = data.map((result) => {
+      const event = Event.builder()
+        .setId(result.event.id)
+        .setTitle(result.event.title)
+        .setAdmin(result.event.admin)
+        .setInvitees(result.event.invitees)
+        .setStartTime(result.event.startTime)
+        .setEndTime(result.event.endTime)
+        .setLocation(result.event.location)
+        .setDescription(result.event.description)
+        .setAlerts(result.event.alerts)
+        .setTags(result.event.tags)
+        .build();
+
+      return UserEventDetails.builder()
+        .setEvent(event)
+        .setStatus(result.status)
+        .build();
+    });
+
+    return {
+      data: userEventDetails,
+      pagination: {
+        hasNextPage,
+        hasPreviousPage: !!cursor,
+        nextCursor,
+        previousCursor: cursor,
+      },
+    };
   }
 
   async getUserEventWithDetails(

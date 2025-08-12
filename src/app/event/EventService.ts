@@ -13,6 +13,8 @@ import {
   EventResponse,
   UserEventResponse,
   UserEventRequest,
+  CursorPaginationRequest,
+  CursorPaginationResponse,
 } from "@seenelm/train-core";
 import mongoose from "mongoose";
 import { IGroupEventRepository } from "../../infrastructure/database/repositories/event/GroupEventRepository.js";
@@ -22,7 +24,10 @@ export interface IEventService {
     request: EventRequest,
     groupId: Types.ObjectId
   ): Promise<EventResponse>;
-  getUserEvents(userId: Types.ObjectId): Promise<UserEventResponse[]>;
+  getUserEvents(
+    userId: Types.ObjectId,
+    pagination: CursorPaginationRequest
+  ): Promise<CursorPaginationResponse<UserEventResponse>>;
   getUserEventById(
     userId: Types.ObjectId,
     eventId: Types.ObjectId
@@ -140,16 +145,33 @@ export default class EventService implements IEventService {
     }
   }
 
-  async getUserEvents(userId: Types.ObjectId): Promise<UserEventResponse[]> {
+  async getUserEvents(
+    userId: Types.ObjectId,
+    pagination: CursorPaginationRequest
+  ): Promise<CursorPaginationResponse<UserEventResponse>> {
     try {
-      const userEvents =
-        await this.userEventRepository.getUserEventsWithDetails(userId);
+      const { limit, cursor } = pagination;
 
-      if (!userEvents || userEvents.length === 0) {
-        return [];
+      const result =
+        await this.userEventRepository.getUserEventsWithDetailsPaginated(
+          userId,
+          limit,
+          cursor
+        );
+
+      if (!result || result.data.length === 0) {
+        return {
+          data: [],
+          pagination: {
+            hasNextPage: false,
+            hasPreviousPage: false,
+            nextCursor: undefined,
+            previousCursor: undefined,
+          },
+        };
       }
 
-      const userEventResponses: UserEventResponse[] = userEvents.map(
+      const userEventResponses: UserEventResponse[] = result.data.map(
         (userEventDetail: UserEventDetails) => {
           return this.userEventRepository.toResponse(userEventDetail);
         }
@@ -158,9 +180,14 @@ export default class EventService implements IEventService {
       this.logger.info("User events retrieved successfully", {
         userId: userId.toString(),
         eventCount: userEventResponses.length,
+        hasNextPage: result.pagination.hasNextPage,
+        nextCursor: result.pagination.nextCursor,
       });
 
-      return userEventResponses;
+      return {
+        data: userEventResponses,
+        pagination: result.pagination,
+      };
     } catch (error) {
       this.logger.error("Failed to get user events", {
         error: error instanceof Error ? error.message : "Unknown error",

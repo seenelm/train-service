@@ -5,6 +5,7 @@ import {
   EventRequest,
   UserEventResponse,
   UserEventRequest,
+  CursorPaginationRequest,
 } from "@seenelm/train-core";
 import { Types } from "mongoose";
 
@@ -38,10 +39,19 @@ export default class EventController {
   ) => {
     try {
       const userId = new Types.ObjectId(req.params.userId);
-      const userEvents: UserEventResponse[] =
-        await this.eventService.getUserEvents(userId);
 
-      res.status(HttpStatusCode.OK).json(userEvents);
+      // Extract pagination parameters from query
+      const limit = parseInt(req.query.limit as string) || 10;
+      const cursor = req.query.cursor as string;
+
+      const pagination: CursorPaginationRequest = {
+        limit: Math.min(limit, 50), // Cap at 50 events per request
+        cursor,
+      };
+
+      const result = await this.eventService.getUserEvents(userId, pagination);
+
+      res.status(HttpStatusCode.OK).json(result);
     } catch (error) {
       next(error);
     }
