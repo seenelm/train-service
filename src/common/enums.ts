@@ -237,4 +237,14 @@ export enum ValidationErrorMessage {
   GROUP_ID_REQUIRED = "Group ID is required",
   GROUP_ID_INVALID_FORMAT = "Invalid group ID format",
   DESCRIPTION_TOO_LONG = "Description must be 500 characters or less",
+
+  // Event validation messages
+  EVENT_TITLE_REQUIRED = "Event title is required",
+  EVENT_TITLE_TOO_LONG = "Event title must be 100 characters or less",
+  EVENT_DESCRIPTION_TOO_LONG = "Event description must be 500 characters or less",
+  EVENT_LOCATION_TOO_LONG = "Event location must be 200 characters or less",
+  EVENT_TAGS_TOO_MANY = "Maximum 10 tags allowed",
+  EVENT_TAG_TOO_LONG = "Each tag must be 20 characters or less",
+  EVENT_ADMIN_ID_INVALID = "All admin IDs must be valid ObjectIds",
+  EVENT_INVITEE_ID_INVALID = "All invitee IDs must be valid ObjectIds",
 }

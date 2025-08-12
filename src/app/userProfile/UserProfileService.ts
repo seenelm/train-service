@@ -920,7 +920,6 @@ export default class UserProfileService implements IUserProfileService {
     userId: Types.ObjectId
   ): Promise<UserGroupsResponse> {
     try {
-      // Get user's groups from userGroupsModel
       const userGroups = await this.userGroupsRepository.findOne({ userId });
 
       if (!userGroups) {

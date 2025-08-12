@@ -1,15 +1,24 @@
 import { z } from "zod";
-import { EventStatus } from "../../common/enums.js";
+import { EventStatus, ValidationErrorMessage } from "../../common/enums.js";
 
 export const createEventSchema = z.object({
-  name: z
+  title: z
     .string()
-    .min(1, "Event name is required")
-    .max(100, "Event name must be 100 characters or less"),
+    .min(1, ValidationErrorMessage.EVENT_TITLE_REQUIRED)
+    .max(100, ValidationErrorMessage.EVENT_TITLE_TOO_LONG)
+    .transform((val) => val.trim()),
   admin: z
     .array(z.string().min(1, "Admin ID is required"))
-    .min(1, "At least one admin is required"),
-  invitees: z.array(z.string().min(1, "Invitee ID is required")).optional(),
+    .min(1, "At least one admin is required")
+    .refine((val) => val.every((id) => /^[0-9a-fA-F]{24}$/.test(id)), {
+      message: ValidationErrorMessage.EVENT_ADMIN_ID_INVALID,
+    }),
+  invitees: z
+    .array(z.string().min(1, "Invitee ID is required"))
+    .optional()
+    .refine((val) => !val || val.every((id) => /^[0-9a-fA-F]{24}$/.test(id)), {
+      message: ValidationErrorMessage.EVENT_INVITEE_ID_INVALID,
+    }),
   startTime: z
     .string()
     .datetime("Start time must be a valid date")
@@ -21,12 +30,14 @@ export const createEventSchema = z.object({
     .transform((val) => (val ? new Date(val) : undefined)),
   location: z
     .string()
-    .max(200, "Location must be 200 characters or less")
-    .optional(),
+    .max(200, ValidationErrorMessage.EVENT_LOCATION_TOO_LONG)
+    .optional()
+    .transform((val) => val?.trim()),
   description: z
     .string()
-    .max(500, "Description must be 500 characters or less")
-    .optional(),
+    .max(500, ValidationErrorMessage.EVENT_DESCRIPTION_TOO_LONG)
+    .optional()
+    .transform((val) => val?.trim()),
   alerts: z
     .array(
       z.object({
@@ -38,19 +49,54 @@ export const createEventSchema = z.object({
       })
     )
     .optional(),
+  tags: z
+    .array(z.string())
+    .optional()
+    .transform((val) =>
+      val?.map((tag) => tag.trim()).filter((tag) => tag.length > 0)
+    )
+    .superRefine((val, ctx) => {
+      if (val && val.length > 10) {
+        ctx.addIssue({
+          code: "custom",
+          message: ValidationErrorMessage.EVENT_TAGS_TOO_MANY,
+        });
+        return;
+      }
+      if (val) {
+        for (const tag of val) {
+          if (tag.length > 20) {
+            ctx.addIssue({
+              code: "custom",
+              message: ValidationErrorMessage.EVENT_TAG_TOO_LONG,
+            });
+            return;
+          }
+        }
+      }
+    }),
 });
 
 export const updateEventSchema = z.object({
-  name: z
+  title: z
     .string()
-    .min(1, "Event name is required")
-    .max(100, "Event name must be 100 characters or less")
-    .optional(),
+    .min(1, ValidationErrorMessage.EVENT_TITLE_REQUIRED)
+    .max(100, ValidationErrorMessage.EVENT_TITLE_TOO_LONG)
+    .optional()
+    .transform((val) => val?.trim()),
   admin: z
     .array(z.string().min(1, "Admin ID is required"))
     .min(1, "At least one admin is required")
-    .optional(),
-  invitees: z.array(z.string().min(1, "Invitee ID is required")).optional(),
+    .optional()
+    .refine((val) => !val || val.every((id) => /^[0-9a-fA-F]{24}$/.test(id)), {
+      message: ValidationErrorMessage.EVENT_ADMIN_ID_INVALID,
+    }),
+  invitees: z
+    .array(z.string().min(1, "Invitee ID is required"))
+    .optional()
+    .refine((val) => !val || val.every((id) => /^[0-9a-fA-F]{24}$/.test(id)), {
+      message: ValidationErrorMessage.EVENT_INVITEE_ID_INVALID,
+    }),
   startTime: z
     .string()
     .datetime("Start time must be a valid date")
@@ -63,12 +109,14 @@ export const updateEventSchema = z.object({
     .transform((val) => (val ? new Date(val) : undefined)),
   location: z
     .string()
-    .max(200, "Location must be 200 characters or less")
-    .optional(),
+    .max(200, ValidationErrorMessage.EVENT_LOCATION_TOO_LONG)
+    .optional()
+    .transform((val) => val?.trim()),
   description: z
     .string()
-    .max(500, "Description must be 500 characters or less")
-    .optional(),
+    .max(500, ValidationErrorMessage.EVENT_DESCRIPTION_TOO_LONG)
+    .optional()
+    .transform((val) => val?.trim()),
   alerts: z
     .array(
       z.object({
@@ -80,6 +128,32 @@ export const updateEventSchema = z.object({
       })
     )
     .optional(),
+  tags: z
+    .array(z.string())
+    .optional()
+    .transform((val) =>
+      val?.map((tag) => tag.trim()).filter((tag) => tag.length > 0)
+    )
+    .superRefine((val, ctx) => {
+      if (val && val.length > 10) {
+        ctx.addIssue({
+          code: "custom",
+          message: ValidationErrorMessage.EVENT_TAGS_TOO_MANY,
+        });
+        return;
+      }
+      if (val) {
+        for (const tag of val) {
+          if (tag.length > 20) {
+            ctx.addIssue({
+              code: "custom",
+              message: ValidationErrorMessage.EVENT_TAG_TOO_LONG,
+            });
+            return;
+          }
+        }
+      }
+    }),
 });
 
 export const updateUserEventStatusSchema = z.object({
