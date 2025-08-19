@@ -24,6 +24,10 @@ export interface IEventService {
     request: EventRequest,
     groupId: Types.ObjectId
   ): Promise<EventResponse>;
+  createEvent(
+    request: EventRequest,
+    userId: Types.ObjectId
+  ): Promise<EventResponse>;
   getUserEvents(
     userId: Types.ObjectId,
     pagination: CursorPaginationRequest
@@ -137,6 +141,74 @@ export default class EventService implements IEventService {
         throw error;
       } else {
         throw APIError.InternalServerError("Failed to create event");
+      }
+    } finally {
+      if (session) {
+        session.endSession();
+      }
+    }
+  }
+
+  async createEvent(
+    request: EventRequest,
+    userId: Types.ObjectId
+  ): Promise<EventResponse> {
+    const session = await mongoose.startSession();
+
+    try {
+      session.startTransaction();
+
+      // Create the event document
+      const eventDoc = this.eventRepository.toDocument(request);
+      const event = await this.eventRepository.create(eventDoc);
+
+      // Add the event to the user's userEvents collection with Accepted status
+      await this.userEventRepository.addEventToUser(
+        userId,
+        event.getId(),
+        EventStatus.Accepted
+      );
+
+      // If there are invitees, add the event to their userEvents with Pending status
+      if (request.invitees && request.invitees.length > 0) {
+        const inviteePromises = request.invitees.map((inviteeId: string) =>
+          this.userEventRepository.addEventToUser(
+            new Types.ObjectId(inviteeId),
+            event.getId(),
+            EventStatus.Pending
+          )
+        );
+
+        await Promise.all(inviteePromises);
+      }
+
+      await session.commitTransaction();
+
+      this.logger.info("User event created successfully", {
+        eventId: event.getId().toString(),
+        title: event.getTitle(),
+        userId: userId.toString(),
+        inviteeCount: request.invitees?.length || 0,
+      });
+
+      return this.eventRepository.toResponse(event);
+    } catch (error) {
+      this.logger.error("Failed to create user event", {
+        error: error instanceof Error ? error.message : "Unknown error",
+        request,
+        userId: userId.toString(),
+      });
+
+      if (session) {
+        await session.abortTransaction();
+      }
+
+      if (error instanceof MongooseError || error instanceof MongoServerError) {
+        throw DatabaseError.handleMongoDBError(error);
+      } else if (error instanceof APIError) {
+        throw error;
+      } else {
+        throw APIError.InternalServerError("Failed to create user event");
       }
     } finally {
       if (session) {

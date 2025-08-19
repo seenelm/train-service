@@ -32,6 +32,26 @@ export default class EventController {
     }
   };
 
+  public createEvent = async (
+    req: Request,
+    res: Response,
+    next: NextFunction
+  ) => {
+    try {
+      const createEventRequest: EventRequest = req.body;
+      const userId = req.user.getId();
+
+      const event = await this.eventService.createEvent(
+        createEventRequest,
+        userId
+      );
+
+      res.status(HttpStatusCode.CREATED).json(event);
+    } catch (error) {
+      next(error);
+    }
+  };
+
   public getUserEvents = async (
     req: Request,
     res: Response,

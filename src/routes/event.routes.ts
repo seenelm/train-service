@@ -90,6 +90,53 @@ router.post(
 
 /**
  * @swagger
+ * /event:
+ *   post:
+ *     summary: Create a new event for a user
+ *     tags: [Events]
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             $ref: '#/components/schemas/EventRequest'
+ *     responses:
+ *       201:
+ *         description: Event created successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/EventResponse'
+ *       400:
+ *         description: Invalid input data
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ *       401:
+ *         description: Unauthorized
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ *       500:
+ *         description: Server error
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ */
+router.post(
+  "/",
+  authMiddleware.authenticateToken,
+  EventMiddleware.validateCreateEvent,
+  eventController.createEvent
+);
+
+/**
+ * @swagger
  * /event/user/{userId}:
  *   get:
  *     summary: Get all events for a specific user
