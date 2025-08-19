@@ -36,12 +36,19 @@ const eventController = new EventController(
 // Event routes
 /**
  * @swagger
- * /event:
+ * /event/{groupId}:
  *   post:
  *     summary: Create a new event
  *     tags: [Events]
  *     security:
  *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: groupId
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: ID of the group to create the event for
  *     requestBody:
  *       required: true
  *       content:
