@@ -73,6 +73,43 @@
  *           type: string
  *           description: Event location (optional)
  *
+ *     EventRequest:
+ *       type: object
+ *       required:
+ *         - title
+ *         - description
+ *         - startTime
+ *         - admin
+ *       properties:
+ *         title:
+ *           type: string
+ *           description: Event title
+ *         description:
+ *           type: string
+ *           description: Event description
+ *         admin:
+ *           type: array
+ *           description: Array of admin user IDs
+ *           items:
+ *             type: string
+ *           example: ["65750dbedc7f22a38934ae3d"]
+ *         startTime:
+ *           type: string
+ *           format: date-time
+ *           description: Event start date and time
+ *         endTime:
+ *           type: string
+ *           format: date-time
+ *           description: Event end date and time (optional)
+ *         location:
+ *           type: string
+ *           description: Event location (optional)
+ *         invitees:
+ *           type: array
+ *           description: Array of user IDs to invite to the event (optional)
+ *           items:
+ *             type: string
+ *
  *     EventUpdateRequest:
  *       type: object
  *       properties:

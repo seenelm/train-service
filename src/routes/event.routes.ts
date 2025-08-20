@@ -38,7 +38,8 @@ const eventController = new EventController(
  * @swagger
  * /event/{groupId}:
  *   post:
- *     summary: Create a new event
+ *     summary: Create a new event for a specific group
+ *     description: Creates an event and associates it with the specified group. Requires authentication.
  *     tags: [Events]
  *     security:
  *       - bearerAuth: []
@@ -85,14 +86,15 @@ router.post(
   "/:groupId",
   authMiddleware.authenticateToken,
   EventMiddleware.validateCreateEvent,
-  eventController.addEvent
+  eventController.createGroupEvent
 );
 
 /**
  * @swagger
  * /event:
  *   post:
- *     summary: Create a new event for a user
+ *     summary: Create a new event for the current user
+ *     description: Creates an event with the current authenticated user as the creator. No groupId is required.
  *     tags: [Events]
  *     security:
  *       - bearerAuth: []
@@ -683,57 +685,5 @@ router.get(
   eventController.getGroupEvents
 );
 
-/**
- * @swagger
- * /event/group/{groupId}/event/{eventId}:
- *   get:
- *     summary: Get a specific event from a group
- *     tags: [Events]
- *     security:
- *       - bearerAuth: []
- *     parameters:
- *       - in: path
- *         name: groupId
- *         required: true
- *         schema:
- *           type: string
- *         description: ID of the group
- *       - in: path
- *         name: eventId
- *         required: true
- *         schema:
- *           type: string
- *         description: ID of the event to retrieve
- *     responses:
- *       200:
- *         description: Group event retrieved successfully
- *         content:
- *           application/json:
- *             schema:
- *               $ref: '#/components/schemas/EventResponse'
- *       401:
- *         description: Unauthorized
- *         content:
- *           application/json:
- *             schema:
- *               $ref: '#/components/schemas/Error'
- *       404:
- *         description: Group or event not found
- *         content:
- *           application/json:
- *             schema:
- *               $ref: '#/components/schemas/Error'
- *       500:
- *         description: Server error
- *         content:
- *           application/json:
- *             schema:
- *               $ref: '#/components/schemas/Error'
- */
-router.get(
-  "/group/:groupId/event/:eventId",
-  authMiddleware.authenticateToken,
-  eventController.getGroupEventById
-);
 
 export default router;

@@ -16,12 +16,12 @@ export default class EventController {
     this.eventService = eventService;
   }
 
-  public addEvent = async (req: Request, res: Response, next: NextFunction) => {
+  public createGroupEvent = async (req: Request, res: Response, next: NextFunction) => {
     try {
       const createEventRequest: EventRequest = req.body;
       const groupId = new Types.ObjectId(req.params.groupId);
 
-      const event = await this.eventService.addEvent(
+      const event = await this.eventService.createGroupEvent(
         createEventRequest,
         groupId
       );
@@ -185,22 +185,6 @@ export default class EventController {
       const events = await this.eventService.getGroupEvents(groupId);
 
       res.status(HttpStatusCode.OK).json(events);
-    } catch (error) {
-      next(error);
-    }
-  };
-
-  public getGroupEventById = async (
-    req: Request,
-    res: Response,
-    next: NextFunction
-  ) => {
-    try {
-      const groupId = new Types.ObjectId(req.params.groupId);
-      const eventId = new Types.ObjectId(req.params.eventId);
-      const event = await this.eventService.getGroupEventById(groupId, eventId);
-
-      res.status(HttpStatusCode.OK).json(event);
     } catch (error) {
       next(error);
     }

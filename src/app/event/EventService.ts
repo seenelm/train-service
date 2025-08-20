@@ -20,7 +20,7 @@ import mongoose from "mongoose";
 import { IGroupEventRepository } from "../../infrastructure/database/repositories/event/GroupEventRepository.js";
 
 export interface IEventService {
-  addEvent(
+  createGroupEvent(
     request: EventRequest,
     groupId: Types.ObjectId
   ): Promise<EventResponse>;
@@ -52,10 +52,6 @@ export interface IEventService {
     eventId: Types.ObjectId
   ): Promise<void>;
   getGroupEvents(groupId: Types.ObjectId): Promise<EventResponse[]>;
-  getGroupEventById(
-    groupId: Types.ObjectId,
-    eventId: Types.ObjectId
-  ): Promise<EventResponse>;
 }
 
 export default class EventService implements IEventService {
@@ -75,7 +71,7 @@ export default class EventService implements IEventService {
     this.logger = Logger.getInstance();
   }
 
-  async addEvent(
+  async createGroupEvent(
     request: EventRequest,
     groupId: Types.ObjectId
   ): Promise<EventResponse> {
@@ -598,74 +594,6 @@ export default class EventService implements IEventService {
         throw error;
       } else {
         throw APIError.InternalServerError("Failed to get group events");
-      }
-    }
-  }
-
-  async getGroupEventById(
-    groupId: Types.ObjectId,
-    eventId: Types.ObjectId
-  ): Promise<EventResponse> {
-    try {
-      // First, check if the group exists
-      const groupEvent = await this.groupEventRepository.findOne({
-        groupId,
-      });
-
-      if (!groupEvent) {
-        this.logger.warn("Group not found when trying to get event", {
-          groupId: groupId.toString(),
-          eventId: eventId.toString(),
-        });
-        throw APIError.NotFound("Group not found");
-      }
-
-      // Check if the event exists in the group
-      if (!groupEvent.getEvents().includes(eventId)) {
-        this.logger.warn("Event not found in group", {
-          groupId: groupId.toString(),
-          eventId: eventId.toString(),
-        });
-        throw APIError.NotFound("Event not found in group");
-      }
-
-      // Get the specific event
-      const event = await this.groupEventRepository.getGroupEventById(
-        groupId,
-        eventId
-      );
-
-      if (!event) {
-        this.logger.warn("Event not found in group", {
-          groupId: groupId.toString(),
-          eventId: eventId.toString(),
-        });
-        throw APIError.NotFound("Event not found in group");
-      }
-
-      this.logger.info("Group event retrieved successfully", {
-        groupId: groupId.toString(),
-        eventId: eventId.toString(),
-        title: event.getTitle(),
-      });
-
-      return this.eventRepository.toResponse(event);
-    } catch (error) {
-      this.logger.error("Failed to get group event", {
-        error: error instanceof Error ? error.message : "Unknown error",
-        groupId: groupId.toString(),
-        eventId: eventId.toString(),
-      });
-
-      if (error instanceof APIError) {
-        throw error;
-      } else if (
-        error instanceof MongooseError ||
-        error instanceof MongoServerError
-      ) {
-        throw DatabaseError.handleMongoDBError(error);
-      } else {
-        throw APIError.InternalServerError("Failed to get group event");
       }
     }
   }
