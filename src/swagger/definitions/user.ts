@@ -9,6 +9,7 @@
  *         - password
  *         - email
  *         - deviceId
+ *         - agreeToTerms
  *       properties:
  *         username:
  *           type: string
@@ -35,6 +36,10 @@
  *         deviceId:
  *           type: string
  *           description: Unique identifier for the user's device
+ *         agreeToTerms:
+ *           type: boolean
+ *           description: Whether the user agrees to the terms and conditions
+ *           example: true
  *
  *     UserLoginRequest:
  *       type: object

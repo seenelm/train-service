@@ -23,6 +23,7 @@ export enum ValidateRegisterUser {
   EmailRequired = "Email is required",
   NameRequired = "Name is required",
   DeviceIdRequired = "Device ID is required",
+  AgreeToTermsRequired = "You must agree to the terms and conditions",
   EmailAndPasswordRequired = "Email and password are required",
 }
 

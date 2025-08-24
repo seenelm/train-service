@@ -22,9 +22,7 @@ export default class GroupMiddleware {
     next: NextFunction
   ) => {
     try {
-      const result = groupProfileSchema.safeParse({
-        body: req.body,
-      });
+      const result = groupProfileSchema.safeParse(req.body);
 
       if (!result.success) {
         const validationErrors = ValidationErrorResponse.fromZodError(

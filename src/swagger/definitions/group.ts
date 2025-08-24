@@ -5,25 +5,31 @@
  *     Group:
  *       type: object
  *       required:
- *         - groupName
- *         - description
+ *         - name
+ *         - accountType
  *       properties:
  *         _id:
  *           type: string
  *           description: The auto-generated ID of the group
- *         groupName:
+ *         name:
  *           type: string
  *           description: Group name
  *         description:
  *           type: string
  *           description: Group description
- *         profilePicture:
+ *         location:
  *           type: string
- *           description: URL to group's profile picture
- *         isPrivate:
- *           type: boolean
- *           description: Whether the group is private
- *           default: false
+ *           description: Group location
+ *         tags:
+ *           type: array
+ *           items:
+ *             type: string
+ *           description: Array of group tags
+ *         accountType:
+ *           type: number
+ *           enum: [0, 1]
+ *           description: Whether the group is public (0) or private (1)
+ *           default: 0
  *         ownerId:
  *           type: string
  *           description: ID of the group owner
@@ -36,52 +42,76 @@
  *           format: date-time
  *           description: Date and time when the group was last updated
  *
- *     GroupCreateRequest:
+ *     GroupRequest:
  *       type: object
  *       required:
- *         - groupName
- *         - description
+ *         - name
+ *         - accountType
  *       properties:
- *         groupName:
+ *         name:
  *           type: string
  *           description: Group name
+ *           example: "Fitness Enthusiasts"
  *         description:
  *           type: string
  *           description: Group description
- *         profilePicture:
+ *           example: "A group for fitness enthusiasts to share tips and motivate each other"
+ *         location:
  *           type: string
- *           description: URL to group's profile picture
- *         isPrivate:
- *           type: boolean
- *           description: Whether the group is private
- *           default: false
- *
- *     GroupUpdateRequest:
- *       type: object
- *       properties:
- *         groupName:
- *           type: string
- *           description: Group name
- *         description:
- *           type: string
- *           description: Group description
- *         profilePicture:
- *           type: string
- *           description: URL to group's profile picture
- *         isPrivate:
- *           type: boolean
- *           description: Whether the group is private
+ *           description: Group location
+ *           example: "New York, NY"
+ *         tags:
+ *           type: array
+ *           items:
+ *             type: string
+ *           description: Array of group tags
+ *           example: ["fitness", "motivation", "health"]
+ *         accountType:
+ *           type: number
+ *           enum: [1, 2]
+ *           description: Whether the group is public (1) or private (2)
+ *           default: 1
+ *           example: 1
  *
  *     GroupResponse:
  *       type: object
  *       properties:
- *         success:
- *           type: boolean
- *           example: true
- *         message:
+ *         id:
  *           type: string
- *         group:
- *           $ref: '#/components/schemas/Group'
+ *           description: Group ID
+ *         name:
+ *           type: string
+ *           description: Group name
+ *         description:
+ *           type: string
+ *           description: Group description
+ *         location:
+ *           type: string
+ *           description: Group location
+ *         tags:
+ *           type: array
+ *           items:
+ *             type: string
+ *           description: Array of group tags
+ *         owners:
+ *           type: array
+ *           items:
+ *             type: string
+ *           description: Array of owner user IDs
+ *         members:
+ *           type: array
+ *           items:
+ *             type: string
+ *           description: Array of member user IDs
+ *         requests:
+ *           type: array
+ *           items:
+ *             type: string
+ *           description: Array of pending request user IDs
+ *         accountType:
+ *           type: number
+ *           enum: [1, 2]
+ *           description: Whether the group is public (1) or private (2)
  *
  *     GroupMembershipResponse:
  *       type: object

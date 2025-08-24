@@ -5,83 +5,81 @@ import { ValidationErrorMessage } from "../../common/enums.js";
 
 // Group Profile Schema (used for both create and update)
 export const groupProfileSchema = z.object({
-  body: z.object({
-    name: z
-      .string({ error: ValidationErrorMessage.GROUP_NAME_REQUIRED })
-      .transform((val) => val.trim())
-      .superRefine((val, ctx) => {
-        // Check if it's empty or whitespace-only first
-        if (!val || val.trim().length === 0) {
-          ctx.addIssue({
-            code: "custom",
-            message: ValidationErrorMessage.GROUP_NAME_REQUIRED,
-          });
-          return; // Stop here if empty
-        }
+  name: z
+    .string({ error: ValidationErrorMessage.GROUP_NAME_REQUIRED })
+    .transform((val) => val.trim())
+    .superRefine((val, ctx) => {
+      // Check if it's empty or whitespace-only first
+      if (!val || val.trim().length === 0) {
+        ctx.addIssue({
+          code: "custom",
+          message: ValidationErrorMessage.GROUP_NAME_REQUIRED,
+        });
+        return; // Stop here if empty
+      }
 
-        // Check length
-        if (val.length > 100) {
-          ctx.addIssue({
-            code: "custom",
-            message: ValidationErrorMessage.GROUP_NAME_TOO_LONG,
-          });
-          return; // Stop here if too long
-        }
-      }),
-    description: z
-      .string()
-      .optional()
-      .transform((val) => val?.trim())
-      .superRefine((val, ctx) => {
-        if (val && val.length > 500) {
-          ctx.addIssue({
-            code: "custom",
-            message: ValidationErrorMessage.DESCRIPTION_TOO_LONG,
-          });
-          return; // Stop here if too long
-        }
-      }),
-    location: z
-      .string()
-      .optional()
-      .transform((val) => val?.trim())
-      .superRefine((val, ctx) => {
-        if (val && val.length > 100) {
-          ctx.addIssue({
-            code: "custom",
-            message: "Location must be 100 characters or less",
-          });
-          return;
-        }
-      }),
-    tags: z
-      .array(z.string())
-      .optional()
-      .transform((val) =>
-        val?.map((tag) => tag.trim()).filter((tag) => tag.length > 0)
-      )
-      .superRefine((val, ctx) => {
-        if (val && val.length > 10) {
-          ctx.addIssue({
-            code: "custom",
-            message: "Maximum 10 tags allowed",
-          });
-          return;
-        }
-        if (val) {
-          for (const tag of val) {
-            if (tag.length > 20) {
-              ctx.addIssue({
-                code: "custom",
-                message: "Each tag must be 20 characters or less",
-              });
-              return;
-            }
+      // Check length
+      if (val.length > 100) {
+        ctx.addIssue({
+          code: "custom",
+          message: ValidationErrorMessage.GROUP_NAME_TOO_LONG,
+        });
+        return; // Stop here if too long
+      }
+    }),
+  description: z
+    .string()
+    .optional()
+    .transform((val) => val?.trim())
+    .superRefine((val, ctx) => {
+      if (val && val.length > 500) {
+        ctx.addIssue({
+          code: "custom",
+          message: ValidationErrorMessage.DESCRIPTION_TOO_LONG,
+        });
+        return; // Stop here if too long
+      }
+    }),
+  location: z
+    .string()
+    .optional()
+    .transform((val) => val?.trim())
+    .superRefine((val, ctx) => {
+      if (val && val.length > 100) {
+        ctx.addIssue({
+          code: "custom",
+          message: "Location must be 100 characters or less",
+        });
+        return;
+      }
+    }),
+  tags: z
+    .array(z.string())
+    .optional()
+    .transform((val) =>
+      val?.map((tag) => tag.trim()).filter((tag) => tag.length > 0)
+    )
+    .superRefine((val, ctx) => {
+      if (val && val.length > 10) {
+        ctx.addIssue({
+          code: "custom",
+          message: "Maximum 10 tags allowed",
+        });
+        return;
+      }
+      if (val) {
+        for (const tag of val) {
+          if (tag.length > 20) {
+            ctx.addIssue({
+              code: "custom",
+              message: "Each tag must be 20 characters or less",
+            });
+            return;
           }
         }
-      }),
-    accountType: z.enum(ProfileAccess).optional().default(ProfileAccess.Public),
-  }),
+      }
+    }),
+  accountType: z.enum(ProfileAccess).optional().default(ProfileAccess.Public),
 });
 
 // Alias for backward compatibility
@@ -221,7 +219,7 @@ export const updateGroupProfileSchema = z.object({
         message: ValidationErrorMessage.GROUP_ID_INVALID_FORMAT,
       }),
   }),
-  body: groupProfileSchema.shape.body,
+  body: groupProfileSchema,
 });
 
 export type UpdateGroupProfileRequest = z.infer<

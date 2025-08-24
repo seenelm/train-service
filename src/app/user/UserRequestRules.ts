@@ -26,6 +26,10 @@ export default class UserRequestRules {
       hasError: (u) => !u.deviceId,
       message: ValidateRegisterUser.DeviceIdRequired,
     },
+    agreeToTerms: {
+      hasError: (u) => !u.agreeToTerms,
+      message: ValidateRegisterUser.AgreeToTermsRequired,
+    },
   };
 
   // TODO: Add rules for password and email

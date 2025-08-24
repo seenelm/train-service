@@ -19,11 +19,7 @@ export default class GroupController {
   ) => {
     try {
       const groupRequest: GroupRequest = req.body;
-      const creatorId = req.user?.getId();
-
-      if (!creatorId) {
-        throw APIError.BadRequest("User not authenticated");
-      }
+      const creatorId = req.user.getId();
 
       const groupResponse = await this.groupService.createGroup(
         groupRequest,

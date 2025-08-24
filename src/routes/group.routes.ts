@@ -42,7 +42,7 @@ const groupController = new GroupController(groupService);
  *       content:
  *         application/json:
  *           schema:
- *             $ref: '#/components/schemas/GroupCreateRequest'
+ *             $ref: '#/components/schemas/GroupRequest'
  *     responses:
  *       201:
  *         description: Group created successfully
@@ -558,8 +558,6 @@ router.delete(
   groupController.deleteGroup
 );
 
-
-
 /**
  * @swagger
  * /group/{groupId}/profile:
@@ -580,7 +578,7 @@ router.delete(
  *       content:
  *         application/json:
  *           schema:
- *             $ref: '#/components/schemas/GroupUpdateRequest'
+ *             $ref: '#/components/schemas/GroupRequest'
  *     responses:
  *       200:
  *         description: Group profile updated successfully
