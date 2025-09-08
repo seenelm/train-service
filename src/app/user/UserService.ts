@@ -347,6 +347,8 @@ export default class UserService implements IUserService {
       // Generate new refresh token
       const newRefreshToken = this.createRefreshToken(deviceId);
       this.logger.info("New refresh token: ", newRefreshToken);
+
+      // Instead of updating the existing token, immediately invalidate old and add new
       await this.userRepository.updateOne(
         {
           _id: user.getId(),
@@ -354,7 +356,8 @@ export default class UserService implements IUserService {
           "refreshTokens.deviceId": deviceId,
         },
         {
-          $set: { refreshTokens: newRefreshToken },
+          $pull: { refreshTokens: { token: refreshToken, deviceId: deviceId } },
+          $push: { refreshTokens: newRefreshToken },
         }
       );
 
@@ -694,7 +697,7 @@ export default class UserService implements IUserService {
     deviceId: string
   ): Promise<string> {
     const refreshToken: string = uuidv4();
-    const expiresAtNum = process.env.REFRESH_TOKEN_EXPIRY as unknown as number;
+    const expiresAtNum = parseInt(process.env.REFRESH_TOKEN_EXPIRY || "30", 10);
     const expiresAt = new Date(Date.now() + expiresAtNum * 24 * 60 * 60 * 1000); // 30 days
 
     const refreshTokenDocument: IRefreshToken = {
@@ -721,7 +724,7 @@ export default class UserService implements IUserService {
 
   private createRefreshToken(deviceId: string): IRefreshToken {
     const refreshToken: string = uuidv4();
-    const expiresAtNum = process.env.REFRESH_TOKEN_EXPIRY as unknown as number;
+    const expiresAtNum = parseInt(process.env.REFRESH_TOKEN_EXPIRY || "30", 10);
     const expiresAt = new Date(Date.now() + expiresAtNum * 24 * 60 * 60 * 1000); // 30 days
 
     const refreshTokenDocument: IRefreshToken = {

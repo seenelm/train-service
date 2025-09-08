@@ -79,6 +79,7 @@ export class AuthMiddleware {
       req.user = user;
       next();
     } catch (error) {
+      this.logger.error("Error authenticating token", { error });
       if (
         error instanceof JsonWebTokenError ||
         error instanceof TokenExpiredError ||

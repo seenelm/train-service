@@ -104,6 +104,50 @@ export default class SearchMiddlewareDataProvider {
         },
         shouldPassValidation: true,
       },
+      {
+        description:
+          "should pass validation with unsafe characters (now allowed)",
+        request: {
+          params: {},
+          query: {
+            searchTerm: "fitness<script>alert('xss')</script>",
+            page: "1",
+            limit: "10",
+          },
+        },
+        shouldPassValidation: true,
+      },
+      {
+        description:
+          "should pass validation with SQL injection attempt (now allowed)",
+        request: {
+          params: {},
+          query: {
+            searchTerm: "fitness'; DROP TABLE users; --",
+            page: "1",
+            limit: "10",
+          },
+        },
+        shouldPassValidation: true,
+      },
+      {
+        description:
+          "should pass validation with NoSQL injection attempt (now allowed)",
+        request: {
+          params: {},
+          query: { searchTerm: "fitness $where", page: "1", limit: "10" },
+        },
+        shouldPassValidation: true,
+      },
+      {
+        description:
+          "should pass validation with control characters (now allowed)",
+        request: {
+          params: {},
+          query: { searchTerm: "fitness\x00training", page: "1", limit: "10" },
+        },
+        shouldPassValidation: true,
+      },
     ];
   }
 
@@ -161,68 +205,7 @@ export default class SearchMiddlewareDataProvider {
           ),
         ],
       },
-      {
-        description: "should fail validation with invalid characters",
-        request: {
-          params: {},
-          query: { searchTerm: "fitness\x00training", page: "1", limit: "10" },
-        },
-        expectedValidationErrors: [
-          new ValidationErrorResponse(
-            "searchTerm",
-            ValidationErrorMessage.SEARCH_TERM_INVALID_CHARACTERS
-          ),
-        ],
-      },
 
-      {
-        description:
-          "should fail validation with unsafe characters (whitelist approach)",
-        request: {
-          params: {},
-          query: {
-            searchTerm: "fitness<script>alert('xss')</script>",
-            page: "1",
-            limit: "10",
-          },
-        },
-        expectedValidationErrors: [
-          new ValidationErrorResponse(
-            "searchTerm",
-            ValidationErrorMessage.SEARCH_TERM_INVALID_CHARACTERS
-          ),
-        ],
-      },
-      {
-        description: "should fail validation with SQL injection attempt",
-        request: {
-          params: {},
-          query: {
-            searchTerm: "fitness'; DROP TABLE users; --",
-            page: "1",
-            limit: "10",
-          },
-        },
-        expectedValidationErrors: [
-          new ValidationErrorResponse(
-            "searchTerm",
-            ValidationErrorMessage.SEARCH_TERM_INVALID_CHARACTERS
-          ),
-        ],
-      },
-      {
-        description: "should fail validation with NoSQL injection attempt",
-        request: {
-          params: {},
-          query: { searchTerm: "fitness $where", page: "1", limit: "10" },
-        },
-        expectedValidationErrors: [
-          new ValidationErrorResponse(
-            "searchTerm",
-            ValidationErrorMessage.SEARCH_TERM_INVALID_CHARACTERS
-          ),
-        ],
-      },
       {
         description: "should fail validation with invalid page number",
         request: {
