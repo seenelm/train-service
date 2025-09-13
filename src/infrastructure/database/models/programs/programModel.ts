@@ -51,7 +51,7 @@ const ProgramSchema: Schema = new Schema(
       required: false,
     },
     accessType: {
-      type: String,
+      type: Number,
       enum: Object.values(ProfileAccess),
       required: true,
     },
