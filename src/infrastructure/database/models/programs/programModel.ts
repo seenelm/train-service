@@ -52,7 +52,7 @@ const ProgramSchema: Schema = new Schema(
     },
     accessType: {
       type: Number,
-      enum: Object.values(ProfileAccess),
+      enum: [ProfileAccess.Public, ProfileAccess.Private],
       required: true,
     },
     createdBy: {

@@ -27,7 +27,7 @@ export default class ProgramMiddleware {
           errors: validationErrors.map((error) => error.toJSON()),
         });
       }
-      req.body = result;
+      req.body = result.data;
       next();
     } catch (error) {
       next(error);
