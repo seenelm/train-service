@@ -1,47 +1,63 @@
 import { BaseRepository, IBaseRepository } from "../BaseRepository.js";
 import Program from "../../entity/program/Program.js";
-import {
-  ProgramModel,
-  ProgramDocument,
-} from "../../models/programs/programModel.js";
-import { ProgramRequest } from "@seenelm/train-core";
-import { Types } from "mongoose";
+import { ProgramDocument } from "../../models/programs/programModel.js";
+import { ProgramRequest, ProgramResponse } from "@seenelm/train-core";
+import { Types, Model } from "mongoose";
 
 export interface IProgramRepository
-  extends IBaseRepository<Program, ProgramDocument> {}
+  extends IBaseRepository<Program, ProgramDocument> {
+  toDocument(request: ProgramRequest): Partial<ProgramDocument>;
+  toResponse(program: Program): ProgramResponse;
+}
 
 export default class ProgramRepository
   extends BaseRepository<Program, ProgramDocument>
   implements IProgramRepository
 {
-  constructor() {
-    super(ProgramModel);
+  private programModel: Model<ProgramDocument>;
+
+  constructor(programModel: Model<ProgramDocument>) {
+    super(programModel);
+    this.programModel = programModel;
   }
 
   toEntity(doc: ProgramDocument): Program {
     return Program.builder()
       .setId(doc._id as Types.ObjectId)
       .setName(doc.name)
-      .setDescription(doc.description)
-      .setCategory(doc.category)
-      .setImagePath(doc.imagePath)
-      .setCreatedBy(doc.createdBy)
-      .setWeeks(doc.weeks)
-      .setDifficulty(doc.difficulty)
+      .setTypes(doc.types)
       .setNumWeeks(doc.numWeeks)
+      .setHasNutritionProgram(doc.hasNutritionProgram)
+      .setPhases(doc.phases)
+      .setAccessType(doc.accessType)
+      .setCreatedBy(doc.createdBy)
+      .setCreatedAt(doc.createdAt)
+      .setUpdatedAt(doc.updatedAt)
       .build();
   }
 
   toDocument(request: ProgramRequest): Partial<ProgramDocument> {
     return {
       name: request.name,
-      description: request.description,
-      category: request.category,
-      imagePath: request.imagePath,
-      createdBy: new Types.ObjectId(request.createdBy),
+      types: request.types,
       numWeeks: request.numWeeks,
-      weeks: request.weeks.map((weekId) => new Types.ObjectId(weekId)),
-      difficulty: request.difficulty,
+      hasNutritionProgram: request.hasNutritionProgram,
+      phases: request.phases,
+      accessType: request.accessType,
+      createdBy: new Types.ObjectId(request.createdBy),
+    };
+  }
+
+  toResponse(program: Program): ProgramResponse {
+    return {
+      id: program.getId().toString(),
+      name: program.getName(),
+      types: program.getTypes(),
+      numWeeks: program.getNumWeeks(),
+      hasNutritionProgram: program.getHasNutritionProgram(),
+      phases: program.getPhases(),
+      accessType: program.getAccessType(),
+      createdBy: program.getCreatedBy().toString(),
     };
   }
 }

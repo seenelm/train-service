@@ -1,18 +1,32 @@
 import { Schema, model, Document, Types } from "mongoose";
-import { ProgramDifficulty } from "../../../../common/enums.js";
+import { ProfileAccess } from "@seenelm/train-core";
+
+export interface Phase {
+  name: string;
+  startWeek: number;
+  endWeek: number;
+}
 
 export interface ProgramDocument extends Document {
   name: string;
-  description?: string;
-  category?: string;
-  imagePath?: string;
+  types?: string[];
+  numWeeks: number;
+  hasNutritionProgram?: boolean;
+  phases?: Phase[];
+  accessType: ProfileAccess;
   createdBy: Types.ObjectId;
-  weeks: Types.ObjectId[];
-  numWeeks?: number;
-  difficulty?: string;
   createdAt?: Date;
   updatedAt?: Date;
 }
+
+const PhaseSchema = new Schema(
+  {
+    name: { type: String, required: true },
+    startWeek: { type: Number, required: true },
+    endWeek: { type: Number, required: true },
+  },
+  { _id: false }
+);
 
 const ProgramSchema: Schema = new Schema(
   {
@@ -20,37 +34,31 @@ const ProgramSchema: Schema = new Schema(
       type: String,
       required: true,
     },
-    description: {
-      type: String,
-      required: false,
-    },
-    category: {
-      type: String,
+    types: {
+      type: [String],
       required: false,
     },
     numWeeks: {
       type: Number,
+      required: true,
+    },
+    hasNutritionProgram: {
+      type: Boolean,
       required: false,
     },
-    imagePath: {
-      type: String,
+    phases: {
+      type: [PhaseSchema],
       required: false,
+    },
+    accessType: {
+      type: String,
+      enum: Object.values(ProfileAccess),
+      required: true,
     },
     createdBy: {
       type: Schema.Types.ObjectId,
-      ref: "UserProfile",
+      ref: "User",
       required: true,
-    },
-    weeks: [
-      {
-        type: Schema.Types.ObjectId,
-        ref: "Week",
-      },
-    ],
-    difficulty: {
-      type: String,
-      enum: Object.values(ProgramDifficulty),
-      required: false,
     },
   },
   { timestamps: true }

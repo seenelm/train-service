@@ -245,6 +245,13 @@ export enum ValidationErrorMessage {
   EVENT_DESCRIPTION_TOO_LONG = "Event description must be 500 characters or less",
   EVENT_LOCATION_TOO_LONG = "Event location must be 200 characters or less",
   EVENT_TAGS_TOO_MANY = "Maximum 10 tags allowed",
+
+  // Program validation messages
+  PROGRAM_NAME_REQUIRED = "Program name is required",
+  PROGRAM_DURATION_INVALID = "Program duration must be between 1 and 104 weeks",
+  PROGRAM_ACCESS_TYPE_REQUIRED = "Program access type is required",
+  PROGRAM_CREATOR_REQUIRED = "Program creator is required",
+  PROGRAM_PHASES_INVALID = "Program phases have invalid data",
   EVENT_TAG_TOO_LONG = "Each tag must be 20 characters or less",
   EVENT_ADMIN_ID_INVALID = "All admin IDs must be valid ObjectIds",
   EVENT_INVITEE_ID_INVALID = "All invitee IDs must be valid ObjectIds",
