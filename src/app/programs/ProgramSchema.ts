@@ -30,9 +30,7 @@ export const createProgramSchema = z.object({
 
   phases: z.array(phaseSchema).optional().default([]),
 
-  accessType: z.enum(Object.values(ProfileAccess) as [string, ...string[]], {
-    message: ValidationErrorMessage.PROGRAM_ACCESS_TYPE_REQUIRED,
-  }),
+  accessType: z.enum(ProfileAccess),
 
   createdBy: z.string(),
 });
