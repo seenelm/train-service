@@ -2,32 +2,16 @@ import { z } from "zod";
 import { ProfileAccess } from "@seenelm/train-core";
 import { ValidationErrorMessage } from "../../common/enums.js";
 
-const phaseSchema = z
-  .object({
-    name: z
-      .string()
-      .min(1, "Phase name is required")
-      .max(100, "Phase name must be 100 characters or less")
-      .transform((val) => val.trim()),
-    startWeek: z.number().int().min(1, "Start week must be at least 1"),
-    endWeek: z.number().int().min(1, "End week must be at least 1"),
-  })
-  .superRefine((data, ctx) => {
-    // Validate that start week is before end week
-    if (data.startWeek > data.endWeek) {
-      ctx.addIssue({
-        code: "custom",
-        message: `Phase "${data.name}" start week cannot be after end week`,
-        path: ["startWeek"],
-      });
-    }
-  });
+const phaseSchema = z.object({
+  name: z.string().transform((val) => val.trim()),
+  startWeek: z.number().int(),
+  endWeek: z.number().int(),
+});
 
 export const createProgramSchema = z.object({
   name: z
     .string()
     .min(1, ValidationErrorMessage.PROGRAM_NAME_REQUIRED)
-    .max(200, "Program name must be 200 characters or less")
     .transform((val) => val.trim()),
 
   types: z
@@ -40,8 +24,7 @@ export const createProgramSchema = z.object({
   numWeeks: z
     .number()
     .int()
-    .min(1, ValidationErrorMessage.PROGRAM_DURATION_INVALID)
-    .max(104, ValidationErrorMessage.PROGRAM_DURATION_INVALID),
+    .min(1, ValidationErrorMessage.PROGRAM_DURATION_INVALID),
 
   hasNutritionProgram: z.boolean().optional().default(false),
 

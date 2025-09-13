@@ -6,3 +6,6 @@ logs/
 
 config/firebase-config.json
 .DS_Store
+
+nutrition-program.md
+example.md
