@@ -26,9 +26,9 @@ export const createProgramSchema = z.object({
     .int()
     .min(1, ValidationErrorMessage.PROGRAM_DURATION_INVALID),
 
-  hasNutritionProgram: z.boolean().optional().default(false),
+  hasNutritionProgram: z.boolean().optional(),
 
-  phases: z.array(phaseSchema).optional().default([]),
+  phases: z.array(phaseSchema).optional(),
 
   accessType: z.enum(ProfileAccess),
 

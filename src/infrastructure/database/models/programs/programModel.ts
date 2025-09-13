@@ -14,7 +14,10 @@ export interface ProgramDocument extends Document {
   hasNutritionProgram?: boolean;
   phases?: Phase[];
   accessType: ProfileAccess;
+  admins: Types.ObjectId[];
   createdBy: Types.ObjectId;
+  members?: Types.ObjectId[];
+  weeks?: Types.ObjectId[];
   createdAt?: Date;
   updatedAt?: Date;
 }
@@ -59,6 +62,21 @@ const ProgramSchema: Schema = new Schema(
       type: Schema.Types.ObjectId,
       ref: "User",
       required: true,
+    },
+    weeks: {
+      type: [Types.ObjectId],
+      ref: "Week",
+      default: [],
+    },
+    members: {
+      type: [Types.ObjectId],
+      ref: "User",
+      default: [],
+    },
+    admins: {
+      type: [Types.ObjectId],
+      ref: "User",
+      default: [],
     },
   },
   { timestamps: true }

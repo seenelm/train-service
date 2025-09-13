@@ -76,7 +76,7 @@ export abstract class BaseRepository<T, TDocument extends Document>
     options?: object
   ): Promise<T[]> {
     // Extract pagination and sorting options to avoid projection conflicts
-    const { skip, limit, sort, ...otherOptions } = options as any;
+    const { skip, limit, sort, ...otherOptions } = options || ({} as any);
 
     let queryBuilder = this.model.find(query, otherOptions);
 
