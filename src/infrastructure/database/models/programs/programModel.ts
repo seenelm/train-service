@@ -58,25 +58,26 @@ const ProgramSchema: Schema = new Schema(
       enum: [ProfileAccess.Public, ProfileAccess.Private],
       required: true,
     },
+    admins: {
+      type: [Types.ObjectId],
+      ref: "User",
+      default: [],
+      required: true,
+    },
+    members: {
+      type: [Types.ObjectId],
+      ref: "User",
+      required: false,
+    },
     createdBy: {
-      type: Schema.Types.ObjectId,
+      type: Types.ObjectId,
       ref: "User",
       required: true,
     },
     weeks: {
       type: [Types.ObjectId],
       ref: "Week",
-      default: [],
-    },
-    members: {
-      type: [Types.ObjectId],
-      ref: "User",
-      default: [],
-    },
-    admins: {
-      type: [Types.ObjectId],
-      ref: "User",
-      default: [],
+      required: false,
     },
   },
   { timestamps: true }

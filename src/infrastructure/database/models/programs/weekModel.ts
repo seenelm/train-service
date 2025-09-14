@@ -9,7 +9,7 @@ export interface Exercise {
   targetWeight?: number;
   notes?: string;
   order: number;
-  logs: ExerciseLog[];
+  logs?: ExerciseLog[];
   createdAt?: Date;
   updatedAt?: Date;
 }
@@ -25,7 +25,7 @@ export interface ExerciseLog {
   updatedAt?: Date;
 }
 
-const exerciseLogSchema = new Schema(
+const ExerciseLogSchema = new Schema(
   {
     userId: {
       type: Types.ObjectId,
@@ -56,7 +56,7 @@ const exerciseLogSchema = new Schema(
   { timestamps: true }
 );
 
-const exerciseSchema = new Schema(
+const ExerciseSchema = new Schema(
   {
     exerciseId: {
       type: Types.ObjectId,
@@ -85,11 +85,11 @@ const exerciseSchema = new Schema(
     },
     order: {
       type: Number,
-      required: false,
+      required: true,
     },
     logs: {
-      type: [exerciseLogSchema],
-      default: [],
+      type: [ExerciseLogSchema],
+      required: false,
     },
   },
   { timestamps: true }
@@ -102,10 +102,12 @@ export interface Block {
   restBetweenExercisesSec?: number;
   restAfterBlockSec?: number;
   exercises: Exercise[];
-  order: number; // For block ordering within workout
+  order: number;
+  createdAt?: Date;
+  updatedAt?: Date;
 }
 
-const blockSchema = new Schema(
+const BlockSchema = new Schema(
   {
     type: {
       type: String,
@@ -130,15 +132,16 @@ const blockSchema = new Schema(
       required: false,
     },
     exercises: {
-      type: [exerciseSchema],
+      type: [ExerciseSchema],
       default: [],
+      required: true,
     },
     order: {
       type: Number,
-      required: false,
+      required: true,
     },
   },
-  { _id: false }
+  { timestamps: true }
 );
 
 export interface Workout {
@@ -156,12 +159,12 @@ export interface Workout {
 
 export interface WeekDocument extends Document {
   weekNumber: number;
-  workouts: Workout[];
-  meals: Types.ObjectId[];
-  startDate: Date;
-  endDate: Date;
-  createdAt: Date;
-  updatedAt: Date;
+  workouts?: Workout[];
+  meals?: Types.ObjectId[];
+  startDate?: Date;
+  endDate?: Date;
+  createdAt?: Date;
+  updatedAt?: Date;
 }
 
 const WorkoutSchema = new Schema(
@@ -175,7 +178,7 @@ const WorkoutSchema = new Schema(
       required: false,
     },
     category: {
-      type: String,
+      type: [String],
       required: false,
     },
     difficulty: {
@@ -183,26 +186,24 @@ const WorkoutSchema = new Schema(
       enum: ["beginner", "intermediate", "advanced"],
       required: false,
     },
-    estimatedDurationMin: {
+    duration: {
       type: Number,
       required: false,
     },
     blocks: {
-      type: [blockSchema],
+      type: [BlockSchema],
       default: [],
+      required: true,
     },
-    tags: {
-      type: [String],
-      default: [],
-    },
-    isPublic: {
-      type: Boolean,
-      default: false,
+    accessType: {
+      type: Number,
+      enum: [ProfileAccess.Public, ProfileAccess.Private],
+      required: true,
     },
     createdBy: {
       type: Types.ObjectId,
       ref: "User",
-      required: false,
+      required: true,
     },
   },
   { timestamps: true }
@@ -211,10 +212,10 @@ const WorkoutSchema = new Schema(
 const WeekSchema = new Schema(
   {
     weekNumber: { type: Number, required: true },
-    workouts: [{ type: WorkoutSchema, default: [] }],
-    meals: [{ type: Types.ObjectId, ref: "Meal", default: [] }],
-    startDate: { type: Date, required: true },
-    endDate: { type: Date, required: true },
+    workouts: [{ type: WorkoutSchema, required: false }],
+    meals: [{ type: Types.ObjectId, ref: "Meal", required: false }],
+    startDate: { type: Date, required: false },
+    endDate: { type: Date, required: false },
   },
   { timestamps: true }
 );

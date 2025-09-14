@@ -1,5 +1,4 @@
 import { Schema, model, Document, Types } from "mongoose";
-import { ProfileAccess } from "@seenelm/train-core";
 
 export interface Macros {
   protein: number;
@@ -27,8 +26,26 @@ export interface Portion {
   unit: Unit;
 }
 
-// Ingredient type = food name -> portion
-export type Ingredient = Record<string, Portion>;
+export interface Ingredient {
+  name: string;
+  portion: Portion;
+}
+
+const PortionSchema = new Schema(
+  {
+    amount: { type: Number, required: true },
+    unit: { type: String, enum: Object.values(Unit), required: true },
+  },
+  { _id: false }
+);
+
+const IngredientSchema = new Schema(
+  {
+    name: { type: String, required: true },
+    portion: { type: PortionSchema, required: true },
+  },
+  { _id: false }
+);
 
 export interface MealDocument extends Document {
   createdBy: Types.ObjectId;
@@ -36,7 +53,7 @@ export interface MealDocument extends Document {
   macros?: Macros;
   ingredients?: Ingredient[];
   instructions?: string;
-  logs: LogMeal[];
+  logs?: LogMeal[];
   createdAt?: Date;
   updatedAt?: Date;
 }
@@ -52,24 +69,33 @@ export interface LogMeal {
   updatedAt?: Date;
 }
 
+const MacrosSchema = new Schema(
+  {
+    protein: { type: Number, required: true },
+    carbs: { type: Number, required: true },
+    fats: { type: Number, required: true },
+  },
+  { _id: false }
+);
+
 const LogMealSchema = new Schema(
   {
     userId: {
-      type: Schema.Types.ObjectId,
+      type: Types.ObjectId,
       ref: "User",
       required: true,
     },
     mealId: {
-      type: Schema.Types.ObjectId,
+      type: Types.ObjectId,
       ref: "Meal",
       required: true,
     },
     actualMacros: {
-      type: Object,
+      type: MacrosSchema,
       required: false,
     },
     actualIngredients: {
-      type: Object,
+      type: [IngredientSchema],
       required: false,
     },
     notes: {
@@ -80,22 +106,14 @@ const LogMealSchema = new Schema(
       type: Boolean,
       required: true,
     },
-    createdAt: {
-      type: Date,
-      required: true,
-    },
-    updatedAt: {
-      type: Date,
-      required: true,
-    },
   },
-  { _id: false }
+  { timestamps: true }
 );
 
 const MealSchema: Schema = new Schema(
   {
     createdBy: {
-      type: Schema.Types.ObjectId,
+      type: Types.ObjectId,
       ref: "User",
       required: true,
     },
@@ -104,11 +122,11 @@ const MealSchema: Schema = new Schema(
       required: true,
     },
     macros: {
-      type: Object,
+      type: MacrosSchema,
       required: false,
     },
     ingredients: {
-      type: Object,
+      type: [IngredientSchema],
       required: false,
     },
     instructions: {
@@ -117,7 +135,7 @@ const MealSchema: Schema = new Schema(
     },
     logs: {
       type: [LogMealSchema],
-      default: [],
+      required: false,
     },
   },
   { timestamps: true }
