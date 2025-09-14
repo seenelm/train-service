@@ -245,6 +245,7 @@ export interface WeekDocument extends Document {
   weekNumber: number;
   workouts?: Workout[];
   meals?: Types.ObjectId[];
+  notes?: Notes[];
   startDate: Date;
   endDate: Date;
   createdAt?: Date;
@@ -305,11 +306,31 @@ const WorkoutSchema = new Schema(
   { timestamps: true }
 );
 
+export interface Notes {
+  title: string;
+  content: string;
+  startDate: Date;
+  endDate: Date;
+  createdAt?: Date;
+  updatedAt?: Date;
+}
+
+const NotesSchema = new Schema(
+  {
+    title: { type: String, required: true },
+    content: { type: String, required: true },
+    startDate: { type: Date, required: true },
+    endDate: { type: Date, required: true },
+  },
+  { timestamps: true }
+);
+
 const WeekSchema = new Schema(
   {
     weekNumber: { type: Number, required: true },
     workouts: [{ type: WorkoutSchema, required: false }],
     meals: [{ type: Types.ObjectId, ref: "Meal", required: false }],
+    notes: [{ type: NotesSchema, required: false }],
     startDate: { type: Date, required: true },
     endDate: { type: Date, required: true },
   },
