@@ -7,7 +7,6 @@ export interface Phase {
   endWeek: number;
 }
 
-// TODO: add startDate and endDate
 export interface ProgramDocument extends Document {
   name: string;
   types?: string[];

@@ -53,14 +53,14 @@ export interface MealDocument extends Document {
   macros?: Macros;
   ingredients?: Ingredient[];
   instructions?: string;
-  logs?: LogMeal[];
+  logs?: MealLog[];
   startDate: Date;
   endDate: Date;
   createdAt?: Date;
   updatedAt?: Date;
 }
 
-export interface LogMeal {
+export interface MealLog {
   userId: Types.ObjectId;
   mealId: Types.ObjectId;
   actualMacros?: Macros;
@@ -82,7 +82,7 @@ const MacrosSchema = new Schema(
   { _id: false }
 );
 
-const LogMealSchema = new Schema(
+const MealLogSchema = new Schema(
   {
     userId: {
       type: Types.ObjectId,
@@ -146,7 +146,7 @@ const MealSchema: Schema = new Schema(
       required: false,
     },
     logs: {
-      type: [LogMealSchema],
+      type: [MealLogSchema],
       required: false,
     },
     startDate: {

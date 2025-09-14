@@ -56,7 +56,6 @@ export interface Block {
   restAfterBlockSec?: number;
   exercises: Exercise[];
   order: number;
-  logs?: BlockLog[];
   createdAt?: Date;
   updatedAt?: Date;
 }
