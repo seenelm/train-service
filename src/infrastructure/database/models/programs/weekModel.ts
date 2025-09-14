@@ -9,52 +9,9 @@ export interface Exercise {
   targetWeight?: number;
   notes?: string;
   order: number;
-  logs?: ExerciseLog[];
   createdAt?: Date;
   updatedAt?: Date;
 }
-
-export interface ExerciseLog {
-  userId: Types.ObjectId;
-  actualSets?: number;
-  actualReps?: number;
-  actualDurationSec?: number;
-  actualWeight?: number;
-  isCompleted?: boolean;
-  createdAt?: Date;
-  updatedAt?: Date;
-}
-
-const ExerciseLogSchema = new Schema(
-  {
-    userId: {
-      type: Types.ObjectId,
-      ref: "User",
-      required: true,
-    },
-    actualSets: {
-      type: Number,
-      required: false,
-    },
-    actualReps: {
-      type: Number,
-      required: false,
-    },
-    actualDurationSec: {
-      type: Number,
-      required: false,
-    },
-    actualWeight: {
-      type: Number,
-      required: false,
-    },
-    isCompleted: {
-      type: Boolean,
-      required: false,
-    },
-  },
-  { timestamps: true }
-);
 
 const ExerciseSchema = new Schema(
   {
@@ -87,10 +44,6 @@ const ExerciseSchema = new Schema(
       type: Number,
       required: true,
     },
-    logs: {
-      type: [ExerciseLogSchema],
-      required: false,
-    },
   },
   { timestamps: true }
 );
@@ -103,9 +56,89 @@ export interface Block {
   restAfterBlockSec?: number;
   exercises: Exercise[];
   order: number;
+  logs?: BlockLog[];
   createdAt?: Date;
   updatedAt?: Date;
 }
+
+export interface ExerciseLog {
+  exerciseId: Types.ObjectId;
+  actualSets?: number;
+  actualReps?: number;
+  actualDurationSec?: number;
+  actualWeight?: number;
+  isCompleted: boolean;
+  order: number;
+}
+
+export interface BlockLog {
+  actualRestBetweenExercisesSec?: number;
+  actualRestAfterBlockSec?: number;
+  exerciseLogs: ExerciseLog[];
+  order: number;
+  isCompleted: boolean;
+}
+
+const ExerciseLogSchema = new Schema(
+  {
+    exerciseId: {
+      type: Types.ObjectId,
+      ref: "ExerciseLibrary",
+      required: true,
+    },
+    actualSets: {
+      type: Number,
+      required: false,
+    },
+    actualReps: {
+      type: Number,
+      required: false,
+    },
+    actualDurationSec: {
+      type: Number,
+      required: false,
+    },
+    actualWeight: {
+      type: Number,
+      required: false,
+    },
+    isCompleted: {
+      type: Boolean,
+      required: true,
+    },
+    order: {
+      type: Number,
+      required: true,
+    },
+  },
+  { _id: false }
+);
+
+const BlockLogSchema = new Schema(
+  {
+    actualRestBetweenExercisesSec: {
+      type: Number,
+      required: false,
+    },
+    actualRestAfterBlockSec: {
+      type: Number,
+      required: false,
+    },
+    exerciseLogs: {
+      type: [ExerciseLogSchema],
+      required: true,
+    },
+    order: {
+      type: Number,
+      required: true,
+    },
+    isCompleted: {
+      type: Boolean,
+      required: true,
+    },
+  },
+  { _id: false }
+);
 
 const BlockSchema = new Schema(
   {
@@ -153,16 +186,67 @@ export interface Workout {
   blocks: Block[];
   accessType: ProfileAccess;
   createdBy: Types.ObjectId;
+  startDate: Date;
+  endDate: Date;
+  workoutLogs?: WorkoutLog[];
   createdAt?: Date;
   updatedAt?: Date;
 }
+
+export interface WorkoutLog {
+  userId: Types.ObjectId;
+  workoutId: Types.ObjectId;
+  blockLogs: BlockLog[];
+  actualDuration: number;
+  actualStartDate: Date;
+  actualEndDate: Date;
+  isCompleted: boolean;
+  createdAt?: Date;
+  updatedAt?: Date;
+}
+
+const WorkoutLogSchema = new Schema(
+  {
+    userId: {
+      type: Types.ObjectId,
+      ref: "User",
+      required: true,
+    },
+    workoutId: {
+      type: Types.ObjectId,
+      ref: "Workout",
+      required: true,
+    },
+    blockLogs: {
+      type: [BlockLogSchema],
+      required: true,
+    },
+    actualDuration: {
+      type: Number,
+      required: true,
+    },
+    actualStartDate: {
+      type: Date,
+      required: true,
+    },
+    actualEndDate: {
+      type: Date,
+      required: true,
+    },
+    isCompleted: {
+      type: Boolean,
+      required: true,
+    },
+  },
+  { timestamps: true }
+);
 
 export interface WeekDocument extends Document {
   weekNumber: number;
   workouts?: Workout[];
   meals?: Types.ObjectId[];
-  startDate?: Date;
-  endDate?: Date;
+  startDate: Date;
+  endDate: Date;
   createdAt?: Date;
   updatedAt?: Date;
 }
@@ -205,6 +289,18 @@ const WorkoutSchema = new Schema(
       ref: "User",
       required: true,
     },
+    startDate: {
+      type: Date,
+      required: true,
+    },
+    endDate: {
+      type: Date,
+      required: true,
+    },
+    workoutLogs: {
+      type: [WorkoutLogSchema],
+      required: false,
+    },
   },
   { timestamps: true }
 );
@@ -214,8 +310,8 @@ const WeekSchema = new Schema(
     weekNumber: { type: Number, required: true },
     workouts: [{ type: WorkoutSchema, required: false }],
     meals: [{ type: Types.ObjectId, ref: "Meal", required: false }],
-    startDate: { type: Date, required: false },
-    endDate: { type: Date, required: false },
+    startDate: { type: Date, required: true },
+    endDate: { type: Date, required: true },
   },
   { timestamps: true }
 );

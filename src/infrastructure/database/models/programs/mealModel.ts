@@ -54,6 +54,8 @@ export interface MealDocument extends Document {
   ingredients?: Ingredient[];
   instructions?: string;
   logs?: LogMeal[];
+  startDate: Date;
+  endDate: Date;
   createdAt?: Date;
   updatedAt?: Date;
 }
@@ -65,6 +67,8 @@ export interface LogMeal {
   actualIngredients?: Ingredient[];
   notes?: string;
   isCompleted: boolean;
+  actualStartDate: Date;
+  actualEndDate: Date;
   createdAt?: Date;
   updatedAt?: Date;
 }
@@ -106,6 +110,14 @@ const LogMealSchema = new Schema(
       type: Boolean,
       required: true,
     },
+    actualStartDate: {
+      type: Date,
+      required: true,
+    },
+    actualEndDate: {
+      type: Date,
+      required: true,
+    },
   },
   { timestamps: true }
 );
@@ -136,6 +148,14 @@ const MealSchema: Schema = new Schema(
     logs: {
       type: [LogMealSchema],
       required: false,
+    },
+    startDate: {
+      type: Date,
+      required: true,
+    },
+    endDate: {
+      type: Date,
+      required: true,
     },
   },
   { timestamps: true }
