@@ -10,7 +10,10 @@ export default class Program {
   private hasNutritionProgram?: boolean;
   private phases?: Phase[];
   private accessType: ProfileAccess;
+  private admins: Types.ObjectId[];
   private createdBy: Types.ObjectId;
+  private members?: Types.ObjectId[];
+  private weeks?: Types.ObjectId[];
   private createdAt?: Date;
   private updatedAt?: Date;
 
@@ -22,6 +25,9 @@ export default class Program {
     this.hasNutritionProgram = builder.hasNutritionProgram;
     this.phases = builder.phases;
     this.accessType = builder.accessType;
+    this.admins = builder.admins;
+    this.members = builder.members;
+    this.weeks = builder.weeks;
     this.createdBy = builder.createdBy;
     this.createdAt = builder.createdAt;
     this.updatedAt = builder.updatedAt;
@@ -52,6 +58,15 @@ export default class Program {
   public getAccessType(): ProfileAccess {
     return this.accessType;
   }
+  public getAdmins(): Types.ObjectId[] {
+    return this.admins;
+  }
+  public getMembers(): Types.ObjectId[] | undefined {
+    return this.members;
+  }
+  public getWeeks(): Types.ObjectId[] | undefined {
+    return this.weeks;
+  }
   public getCreatedBy(): Types.ObjectId {
     return this.createdBy;
   }
@@ -71,6 +86,9 @@ class ProgramBuilder {
   hasNutritionProgram?: boolean;
   phases?: Phase[];
   accessType: ProfileAccess = ProfileAccess.Public;
+  admins: Types.ObjectId[] = [];
+  members?: Types.ObjectId[];
+  weeks?: Types.ObjectId[];
   createdBy: Types.ObjectId = new Types.ObjectId();
   createdAt?: Date;
   updatedAt?: Date;
@@ -105,6 +123,18 @@ class ProgramBuilder {
   }
   public setCreatedBy(createdBy: Types.ObjectId): this {
     this.createdBy = createdBy;
+    return this;
+  }
+  public setAdmins(admins: Types.ObjectId[]): this {
+    this.admins = admins;
+    return this;
+  }
+  public setMembers(members?: Types.ObjectId[]): this {
+    this.members = members;
+    return this;
+  }
+  public setWeeks(weeks?: Types.ObjectId[]): this {
+    this.weeks = weeks;
     return this;
   }
   public setCreatedAt(createdAt?: Date): this {

@@ -196,9 +196,12 @@ export enum ValidationErrorCode {
 }
 
 export enum ValidationErrorMessage {
+  EXERCISE_ID_REQUIRED = "Exercise ID is required",
+  EXERCISE_ID_INVALID_FORMAT = "Invalid exercise ID format",
   USER_ID_REQUIRED = "User ID is required",
   USER_ID_INVALID_FORMAT = "Invalid user ID format",
   NAME_REQUIRED = "Name is required",
+  NAME_INVALID_FORMAT = "Invalid name format",
   ACCOUNT_TYPE_REQUIRED = "Account type is required",
   ACCOUNT_TYPE_INVALID = "Invalid account type. Must be 0 (Public) or 1 (Private)",
   USERNAME_REQUIRED = "Username is required",
@@ -255,4 +258,6 @@ export enum ValidationErrorMessage {
   EVENT_TAG_TOO_LONG = "Each tag must be 20 characters or less",
   EVENT_ADMIN_ID_INVALID = "All admin IDs must be valid ObjectIds",
   EVENT_INVITEE_ID_INVALID = "All invitee IDs must be valid ObjectIds",
+  CREATOR_ID_REQUIRED = "Creator ID is required",
+  CREATOR_ID_INVALID_FORMAT = "Invalid creator ID format",
 }

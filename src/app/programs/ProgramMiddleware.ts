@@ -1,14 +1,19 @@
 import { Request, Response, NextFunction } from "express";
-import { createProgramSchema } from "./ProgramSchema.js";
+import { createProgramSchema, createWorkoutSchema } from "./ProgramSchema.js";
 import { Logger } from "../../common/logger.js";
 import { ValidationErrorResponse } from "../../common/errors/ValidationErrorResponse.js";
 import { StatusCodes as HttpStatusCode } from "http-status-codes";
+import { IProgramRepository } from "../../infrastructure/database/repositories/programs/ProgramRepository.js";
+import { Types } from "mongoose";
+import { APIError } from "../../common/errors/APIError.js";
 
 export default class ProgramMiddleware {
   private logger: Logger;
+  private programRepository: IProgramRepository;
 
-  constructor() {
+  constructor(programRepository: IProgramRepository) {
     this.logger = Logger.getInstance();
+    this.programRepository = programRepository;
   }
 
   static validateCreateProgram = (
@@ -30,6 +35,82 @@ export default class ProgramMiddleware {
       req.body = result.data;
       next();
     } catch (error) {
+      next(error);
+    }
+  };
+
+  static validateCreateWorkout = (
+    req: Request,
+    res: Response,
+    next: NextFunction
+  ) => {
+    try {
+      const result = createWorkoutSchema.safeParse(req.body);
+      if (!result.success) {
+        const validationErrors = ValidationErrorResponse.fromZodError(
+          result.error
+        );
+        return res.status(HttpStatusCode.BAD_REQUEST).json({
+          message: "Create workout validation failed",
+          errors: validationErrors.map((error) => error.toJSON()),
+        });
+      }
+      req.body = result.data;
+      next();
+    } catch (error) {
+      next(error);
+    }
+  };
+
+  public checkAdminAuthorization = async (
+    req: Request,
+    res: Response,
+    next: NextFunction
+  ) => {
+    try {
+      const programId = req.params.programId;
+      const userId = req.user.getId();
+
+      if (!programId) {
+        throw APIError.BadRequest("Program ID is required");
+      }
+
+      const program = await this.programRepository.findById(
+        new Types.ObjectId(programId)
+      );
+
+      if (!program) {
+        throw APIError.NotFound("Program not found");
+      }
+
+      const isAdmin = program
+        .getAdmins()
+        .some((adminId) => adminId.equals(new Types.ObjectId(userId)));
+
+      if (!isAdmin) {
+        // TODO: Should log this error. Should not return this to client.
+        throw APIError.Forbidden(
+          "Access denied. Only program administrators can perform this action",
+          {
+            programId,
+            userId,
+          }
+        );
+      }
+
+      this.logger.info("Admin authorization successful", {
+        programId,
+        userId,
+      });
+
+      req.program = program;
+      next();
+    } catch (error) {
+      this.logger.error("Admin authorization failed", {
+        programId: req.params.programId,
+        userId: req.user.getId().toString(),
+        error: error instanceof Error ? error.message : error,
+      });
       next(error);
     }
   };

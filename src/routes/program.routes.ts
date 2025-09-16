@@ -2,6 +2,8 @@ import { Router } from "express";
 import ProgramService from "../app/programs/ProgramService.js";
 import ProgramRepository from "../infrastructure/database/repositories/programs/ProgramRepository.js";
 import { ProgramModel } from "../infrastructure/database/models/programs/programModel.js";
+import WeekRepository from "../infrastructure/database/repositories/programs/WeekRepository.js";
+import { WeekModel } from "../infrastructure/database/models/programs/weekModel.js";
 import ProgramController from "../app/programs/ProgramController.js";
 import ProgramMiddleware from "../app/programs/ProgramMiddleware.js";
 import { AuthMiddleware } from "../common/middleware/AuthMiddleware.js";
@@ -19,9 +21,16 @@ const router = Router();
 
 const authMiddleware = new AuthMiddleware(new UserRepository(UserModel));
 
-const programService = new ProgramService(new ProgramRepository(ProgramModel));
+const programService = new ProgramService(
+  new ProgramRepository(ProgramModel),
+  new WeekRepository(WeekModel)
+);
 
 const programController = new ProgramController(programService);
+
+const programMiddleware = new ProgramMiddleware(
+  new ProgramRepository(ProgramModel)
+);
 
 /**
  * @swagger
@@ -218,6 +227,174 @@ router.get(
   "/user/:userId",
   authMiddleware.authenticateToken,
   programController.getUserPrograms
+);
+
+/**
+ * @swagger
+ * /programs/{programId}/workouts:
+ *   post:
+ *     tags: [Programs]
+ *     summary: Create a new workout for a program
+ *     description: Creates a new workout within a specific program. Only program administrators can create workouts.
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: programId
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: Program ID
+ *         example: "507f1f77bcf86cd799439011"
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - name
+ *               - blocks
+ *               - accessType
+ *               - createdBy
+ *               - startDate
+ *               - endDate
+ *             properties:
+ *               name:
+ *                 type: string
+ *                 description: Workout name
+ *                 example: "Upper Body Strength"
+ *               description:
+ *                 type: string
+ *                 description: Workout description
+ *                 example: "Focus on upper body muscle groups"
+ *               category:
+ *                 type: array
+ *                 items:
+ *                   type: string
+ *                 description: Workout categories
+ *                 example: ["strength", "upper-body"]
+ *               difficulty:
+ *                 type: string
+ *                 enum: ["beginner", "intermediate", "advanced"]
+ *                 description: Workout difficulty level
+ *                 example: "intermediate"
+ *               duration:
+ *                 type: number
+ *                 description: Estimated workout duration in minutes
+ *                 example: 60
+ *               blocks:
+ *                 type: array
+ *                 description: Workout blocks/exercises
+ *                 items:
+ *                   type: object
+ *                   properties:
+ *                     type:
+ *                       type: string
+ *                       enum: ["single", "superset", "circuit"]
+ *                     name:
+ *                       type: string
+ *                       example: "Main Strength Block"
+ *                     exercises:
+ *                       type: array
+ *                       items:
+ *                         type: object
+ *                         properties:
+ *                           exerciseId:
+ *                             type: string
+ *                             example: "bench-press"
+ *                           targetSets:
+ *                             type: number
+ *                             example: 3
+ *                           targetReps:
+ *                             type: number
+ *                             example: 10
+ *                           targetWeight:
+ *                             type: number
+ *                             example: 135
+ *                     order:
+ *                       type: number
+ *                       example: 1
+ *               accessType:
+ *                 type: string
+ *                 enum: ["0", "1"]
+ *                 description: Access type (0=Public, 1=Private)
+ *                 example: "0"
+ *               createdBy:
+ *                 type: string
+ *                 description: Creator user ID
+ *                 example: "507f1f77bcf86cd799439011"
+ *               startDate:
+ *                 type: string
+ *                 format: date-time
+ *                 description: Workout start date
+ *                 example: "2024-01-15T09:00:00Z"
+ *               endDate:
+ *                 type: string
+ *                 format: date-time
+ *                 description: Workout end date
+ *                 example: "2024-01-15T10:00:00Z"
+ *     responses:
+ *       201:
+ *         description: Workout created successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 id:
+ *                   type: string
+ *                   example: "507f1f77bcf86cd799439012"
+ *                 name:
+ *                   type: string
+ *                   example: "Upper Body Strength"
+ *                 description:
+ *                   type: string
+ *                   example: "Focus on upper body muscle groups"
+ *                 category:
+ *                   type: array
+ *                   items:
+ *                     type: string
+ *                   example: ["strength", "upper-body"]
+ *                 difficulty:
+ *                   type: string
+ *                   example: "intermediate"
+ *                 duration:
+ *                   type: number
+ *                   example: 60
+ *                 blocks:
+ *                   type: array
+ *                 accessType:
+ *                   type: string
+ *                   example: "0"
+ *                 createdBy:
+ *                   type: string
+ *                   example: "507f1f77bcf86cd799439011"
+ *                 startDate:
+ *                   type: string
+ *                   format: date-time
+ *                   example: "2024-01-15T09:00:00Z"
+ *                 endDate:
+ *                   type: string
+ *                   format: date-time
+ *                   example: "2024-01-15T10:00:00Z"
+ *       400:
+ *         description: Bad request - validation failed
+ *       401:
+ *         description: Unauthorized
+ *       403:
+ *         description: Forbidden - user is not a program administrator
+ *       404:
+ *         description: Program not found
+ *       500:
+ *         description: Internal server error
+ */
+router.post(
+  "/:programId/weeks/:weekId/workouts",
+  authMiddleware.authenticateToken,
+  programMiddleware.checkAdminAuthorization,
+  ProgramMiddleware.validateCreateWorkout,
+  programController.createWorkout
 );
 
 export default router;

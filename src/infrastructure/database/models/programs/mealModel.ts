@@ -1,23 +1,10 @@
 import { Schema, model, Document, Types } from "mongoose";
+import { Unit } from "@seenelm/train-core";
 
 export interface Macros {
   protein: number;
   carbs: number;
   fats: number;
-}
-
-// Define allowed measurement units
-export enum Unit {
-  Gram = "g",
-  Kilogram = "kg",
-  Ounce = "oz",
-  Pound = "lb",
-  Milliliter = "ml",
-  Liter = "l",
-  Cup = "cup",
-  Tablespoon = "tbsp",
-  Teaspoon = "tsp",
-  Piece = "piece",
 }
 
 // Portion type = number + unit

@@ -30,6 +30,9 @@ export default class ProgramRepository
       .setHasNutritionProgram(doc.hasNutritionProgram)
       .setPhases(doc.phases)
       .setAccessType(doc.accessType)
+      .setAdmins(doc.admins)
+      .setMembers(doc.members)
+      .setWeeks(doc.weeks)
       .setCreatedBy(doc.createdBy)
       .setCreatedAt(doc.createdAt)
       .setUpdatedAt(doc.updatedAt)
@@ -45,6 +48,9 @@ export default class ProgramRepository
       phases: request.phases,
       accessType: request.accessType,
       createdBy: new Types.ObjectId(request.createdBy),
+      admins: request.admins.map((id) => new Types.ObjectId(id)),
+      members: request.members?.map((id) => new Types.ObjectId(id)) || [],
+      weeks: [], // Will be populated after week documents are created
     };
   }
 
@@ -57,6 +63,9 @@ export default class ProgramRepository
       hasNutritionProgram: program.getHasNutritionProgram(),
       phases: program.getPhases(),
       accessType: program.getAccessType(),
+      admins: program.getAdmins().map((id) => id.toString()),
+      members: program.getMembers()?.map((id) => id.toString()) || [],
+      weeks: program.getWeeks()?.map((id) => id.toString()) || [],
       createdBy: program.getCreatedBy().toString(),
     };
   }

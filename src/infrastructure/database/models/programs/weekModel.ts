@@ -1,8 +1,12 @@
 import { Schema, model, Document, Types } from "mongoose";
-import { ProfileAccess } from "@seenelm/train-core";
+import {
+  ProfileAccess,
+  BlockType,
+  WorkoutDifficulty,
+} from "@seenelm/train-core";
 
 export interface Exercise {
-  exerciseId: Types.ObjectId;
+  exerciseId: string;
   targetSets?: number;
   targetReps?: number;
   targetDurationSec?: number;
@@ -16,8 +20,7 @@ export interface Exercise {
 const ExerciseSchema = new Schema(
   {
     exerciseId: {
-      type: Types.ObjectId,
-      ref: "ExerciseLibrary",
+      type: String,
       required: true,
     },
     targetSets: {
@@ -49,7 +52,7 @@ const ExerciseSchema = new Schema(
 );
 
 export interface Block {
-  type: "single" | "superset" | "cluster" | "circuit";
+  type: BlockType;
   name?: string;
   description?: string;
   restBetweenExercisesSec?: number;
@@ -61,7 +64,7 @@ export interface Block {
 }
 
 export interface ExerciseLog {
-  exerciseId: Types.ObjectId;
+  exerciseId: string;
   actualSets?: number;
   actualReps?: number;
   actualDurationSec?: number;
@@ -81,8 +84,7 @@ export interface BlockLog {
 const ExerciseLogSchema = new Schema(
   {
     exerciseId: {
-      type: Types.ObjectId,
-      ref: "ExerciseLibrary",
+      type: String,
       required: true,
     },
     actualSets: {
@@ -143,8 +145,8 @@ const BlockSchema = new Schema(
   {
     type: {
       type: String,
-      enum: ["single", "superset", "cluster", "circuit"],
-      default: "single",
+      enum: Object.values(BlockType),
+      default: BlockType.SINGLE,
       required: true,
     },
     name: {
@@ -177,10 +179,11 @@ const BlockSchema = new Schema(
 );
 
 export interface Workout {
+  _id?: Types.ObjectId;
   name: string;
   description?: string;
   category?: string[];
-  difficulty?: "beginner" | "intermediate" | "advanced";
+  difficulty?: WorkoutDifficulty;
   duration?: number;
   blocks: Block[];
   accessType: ProfileAccess;
@@ -242,7 +245,7 @@ const WorkoutLogSchema = new Schema(
 
 export interface WeekDocument extends Document {
   weekNumber: number;
-  workouts?: Workout[];
+  workouts: Workout[];
   meals?: Types.ObjectId[];
   notes?: Notes[];
   startDate: Date;
@@ -267,7 +270,7 @@ const WorkoutSchema = new Schema(
     },
     difficulty: {
       type: String,
-      enum: ["beginner", "intermediate", "advanced"],
+      enum: Object.values(WorkoutDifficulty),
       required: false,
     },
     duration: {
@@ -306,6 +309,7 @@ const WorkoutSchema = new Schema(
 );
 
 export interface Notes {
+  _id?: Types.ObjectId;
   title: string;
   content: string;
   startDate: Date;
@@ -327,7 +331,7 @@ const NotesSchema = new Schema(
 const WeekSchema = new Schema(
   {
     weekNumber: { type: Number, required: true },
-    workouts: [{ type: WorkoutSchema, required: false }],
+    workouts: [{ type: WorkoutSchema, required: true, default: [] }],
     meals: [{ type: Types.ObjectId, ref: "Meal", required: false }],
     notes: [{ type: NotesSchema, required: false }],
     startDate: { type: Date, required: true },
