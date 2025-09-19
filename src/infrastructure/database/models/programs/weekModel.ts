@@ -63,6 +63,29 @@ export interface Block {
   updatedAt?: Date;
 }
 
+export interface ExerciseSnapshot {
+  exerciseId: string;
+  targetSets?: number;
+  targetReps?: number;
+  targetDurationSec?: number;
+  targetWeight?: number;
+  notes?: string;
+  order: number;
+}
+
+const ExerciseSnapshotSchema = new Schema(
+  {
+    exerciseId: { type: String, required: true },
+    targetSets: { type: Number, required: false },
+    targetReps: { type: Number, required: false },
+    targetDurationSec: { type: Number, required: false },
+    targetWeight: { type: Number, required: false },
+    notes: { type: String, required: false },
+    order: { type: Number, required: true },
+  },
+  { _id: false }
+);
+
 export interface ExerciseLog {
   exerciseId: string;
   actualSets?: number;
@@ -72,6 +95,29 @@ export interface ExerciseLog {
   isCompleted: boolean;
   order: number;
 }
+
+export interface BlockSnapshot {
+  type: BlockType;
+  name?: string;
+  description?: string;
+  restBetweenExercisesSec?: number;
+  restAfterBlockSec?: number;
+  exerciseSnapshot: ExerciseSnapshot[];
+  order: number;
+}
+
+const BlockSnapshotSchema = new Schema(
+  {
+    type: { type: String, enum: Object.values(BlockType), required: true },
+    name: { type: String, required: false },
+    description: { type: String, required: false },
+    restBetweenExercisesSec: { type: Number, required: false },
+    restAfterBlockSec: { type: Number, required: false },
+    exerciseSnapshot: { type: [ExerciseSnapshotSchema], required: true },
+    order: { type: Number, required: true },
+  },
+  { _id: false }
+);
 
 export interface BlockLog {
   actualRestBetweenExercisesSec?: number;
@@ -146,7 +192,6 @@ const BlockSchema = new Schema(
     type: {
       type: String,
       enum: Object.values(BlockType),
-      default: BlockType.SINGLE,
       required: true,
     },
     name: {
@@ -180,6 +225,7 @@ const BlockSchema = new Schema(
 
 export interface Workout {
   _id?: Types.ObjectId;
+  versionId: number;
   name: string;
   description?: string;
   category?: string[];
@@ -195,9 +241,48 @@ export interface Workout {
   updatedAt?: Date;
 }
 
+export interface WorkoutSnapshot {
+  name: string;
+  description?: string;
+  category?: string[];
+  difficulty?: WorkoutDifficulty;
+  duration?: number;
+  blockSnapshot: BlockSnapshot[];
+  accessType: ProfileAccess;
+  createdBy: Types.ObjectId;
+  startDate: Date;
+  endDate: Date;
+}
+
+const WorkoutSnapshotSchema = new Schema(
+  {
+    name: { type: String, required: true },
+    description: { type: String, required: false },
+    category: { type: [String], required: false },
+    difficulty: {
+      type: String,
+      enum: Object.values(WorkoutDifficulty),
+      required: false,
+    },
+    duration: { type: Number, required: false },
+    blockSnapshot: { type: [BlockSnapshotSchema], required: true },
+    accessType: {
+      type: Number,
+      enum: [ProfileAccess.Public, ProfileAccess.Private],
+      required: true,
+    },
+    createdBy: { type: Types.ObjectId, ref: "User", required: true },
+    startDate: { type: Date, required: true },
+    endDate: { type: Date, required: true },
+  },
+  { _id: false }
+);
+
 export interface WorkoutLog {
   userId: Types.ObjectId;
   workoutId: Types.ObjectId;
+  versionId: number;
+  workoutSnapshot: WorkoutSnapshot;
   blockLogs: BlockLog[];
   actualDuration: number;
   actualStartDate: Date;
@@ -217,6 +302,14 @@ const WorkoutLogSchema = new Schema(
     workoutId: {
       type: Types.ObjectId,
       ref: "Workout",
+      required: true,
+    },
+    versionId: {
+      type: Number,
+      required: true,
+    },
+    workoutSnapshot: {
+      type: WorkoutSnapshotSchema,
       required: true,
     },
     blockLogs: {
@@ -256,6 +349,11 @@ export interface WeekDocument extends Document {
 
 const WorkoutSchema = new Schema(
   {
+    versionId: {
+      type: Number,
+      required: true,
+      default: 1,
+    },
     name: {
       type: String,
       required: true,

@@ -3,6 +3,7 @@ import {
   ProfileAccess,
   WorkoutDifficulty,
   BlockType,
+  Unit,
 } from "@seenelm/train-core";
 import { ValidationErrorMessage } from "../../common/enums.js";
 
@@ -104,5 +105,36 @@ export const createWorkoutSchema = z.object({
 
   startDate: z.date(),
 
+  endDate: z.date(),
+});
+
+export const mealRequestSchema = z.object({
+  createdBy: z.string({
+    error: (issue) =>
+      issue.input === undefined
+        ? ValidationErrorMessage.CREATOR_ID_REQUIRED
+        : ValidationErrorMessage.CREATOR_ID_INVALID_FORMAT,
+  }),
+  mealName: z.string().transform((val) => val.trim()),
+  macros: z
+    .object({
+      protein: z.number().int(),
+      carbs: z.number().int(),
+      fats: z.number().int(),
+    })
+    .optional(),
+  ingredients: z
+    .array(
+      z.object({
+        name: z.string().transform((val) => val.trim()),
+        portion: z.object({
+          amount: z.number().int(),
+          unit: z.enum(Object.values(Unit) as [string, ...string[]]),
+        }),
+      })
+    )
+    .optional(),
+  instructions: z.string().optional(),
+  startDate: z.date(),
   endDate: z.date(),
 });

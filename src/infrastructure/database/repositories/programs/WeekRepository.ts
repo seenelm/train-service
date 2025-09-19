@@ -81,6 +81,7 @@ export default class WeekRepository
   toWorkoutResponse(workout: Workout): WorkoutResponse {
     return {
       id: workout._id?.toString() || "",
+      versionId: workout.versionId,
       name: workout.name,
       description: workout.description,
       category: workout.category,

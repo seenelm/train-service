@@ -3,6 +3,8 @@ import {
   ProgramResponse,
   WorkoutRequest,
   WorkoutResponse,
+  MealRequest,
+  MealResponse,
 } from "@seenelm/train-core";
 import { IProgramRepository } from "../../infrastructure/database/repositories/programs/ProgramRepository.js";
 import { Logger } from "../../common/logger.js";
@@ -13,6 +15,7 @@ import { MongoServerError } from "mongodb";
 import { IWeekRepository } from "../../infrastructure/database/repositories/programs/WeekRepository.js";
 import mongoose from "mongoose";
 import { ClientSession } from "mongoose";
+import { IMealRepository } from "../../infrastructure/database/repositories/programs/MealRepository.js";
 
 export interface IProgramService {
   createProgram(programRequest: ProgramRequest): Promise<ProgramResponse>;
@@ -21,19 +24,28 @@ export interface IProgramService {
     weekId: Types.ObjectId,
     workoutRequest: WorkoutRequest
   ): Promise<WorkoutResponse>;
+  createMeal(
+    weekId: Types.ObjectId,
+    mealRequest: MealRequest
+  ): Promise<MealResponse>;
+  getWeekWorkouts(weekId: Types.ObjectId): Promise<WorkoutResponse[]>;
+  getWeekMeals(weekId: Types.ObjectId): Promise<MealResponse[]>;
 }
 
 export default class ProgramService implements IProgramService {
   private programRepository: IProgramRepository;
   private weekRepository: IWeekRepository;
+  private mealRepository: IMealRepository;
   private logger: Logger;
 
   constructor(
     programRepository: IProgramRepository,
-    weekRepository: IWeekRepository
+    weekRepository: IWeekRepository,
+    mealRepository: IMealRepository
   ) {
     this.programRepository = programRepository;
     this.weekRepository = weekRepository;
+    this.mealRepository = mealRepository;
     this.logger = Logger.getInstance();
   }
 
@@ -103,9 +115,10 @@ export default class ProgramService implements IProgramService {
     userId: Types.ObjectId
   ): Promise<ProgramResponse[]> {
     try {
-      const programs = await this.programRepository.find({ createdBy: userId });
+      const programs = await this.programRepository.find({
+        $or: [{ createdBy: userId }, { admins: userId }, { members: userId }],
+      });
 
-      // Convert to response format
       const programResponses: ProgramResponse[] = programs.map((program) =>
         this.programRepository.toResponse(program)
       );
@@ -191,6 +204,116 @@ export default class ProgramService implements IProgramService {
         throw DatabaseError.handleMongoDBError(error);
       } else {
         throw APIError.InternalServerError("Failed to create workout");
+      }
+    }
+  }
+
+  public async createMeal(
+    weekId: Types.ObjectId,
+    mealRequest: MealRequest
+  ): Promise<MealResponse> {
+    const session = await mongoose.startSession();
+
+    try {
+      session.startTransaction();
+      const week = await this.weekRepository.findById(weekId);
+
+      if (!week) {
+        throw APIError.NotFound("Week not found");
+      }
+
+      const mealDocument = this.mealRepository.toDocument(mealRequest);
+      const meal = await this.mealRepository.create(mealDocument, { session });
+
+      await this.weekRepository.updateOne(
+        { _id: weekId },
+        { $push: { meals: meal.getId() } },
+        { session }
+      );
+
+      await session.commitTransaction();
+
+      return this.mealRepository.toResponse(meal);
+    } catch (error) {
+      this.logger.error("Error creating meal: ", error);
+
+      if (session) {
+        await session.abortTransaction();
+      }
+
+      if (error instanceof MongooseError || error instanceof MongoServerError) {
+        throw DatabaseError.handleMongoDBError(error);
+      } else {
+        throw APIError.InternalServerError("Failed to create meal");
+      }
+    } finally {
+      if (session) {
+        session.endSession();
+      }
+    }
+  }
+
+  public async getWeekWorkouts(
+    weekId: Types.ObjectId
+  ): Promise<WorkoutResponse[]> {
+    try {
+      const week = await this.weekRepository.findById(weekId);
+
+      if (!week) {
+        throw APIError.NotFound("Week not found");
+      }
+
+      const workouts = week.getWorkouts();
+
+      if (!workouts || workouts.length === 0) {
+        this.logger.info("No workouts found for week: ", weekId);
+        return [];
+      }
+
+      return workouts.map((workout) =>
+        this.weekRepository.toWorkoutResponse(workout)
+      );
+    } catch (error) {
+      this.logger.error("Error getting week workouts: ", error);
+
+      if (error instanceof MongooseError || error instanceof MongoServerError) {
+        throw DatabaseError.handleMongoDBError(error);
+      } else {
+        throw APIError.InternalServerError("Failed to get week workouts");
+      }
+    }
+  }
+
+  public async getWeekMeals(weekId: Types.ObjectId): Promise<MealResponse[]> {
+    try {
+      const week = await this.weekRepository.findById(weekId);
+
+      if (!week) {
+        throw APIError.NotFound("Week not found");
+      }
+
+      const mealIds = week.getMeals();
+      if (!mealIds || mealIds.length === 0) {
+        this.logger.info("No meals found for week: ", weekId);
+        return [];
+      }
+
+      const meals = await Promise.all(
+        mealIds.map(async (mealId) => {
+          const meal = await this.mealRepository.findById(mealId);
+          return meal ? this.mealRepository.toResponse(meal) : null;
+        })
+      );
+
+      // Filter out any null results (meals that might have been deleted)
+      return meals.filter((meal): meal is MealResponse => meal !== null);
+    } catch (error) {
+      this.logger.error("Error getting week meals: ", error);
+
+      if (error instanceof MongooseError || error instanceof MongoServerError) {
+        throw DatabaseError.handleMongoDBError(error);
+      } else {
+        throw APIError.InternalServerError("Failed to get week meals");
       }
     }
   }

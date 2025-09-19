@@ -5,6 +5,8 @@ import {
   ProgramResponse,
   WorkoutRequest,
   WorkoutResponse,
+  MealRequest,
+  MealResponse,
 } from "@seenelm/train-core";
 import { StatusCodes as HttpStatusCode } from "http-status-codes";
 import { Logger } from "../../common/logger.js";
@@ -66,6 +68,60 @@ export default class ProgramController {
         await this.programService.createWorkout(weekId, workoutRequest);
 
       return res.status(HttpStatusCode.CREATED).json(workoutResponse);
+    } catch (error) {
+      next(error);
+    }
+  };
+
+  public createMeal = async (
+    req: Request,
+    res: Response,
+    next: NextFunction
+  ) => {
+    try {
+      const weekId = new Types.ObjectId(req.params.weekId);
+      const mealRequest: MealRequest = req.body;
+
+      const mealResponse: MealResponse = await this.programService.createMeal(
+        weekId,
+        mealRequest
+      );
+
+      return res.status(HttpStatusCode.CREATED).json(mealResponse);
+    } catch (error) {
+      next(error);
+    }
+  };
+
+  public getWeekWorkouts = async (
+    req: Request,
+    res: Response,
+    next: NextFunction
+  ) => {
+    try {
+      const weekId = new Types.ObjectId(req.params.weekId);
+
+      const workoutResponse: WorkoutResponse[] =
+        await this.programService.getWeekWorkouts(weekId);
+
+      return res.status(HttpStatusCode.OK).json(workoutResponse);
+    } catch (error) {
+      next(error);
+    }
+  };
+
+  public getWeekMeals = async (
+    req: Request,
+    res: Response,
+    next: NextFunction
+  ) => {
+    try {
+      const weekId = new Types.ObjectId(req.params.weekId);
+
+      const mealsResponse: MealResponse[] =
+        await this.programService.getWeekMeals(weekId);
+
+      return res.status(HttpStatusCode.OK).json(mealsResponse);
     } catch (error) {
       next(error);
     }

@@ -1,9 +1,5 @@
 import { Types } from "mongoose";
-import {
-  Workout,
-  Notes,
-  WeekDocument,
-} from "../../models/programs/weekModel.js";
+import { Workout, Notes } from "../../models/programs/weekModel.js";
 
 export default class Week {
   private id: Types.ObjectId;

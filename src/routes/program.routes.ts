@@ -9,6 +9,8 @@ import ProgramMiddleware from "../app/programs/ProgramMiddleware.js";
 import { AuthMiddleware } from "../common/middleware/AuthMiddleware.js";
 import UserRepository from "../infrastructure/database/repositories/user/UserRepository.js";
 import { UserModel } from "../infrastructure/database/models/user/userModel.js";
+import MealRepository from "../infrastructure/database/repositories/programs/MealRepository.js";
+import { MealModel } from "../infrastructure/database/models/programs/mealModel.js";
 
 /**
  * @swagger
@@ -23,7 +25,8 @@ const authMiddleware = new AuthMiddleware(new UserRepository(UserModel));
 
 const programService = new ProgramService(
   new ProgramRepository(ProgramModel),
-  new WeekRepository(WeekModel)
+  new WeekRepository(WeekModel),
+  new MealRepository(MealModel)
 );
 
 const programController = new ProgramController(programService);
@@ -395,6 +398,229 @@ router.post(
   programMiddleware.checkAdminAuthorization,
   ProgramMiddleware.validateCreateWorkout,
   programController.createWorkout
+);
+
+router.post(
+  "/:programId/weeks/:weekId/meals",
+  authMiddleware.authenticateToken,
+  programMiddleware.checkAdminAuthorization,
+  ProgramMiddleware.validateMealRequest,
+  programController.createMeal
+);
+
+/**
+ * @swagger
+ * /programs/{programId}/weeks/{weekId}/workouts:
+ *   get:
+ *     tags: [Programs]
+ *     summary: Get all workouts for a week
+ *     description: Retrieves all workouts for a specific week within a program. Only program administrators or members can access this resource.
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: programId
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: Program ID
+ *         example: "507f1f77bcf86cd799439011"
+ *       - in: path
+ *         name: weekId
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: Week ID
+ *         example: "507f1f77bcf86cd799439012"
+ *     responses:
+ *       200:
+ *         description: Week workouts retrieved successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: array
+ *               items:
+ *                 type: object
+ *                 properties:
+ *                   id:
+ *                     type: string
+ *                     example: "507f1f77bcf86cd799439013"
+ *                   name:
+ *                     type: string
+ *                     example: "Upper Body Strength"
+ *                   description:
+ *                     type: string
+ *                     example: "Focus on upper body muscle groups"
+ *                   category:
+ *                     type: array
+ *                     items:
+ *                       type: string
+ *                     example: ["strength", "upper-body"]
+ *                   difficulty:
+ *                     type: string
+ *                     example: "intermediate"
+ *                   duration:
+ *                     type: number
+ *                     example: 60
+ *                   blocks:
+ *                     type: array
+ *                     description: Workout blocks/exercises
+ *                     items:
+ *                       type: object
+ *                       properties:
+ *                         type:
+ *                           type: string
+ *                           enum: ["single", "superset", "circuit"]
+ *                         name:
+ *                           type: string
+ *                           example: "Main Strength Block"
+ *                         exercises:
+ *                           type: array
+ *                           items:
+ *                             type: object
+ *                             properties:
+ *                               exerciseId:
+ *                                 type: string
+ *                                 example: "bench-press"
+ *                               targetSets:
+ *                                 type: number
+ *                                 example: 3
+ *                               targetReps:
+ *                                 type: number
+ *                                 example: 10
+ *                               targetWeight:
+ *                                 type: number
+ *                                 example: 135
+ *                         order:
+ *                           type: number
+ *                           example: 1
+ *                   accessType:
+ *                     type: string
+ *                     example: "0"
+ *                   createdBy:
+ *                     type: string
+ *                     example: "507f1f77bcf86cd799439011"
+ *                   startDate:
+ *                     type: string
+ *                     format: date-time
+ *                     example: "2024-01-15T09:00:00Z"
+ *                   endDate:
+ *                     type: string
+ *                     format: date-time
+ *                     example: "2024-01-15T10:00:00Z"
+ *       401:
+ *         description: Unauthorized
+ *       403:
+ *         description: Forbidden - User is not a program administrator or member
+ *       404:
+ *         description: Week not found
+ *       500:
+ *         description: Internal server error
+ */
+router.get(
+  "/:programId/weeks/:weekId/workouts",
+  authMiddleware.authenticateToken,
+  programMiddleware.checkMemberOrAdminAuthorization,
+  programController.getWeekWorkouts
+);
+
+/**
+ * @swagger
+ * /programs/{programId}/weeks/{weekId}/meals:
+ *   get:
+ *     tags: [Programs]
+ *     summary: Get all meals for a week
+ *     description: Retrieves all meals for a specific week within a program. Only program administrators or members can access this resource.
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: programId
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: Program ID
+ *         example: "507f1f77bcf86cd799439011"
+ *       - in: path
+ *         name: weekId
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: Week ID
+ *         example: "507f1f77bcf86cd799439012"
+ *     responses:
+ *       200:
+ *         description: Week meals retrieved successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: array
+ *               items:
+ *                 type: object
+ *                 properties:
+ *                   id:
+ *                     type: string
+ *                     example: "507f1f77bcf86cd799439013"
+ *                   mealName:
+ *                     type: string
+ *                     example: "Grilled Chicken Breast"
+ *                   macros:
+ *                     type: object
+ *                     properties:
+ *                       protein:
+ *                         type: number
+ *                         example: 30
+ *                       carbs:
+ *                         type: number
+ *                         example: 5
+ *                       fats:
+ *                         type: number
+ *                         example: 8
+ *                   ingredients:
+ *                     type: array
+ *                     items:
+ *                       type: object
+ *                       properties:
+ *                         name:
+ *                           type: string
+ *                           example: "Chicken Breast"
+ *                         portion:
+ *                           type: object
+ *                           properties:
+ *                             amount:
+ *                               type: number
+ *                               example: 200
+ *                             unit:
+ *                               type: string
+ *                               example: "g"
+ *                   instructions:
+ *                     type: string
+ *                     example: "Season chicken with salt and pepper, grill for 6-7 minutes per side"
+ *                   startDate:
+ *                     type: string
+ *                     format: date-time
+ *                     example: "2024-01-15T12:00:00Z"
+ *                   endDate:
+ *                     type: string
+ *                     format: date-time
+ *                     example: "2024-01-15T13:00:00Z"
+ *                   createdBy:
+ *                     type: string
+ *                     example: "507f1f77bcf86cd799439011"
+ *       401:
+ *         description: Unauthorized
+ *       403:
+ *         description: Forbidden - User is not a program administrator or member
+ *       404:
+ *         description: Week not found
+ *       500:
+ *         description: Internal server error
+ */
+router.get(
+  "/:programId/weeks/:weekId/meals",
+  authMiddleware.authenticateToken,
+  programMiddleware.checkMemberOrAdminAuthorization,
+  programController.getWeekMeals
 );
 
 export default router;

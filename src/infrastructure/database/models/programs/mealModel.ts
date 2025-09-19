@@ -7,8 +7,19 @@ export interface Macros {
   fats: number;
 }
 
+export interface MacrosSnapshot {
+  protein: number;
+  carbs: number;
+  fats: number;
+}
+
 // Portion type = number + unit
 export interface Portion {
+  amount: number;
+  unit: Unit;
+}
+
+export interface PortionSnapshot {
   amount: number;
   unit: Unit;
 }
@@ -18,7 +29,20 @@ export interface Ingredient {
   portion: Portion;
 }
 
+export interface IngredientSnapshot {
+  name: string;
+  portionSnapshot: PortionSnapshot;
+}
+
 const PortionSchema = new Schema(
+  {
+    amount: { type: Number, required: true },
+    unit: { type: String, enum: Object.values(Unit), required: true },
+  },
+  { _id: false }
+);
+
+const PortionSnapshotSchema = new Schema(
   {
     amount: { type: Number, required: true },
     unit: { type: String, enum: Object.values(Unit), required: true },
@@ -34,7 +58,16 @@ const IngredientSchema = new Schema(
   { _id: false }
 );
 
+const IngredientSnapshotSchema = new Schema(
+  {
+    name: { type: String, required: true },
+    portion: { type: PortionSnapshotSchema, required: true },
+  },
+  { _id: false }
+);
+
 export interface MealDocument extends Document {
+  versionId: number;
   createdBy: Types.ObjectId;
   mealName: string;
   macros?: Macros;
@@ -47,9 +80,21 @@ export interface MealDocument extends Document {
   updatedAt?: Date;
 }
 
+export interface MealSnapshot {
+  createdBy: Types.ObjectId;
+  mealName: string;
+  macrosSnapshot: MacrosSnapshot;
+  ingredientSnapshot: IngredientSnapshot[];
+  instructions?: string;
+  startDate: Date;
+  endDate: Date;
+}
+
 export interface MealLog {
+  versionId: number;
   userId: Types.ObjectId;
   mealId: Types.ObjectId;
+  mealSnapshot: MealSnapshot;
   actualMacros?: Macros;
   actualIngredients?: Ingredient[];
   notes?: string;
@@ -69,8 +114,56 @@ const MacrosSchema = new Schema(
   { _id: false }
 );
 
+const MacrosSnapshotSchema = new Schema(
+  {
+    protein: { type: Number, required: true },
+    carbs: { type: Number, required: true },
+    fats: { type: Number, required: true },
+  },
+  { _id: false }
+);
+
+const MealSnapshotSchema = new Schema(
+  {
+    createdBy: {
+      type: Types.ObjectId,
+      ref: "User",
+      required: true,
+    },
+    mealName: {
+      type: String,
+      required: true,
+    },
+    macrosSnapshot: {
+      type: MacrosSnapshotSchema,
+      required: true,
+    },
+    ingredientSnapshot: {
+      type: [IngredientSnapshotSchema],
+      required: true,
+    },
+    instructions: {
+      type: String,
+      required: false,
+    },
+    startDate: {
+      type: Date,
+      required: true,
+    },
+    endDate: {
+      type: Date,
+      required: true,
+    },
+  },
+  { _id: false }
+);
+
 const MealLogSchema = new Schema(
   {
+    versionId: {
+      type: Number,
+      required: true,
+    },
     userId: {
       type: Types.ObjectId,
       ref: "User",
@@ -79,6 +172,10 @@ const MealLogSchema = new Schema(
     mealId: {
       type: Types.ObjectId,
       ref: "Meal",
+      required: true,
+    },
+    mealSnapshot: {
+      type: MealSnapshotSchema,
       required: true,
     },
     actualMacros: {
@@ -111,6 +208,11 @@ const MealLogSchema = new Schema(
 
 const MealSchema: Schema = new Schema(
   {
+    versionId: {
+      type: Number,
+      required: true,
+      default: 1,
+    },
     createdBy: {
       type: Types.ObjectId,
       ref: "User",

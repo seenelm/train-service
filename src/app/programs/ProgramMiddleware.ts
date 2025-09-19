@@ -1,5 +1,9 @@
 import { Request, Response, NextFunction } from "express";
-import { createProgramSchema, createWorkoutSchema } from "./ProgramSchema.js";
+import {
+  createProgramSchema,
+  createWorkoutSchema,
+  mealRequestSchema,
+} from "./ProgramSchema.js";
 import { Logger } from "../../common/logger.js";
 import { ValidationErrorResponse } from "../../common/errors/ValidationErrorResponse.js";
 import { StatusCodes as HttpStatusCode } from "http-status-codes";
@@ -62,6 +66,29 @@ export default class ProgramMiddleware {
     }
   };
 
+  static validateMealRequest = (
+    req: Request,
+    res: Response,
+    next: NextFunction
+  ) => {
+    try {
+      const result = mealRequestSchema.safeParse(req.body);
+      if (!result.success) {
+        const validationErrors = ValidationErrorResponse.fromZodError(
+          result.error
+        );
+        return res.status(HttpStatusCode.BAD_REQUEST).json({
+          message: "Create meal validation failed",
+          errors: validationErrors.map((error) => error.toJSON()),
+        });
+      }
+      req.body = result.data;
+      next();
+    } catch (error) {
+      next(error);
+    }
+  };
+
   public checkAdminAuthorization = async (
     req: Request,
     res: Response,
@@ -107,6 +134,74 @@ export default class ProgramMiddleware {
       next();
     } catch (error) {
       this.logger.error("Admin authorization failed", {
+        programId: req.params.programId,
+        userId: req.user.getId().toString(),
+        error: error instanceof Error ? error.message : error,
+      });
+      next(error);
+    }
+  };
+
+  public checkMemberOrAdminAuthorization = async (
+    req: Request,
+    res: Response,
+    next: NextFunction
+  ) => {
+    try {
+      const programId = req.params.programId;
+      const userId = req.user.getId();
+
+      if (!programId) {
+        throw APIError.BadRequest("Program ID is required");
+      }
+
+      const program = await this.programRepository.findById(
+        new Types.ObjectId(programId)
+      );
+
+      if (!program) {
+        throw APIError.NotFound("Program not found");
+      }
+
+      const userIdObj = new Types.ObjectId(userId);
+
+      // Check if user is an admin
+      const isAdmin = program
+        .getAdmins()
+        .some((adminId) => adminId.equals(userIdObj));
+
+      // Check if user is a member
+      const isMember =
+        program.getMembers()?.some((memberId) => memberId.equals(userIdObj)) ||
+        false;
+
+      if (!isAdmin && !isMember) {
+        this.logger.warn("Access denied: User is neither admin nor member", {
+          programId,
+          userId,
+          isAdmin,
+          isMember,
+        });
+        throw APIError.Forbidden(
+          "Access denied. Only program administrators or members can access this resource",
+          {
+            programId,
+            userId,
+          }
+        );
+      }
+
+      this.logger.info("Member or admin authorization successful", {
+        programId,
+        userId,
+        isAdmin,
+        isMember,
+      });
+
+      req.program = program;
+      next();
+    } catch (error) {
+      this.logger.error("Member or admin authorization failed", {
         programId: req.params.programId,
         userId: req.user.getId().toString(),
         error: error instanceof Error ? error.message : error,
