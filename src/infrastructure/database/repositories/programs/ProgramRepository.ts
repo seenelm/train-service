@@ -48,7 +48,7 @@ export default class ProgramRepository
       phases: request.phases,
       accessType: request.accessType,
       createdBy: new Types.ObjectId(request.createdBy),
-      admins: request.admins.map((id) => new Types.ObjectId(id)),
+      admins: request.admins?.map((id) => new Types.ObjectId(id)) || [new Types.ObjectId(request.createdBy)],
       members: request.members?.map((id) => new Types.ObjectId(id)) || [],
       weeks: [], // Will be populated after week documents are created
     };
