@@ -110,9 +110,15 @@ export default class WeekRepository
     workout: WorkoutRequest
   ): Promise<Workout | null> {
     try {
+      const workoutDocument = {
+        ...workout,
+        createdBy: new Types.ObjectId(workout.createdBy),
+        versionId: 1, // Default version for new workouts
+      };
+
       const updatedWeek = await this.weekModel.findByIdAndUpdate(
         weekId,
-        { $push: { workouts: workout } },
+        { $push: { workouts: workoutDocument } },
         { new: true }
       );
 

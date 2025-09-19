@@ -393,7 +393,7 @@ router.get(
  *         description: Internal server error
  */
 router.post(
-  "/:programId/weeks/:weekId/workouts",
+  "/:programId/week/:weekId/workout",
   authMiddleware.authenticateToken,
   programMiddleware.checkAdminAuthorization,
   ProgramMiddleware.validateCreateWorkout,
@@ -401,7 +401,7 @@ router.post(
 );
 
 router.post(
-  "/:programId/weeks/:weekId/meals",
+  "/:programId/week/:weekId/meal",
   authMiddleware.authenticateToken,
   programMiddleware.checkAdminAuthorization,
   ProgramMiddleware.validateMealRequest,
@@ -518,7 +518,7 @@ router.post(
  *         description: Internal server error
  */
 router.get(
-  "/:programId/weeks/:weekId/workouts",
+  "/:programId/week/:weekId/workouts",
   authMiddleware.authenticateToken,
   programMiddleware.checkMemberOrAdminAuthorization,
   programController.getWeekWorkouts
@@ -617,7 +617,7 @@ router.get(
  *         description: Internal server error
  */
 router.get(
-  "/:programId/weeks/:weekId/meals",
+  "/:programId/week/:weekId/meals",
   authMiddleware.authenticateToken,
   programMiddleware.checkMemberOrAdminAuthorization,
   programController.getWeekMeals
