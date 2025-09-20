@@ -6,19 +6,50 @@ import {
   WorkoutResponse,
   NotesResponse,
   WorkoutRequest,
+  MealResponse,
+  Macros,
+  Ingredient,
 } from "@seenelm/train-core";
 import { Types, Model } from "mongoose";
 import { Workout, Notes } from "../../models/programs/weekModel.js";
 import { Logger } from "../../../../common/logger.js";
 
+export interface AggregatedMeal {
+  _id: Types.ObjectId;
+  versionId: number;
+  createdBy: Types.ObjectId;
+  mealName: string;
+  macros?: Macros;
+  ingredients?: Ingredient[];
+  instructions?: string;
+  startDate: Date;
+  endDate: Date;
+}
+
+export interface AggregatedWeek {
+  _id: Types.ObjectId;
+  name?: string;
+  description?: string;
+  weekNumber: number;
+  workouts: Workout[];
+  meals?: AggregatedMeal[];
+  notes?: Notes[];
+  startDate: Date;
+  endDate: Date;
+  createdAt?: Date;
+  updatedAt?: Date;
+}
+
 export interface IWeekRepository extends IBaseRepository<Week, WeekDocument> {
   toResponse(week: Week): WeekResponse;
   toWorkoutResponse(workout: Workout): WorkoutResponse;
   toNotesResponse(notes: Notes): NotesResponse;
+  toWeekResponse(week: AggregatedWeek): WeekResponse;
   createWorkout(
     weekId: Types.ObjectId,
     workout: WorkoutRequest
   ): Promise<Workout | null>;
+  findWeek(weekId: Types.ObjectId): Promise<AggregatedWeek | null>;
 }
 
 export default class WeekRepository
@@ -71,10 +102,38 @@ export default class WeekRepository
       workouts:
         week.getWorkouts()?.map((workout) => this.toWorkoutResponse(workout)) ||
         [],
-      meals: undefined, // TODO: Convert ObjectId[] to MealResponse[] when needed
+      meals: [], // TODO: Convert ObjectId[] to MealResponse[] when needed
       notes: week.getNotes()?.map((notes) => this.toNotesResponse(notes)) || [],
       startDate: week.getStartDate(),
       endDate: week.getEndDate(),
+    };
+  }
+
+  toWeekResponse(week: AggregatedWeek): WeekResponse {
+    return {
+      id: week._id.toString(),
+      name: week.name,
+      description: week.description,
+      weekNumber: week.weekNumber,
+      workouts: week.workouts.map((workout) => this.toWorkoutResponse(workout)),
+      meals: week.meals?.map((meal) => this.toMealResponse(meal)) || [],
+      notes: week.notes?.map((notes) => this.toNotesResponse(notes)) || [],
+      startDate: week.startDate,
+      endDate: week.endDate,
+    };
+  }
+
+  private toMealResponse(meal: AggregatedMeal): MealResponse {
+    return {
+      id: meal._id.toString(),
+      versionId: meal.versionId,
+      createdBy: meal.createdBy.toString(),
+      mealName: meal.mealName,
+      macros: meal.macros,
+      ingredients: meal.ingredients,
+      instructions: meal.instructions,
+      startDate: meal.startDate,
+      endDate: meal.endDate,
     };
   }
 
@@ -129,6 +188,35 @@ export default class WeekRepository
       return updatedWeek.workouts[updatedWeek.workouts.length - 1] as Workout;
     } catch (error) {
       this.logger.error("Error creating workout: ", error);
+      throw error;
+    }
+  }
+
+  async findWeek(weekId: Types.ObjectId): Promise<AggregatedWeek | null> {
+    try {
+      const result = await this.weekModel.aggregate<AggregatedWeek>([
+        { $match: { _id: weekId } },
+        {
+          $lookup: {
+            from: "meals",
+            localField: "meals",
+            foreignField: "_id",
+            as: "meals",
+          },
+        },
+        { $limit: 1 },
+      ]);
+
+      if (result.length === 0) {
+        return null;
+      }
+
+      return result[0];
+    } catch (error) {
+      this.logger.error(
+        "Error finding week with meals using aggregate: ",
+        error
+      );
       throw error;
     }
   }

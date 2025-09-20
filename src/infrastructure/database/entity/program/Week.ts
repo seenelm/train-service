@@ -3,6 +3,8 @@ import { Workout, Notes } from "../../models/programs/weekModel.js";
 
 export default class Week {
   private id: Types.ObjectId;
+  private name?: string;
+  private description?: string;
   private weekNumber: number;
   private workouts: Workout[];
   private meals?: Types.ObjectId[];
@@ -14,6 +16,8 @@ export default class Week {
 
   constructor(builder: WeekBuilder) {
     this.id = builder.id;
+    this.name = builder.name;
+    this.description = builder.description;
     this.weekNumber = builder.weekNumber;
     this.workouts = builder.workouts;
     this.meals = builder.meals;
@@ -30,6 +34,14 @@ export default class Week {
 
   public getId(): Types.ObjectId {
     return this.id;
+  }
+
+  public getName(): string | undefined {
+    return this.name;
+  }
+
+  public getDescription(): string | undefined {
+    return this.description;
   }
 
   public getWeekNumber(): number {
@@ -67,6 +79,8 @@ export default class Week {
 
 export class WeekBuilder {
   public id!: Types.ObjectId;
+  public name?: string;
+  public description?: string;
   public weekNumber!: number;
   public workouts!: Workout[];
   public meals?: Types.ObjectId[];
@@ -78,6 +92,14 @@ export class WeekBuilder {
 
   setId(id: Types.ObjectId): this {
     this.id = id;
+    return this;
+  }
+  setName(name: string): this {
+    this.name = name;
+    return this;
+  }
+  setDescription(description: string): this {
+    this.description = description;
     return this;
   }
 

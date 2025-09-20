@@ -1,13 +1,37 @@
 import { BaseRepository, IBaseRepository } from "../BaseRepository.js";
 import Program from "../../entity/program/Program.js";
 import { ProgramDocument } from "../../models/programs/programModel.js";
-import { ProgramRequest, ProgramResponse } from "@seenelm/train-core";
+import {
+  ProgramRequest,
+  ProgramResponse,
+  WeekDetail,
+  Phase,
+  ProfileAccess,
+} from "@seenelm/train-core";
 import { Types, Model } from "mongoose";
+
+export interface ProgramWithWeeks {
+  _id: Types.ObjectId;
+  name: string;
+  types?: string[];
+  numWeeks: number;
+  hasNutritionProgram?: boolean;
+  phases?: Phase[];
+  accessType: ProfileAccess;
+  admins: Types.ObjectId[];
+  createdBy: Types.ObjectId;
+  members?: Types.ObjectId[];
+  weeks?: WeekDetail[];
+  createdAt?: Date;
+  updatedAt?: Date;
+}
 
 export interface IProgramRepository
   extends IBaseRepository<Program, ProgramDocument> {
   toDocument(request: ProgramRequest): Partial<ProgramDocument>;
   toResponse(program: Program): ProgramResponse;
+  getUserProgramsWithWeeks(userId: Types.ObjectId): Promise<ProgramWithWeeks[]>;
+  toResponseWithWeeks(program: ProgramWithWeeks): ProgramResponse;
 }
 
 export default class ProgramRepository
@@ -48,7 +72,9 @@ export default class ProgramRepository
       phases: request.phases,
       accessType: request.accessType,
       createdBy: new Types.ObjectId(request.createdBy),
-      admins: request.admins?.map((id) => new Types.ObjectId(id)) || [new Types.ObjectId(request.createdBy)],
+      admins: request.admins?.map((id) => new Types.ObjectId(id)) || [
+        new Types.ObjectId(request.createdBy),
+      ],
       members: request.members?.map((id) => new Types.ObjectId(id)) || [],
       weeks: [], // Will be populated after week documents are created
     };
@@ -65,8 +91,82 @@ export default class ProgramRepository
       accessType: program.getAccessType(),
       admins: program.getAdmins().map((id) => id.toString()),
       members: program.getMembers()?.map((id) => id.toString()) || [],
-      weeks: program.getWeeks()?.map((id) => id.toString()) || [],
+      weeks: [],
       createdBy: program.getCreatedBy().toString(),
     };
+  }
+
+  toResponseWithWeeks(program: ProgramWithWeeks): ProgramResponse {
+    return {
+      id: program._id.toString(),
+      name: program.name,
+      types: program.types,
+      numWeeks: program.numWeeks,
+      hasNutritionProgram: program.hasNutritionProgram,
+      phases: program.phases,
+      accessType: program.accessType,
+      admins: program.admins.map((id) => id.toString()),
+      members: program.members?.map((id) => id.toString()) || [],
+      createdBy: program.createdBy.toString(),
+      weeks: program.weeks,
+    };
+  }
+
+  async getUserProgramsWithWeeks(
+    userId: Types.ObjectId
+  ): Promise<ProgramWithWeeks[]> {
+    try {
+      const result = await this.programModel.aggregate<ProgramWithWeeks>([
+        {
+          $match: {
+            $or: [
+              { createdBy: userId },
+              { admins: userId },
+              { members: userId },
+            ],
+          },
+        },
+        {
+          $lookup: {
+            from: "weeks",
+            localField: "weeks",
+            foreignField: "_id",
+            as: "weekDetails",
+          },
+        },
+        {
+          $project: {
+            _id: 1,
+            name: 1,
+            types: 1,
+            numWeeks: 1,
+            hasNutritionProgram: 1,
+            phases: 1,
+            accessType: 1,
+            admins: 1,
+            members: 1,
+            createdBy: 1,
+            createdAt: 1,
+            updatedAt: 1,
+            weeks: {
+              $map: {
+                input: "$weekDetails",
+                as: "week",
+                in: {
+                  id: { $toString: "$$week._id" },
+                  name: "$$week.name",
+                  description: "$$week.description",
+                  weekNumber: "$$week.weekNumber",
+                },
+              },
+            },
+          },
+        },
+      ]);
+
+      return result;
+    } catch (error) {
+      throw error;
+    }
   }
 }

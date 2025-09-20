@@ -5,6 +5,7 @@ import {
   WorkoutResponse,
   MealRequest,
   MealResponse,
+  WeekResponse,
 } from "@seenelm/train-core";
 import { IProgramRepository } from "../../infrastructure/database/repositories/programs/ProgramRepository.js";
 import { Logger } from "../../common/logger.js";
@@ -30,6 +31,7 @@ export interface IProgramService {
   ): Promise<MealResponse>;
   getWeekWorkouts(weekId: Types.ObjectId): Promise<WorkoutResponse[]>;
   getWeekMeals(weekId: Types.ObjectId): Promise<MealResponse[]>;
+  getWeek(weekId: Types.ObjectId): Promise<WeekResponse>;
 }
 
 export default class ProgramService implements IProgramService {
@@ -115,16 +117,19 @@ export default class ProgramService implements IProgramService {
     userId: Types.ObjectId
   ): Promise<ProgramResponse[]> {
     try {
-      const programs = await this.programRepository.find({
-        $or: [{ createdBy: userId }, { admins: userId }, { members: userId }],
-      });
+      const programsWithWeeks =
+        await this.programRepository.getUserProgramsWithWeeks(userId);
 
-      const programResponses: ProgramResponse[] = programs.map((program) =>
-        this.programRepository.toResponse(program)
+      if (!programsWithWeeks) {
+        throw APIError.NotFound("No programs with weeks found for user");
+      }
+
+      const programResponses: ProgramResponse[] = programsWithWeeks.map(
+        (program) => this.programRepository.toResponseWithWeeks(program)
       );
 
       this.logger.info(
-        `Found ${programResponses.length} programs for user: `,
+        `Found ${programResponses.length} programs with week details for user: `,
         userId
       );
       return programResponses;
@@ -314,6 +319,27 @@ export default class ProgramService implements IProgramService {
         throw DatabaseError.handleMongoDBError(error);
       } else {
         throw APIError.InternalServerError("Failed to get week meals");
+      }
+    }
+  }
+
+  public async getWeek(weekId: Types.ObjectId): Promise<WeekResponse> {
+    try {
+      const weekResponse = await this.weekRepository.findWeek(weekId);
+
+      if (!weekResponse) {
+        throw APIError.NotFound("Week not found");
+      }
+
+      this.logger.info("Week retrieved successfully: ", weekResponse);
+      return this.weekRepository.toWeekResponse(weekResponse);
+    } catch (error) {
+      this.logger.error("Error getting week: ", error);
+
+      if (error instanceof MongooseError || error instanceof MongoServerError) {
+        throw DatabaseError.handleMongoDBError(error);
+      } else {
+        throw APIError.InternalServerError("Failed to get week");
       }
     }
   }

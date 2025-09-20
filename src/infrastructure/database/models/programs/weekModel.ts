@@ -337,6 +337,8 @@ const WorkoutLogSchema = new Schema(
 );
 
 export interface WeekDocument extends Document {
+  name?: string;
+  description?: string;
   weekNumber: number;
   workouts: Workout[];
   meals?: Types.ObjectId[];
@@ -428,6 +430,8 @@ const NotesSchema = new Schema(
 
 const WeekSchema = new Schema(
   {
+    name: { type: String, required: false },
+    description: { type: String, required: false },
     weekNumber: { type: Number, required: true },
     workouts: [{ type: WorkoutSchema, required: true, default: [] }],
     meals: [{ type: Types.ObjectId, ref: "Meal", required: false }],

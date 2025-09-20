@@ -219,6 +219,23 @@ router.post(
  *                   createdBy:
  *                     type: string
  *                     example: "507f1f77bcf86cd799439011"
+ *                   weeks:
+ *                     type: array
+ *                     items:
+ *                       type: object
+ *                       properties:
+ *                         id:
+ *                           type: string
+ *                           example: "507f1f77bcf86cd799439012"
+ *                         name:
+ *                           type: string
+ *                           example: "Week 1 - Foundation"
+ *                         description:
+ *                           type: string
+ *                           example: "Focus on basic movements and form"
+ *                         weekNumber:
+ *                           type: number
+ *                           example: 1
  *       400:
  *         description: Bad request - invalid user ID
  *       401:
@@ -621,6 +638,190 @@ router.get(
   authMiddleware.authenticateToken,
   programMiddleware.checkMemberOrAdminAuthorization,
   programController.getWeekMeals
+);
+
+/**
+ * @swagger
+ * /programs/{programId}/week/{weekId}:
+ *   get:
+ *     tags: [Programs]
+ *     summary: Get a specific week
+ *     description: Retrieves a specific week within a program. Only program administrators or members can access this resource.
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: programId
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: Program ID
+ *         example: "507f1f77bcf86cd799439011"
+ *       - in: path
+ *         name: weekId
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: Week ID
+ *         example: "507f1f77bcf86cd799439012"
+ *     responses:
+ *       200:
+ *         description: Week retrieved successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 id:
+ *                   type: string
+ *                   example: "507f1f77bcf86cd799439012"
+ *                 weekNumber:
+ *                   type: number
+ *                   example: 1
+ *                 workouts:
+ *                   type: array
+ *                   items:
+ *                     type: object
+ *                     properties:
+ *                       id:
+ *                         type: string
+ *                         example: "507f1f77bcf86cd799439013"
+ *                       name:
+ *                         type: string
+ *                         example: "Upper Body Strength"
+ *                       description:
+ *                         type: string
+ *                         example: "Focus on upper body muscle groups"
+ *                       category:
+ *                         type: array
+ *                         items:
+ *                           type: string
+ *                         example: ["strength", "upper-body"]
+ *                       difficulty:
+ *                         type: string
+ *                         example: "intermediate"
+ *                       duration:
+ *                         type: number
+ *                         example: 60
+ *                       blocks:
+ *                         type: array
+ *                         description: Workout blocks/exercises
+ *                       accessType:
+ *                         type: string
+ *                         example: "0"
+ *                       createdBy:
+ *                         type: string
+ *                         example: "507f1f77bcf86cd799439011"
+ *                       startDate:
+ *                         type: string
+ *                         format: date-time
+ *                         example: "2024-01-15T09:00:00Z"
+ *                       endDate:
+ *                         type: string
+ *                         format: date-time
+ *                         example: "2024-01-15T10:00:00Z"
+ *                 meals:
+ *                   type: array
+ *                   description: Array of meal responses
+ *                   items:
+ *                     type: object
+ *                     properties:
+ *                       id:
+ *                         type: string
+ *                         example: "507f1f77bcf86cd799439014"
+ *                       versionId:
+ *                         type: number
+ *                         example: 1
+ *                       createdBy:
+ *                         type: string
+ *                         example: "507f1f77bcf86cd799439011"
+ *                       mealName:
+ *                         type: string
+ *                         example: "Grilled Chicken Breast"
+ *                       macros:
+ *                         type: object
+ *                         properties:
+ *                           protein:
+ *                             type: number
+ *                             example: 30
+ *                           carbs:
+ *                             type: number
+ *                             example: 5
+ *                           fats:
+ *                             type: number
+ *                             example: 8
+ *                       ingredients:
+ *                         type: array
+ *                         items:
+ *                           type: object
+ *                           properties:
+ *                             name:
+ *                               type: string
+ *                               example: "Chicken Breast"
+ *                             portion:
+ *                               type: object
+ *                               properties:
+ *                                 amount:
+ *                                   type: number
+ *                                   example: 200
+ *                                 unit:
+ *                                   type: string
+ *                                   example: "g"
+ *                       instructions:
+ *                         type: string
+ *                         example: "Season chicken with salt and pepper, grill for 6-7 minutes per side"
+ *                       startDate:
+ *                         type: string
+ *                         format: date-time
+ *                         example: "2024-01-15T12:00:00Z"
+ *                       endDate:
+ *                         type: string
+ *                         format: date-time
+ *                         example: "2024-01-15T13:00:00Z"
+ *                 notes:
+ *                   type: array
+ *                   items:
+ *                     type: object
+ *                     properties:
+ *                       id:
+ *                         type: string
+ *                         example: "507f1f77bcf86cd799439016"
+ *                       title:
+ *                         type: string
+ *                         example: "Week 1 Notes"
+ *                       content:
+ *                         type: string
+ *                         example: "Focus on proper form and technique"
+ *                       startDate:
+ *                         type: string
+ *                         format: date-time
+ *                         example: "2024-01-15T00:00:00Z"
+ *                       endDate:
+ *                         type: string
+ *                         format: date-time
+ *                         example: "2024-01-21T23:59:59Z"
+ *                 startDate:
+ *                   type: string
+ *                   format: date-time
+ *                   example: "2024-01-15T00:00:00Z"
+ *                 endDate:
+ *                   type: string
+ *                   format: date-time
+ *                   example: "2024-01-21T23:59:59Z"
+ *       401:
+ *         description: Unauthorized
+ *       403:
+ *         description: Forbidden - User is not a program administrator or member
+ *       404:
+ *         description: Week not found
+ *       500:
+ *         description: Internal server error
+ */
+router.get(
+  "/:programId/week/:weekId",
+  authMiddleware.authenticateToken,
+  programMiddleware.checkMemberOrAdminAuthorization,
+  programController.getWeek
 );
 
 export default router;
