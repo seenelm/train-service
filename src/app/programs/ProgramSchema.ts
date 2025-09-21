@@ -29,7 +29,6 @@ const exerciseSchema = z.object({
   order: z.number().int().min(1),
 });
 
-// Block schema for workout validation
 const blockSchema = z.object({
   type: z.enum(Object.values(BlockType) as [string, ...string[]]),
   name: z.string().optional(),
@@ -40,6 +39,24 @@ const blockSchema = z.object({
     .array(exerciseSchema)
     .min(1, "Block must have at least one exercise"),
   order: z.number().int().min(1),
+});
+
+const exerciseLogSchema = z.object({
+  exerciseId: z.string(),
+  actualSets: z.number().int().optional(),
+  actualReps: z.number().int().optional(),
+  actualDurationSec: z.number().int().optional(),
+  actualWeight: z.number().int().optional(),
+  isCompleted: z.boolean(),
+  order: z.number().int().min(1),
+});
+
+export const blockLogSchema = z.object({
+  actualRestBetweenExercisesSec: z.number().int().optional(),
+  actualRestAfterBlockSec: z.number().int().optional(),
+  exerciseLogs: z.array(exerciseLogSchema),
+  order: z.number().int().min(1),
+  isCompleted: z.boolean(),
 });
 
 export const createProgramSchema = z.object({
@@ -137,4 +154,29 @@ export const mealRequestSchema = z.object({
   instructions: z.string().optional(),
   startDate: z.date(),
   endDate: z.date(),
+});
+
+export const workoutLogRequestSchema = z.object({
+  userId: z.string(),
+  workoutId: z.string(),
+  versionId: z.number().int(),
+  workoutSnapshot: z.object({
+    name: z.string().transform((val) => val.trim()),
+    description: z.string().optional(),
+    category: z.array(z.string().min(1, "Category cannot be empty")).optional(),
+    difficulty: z
+      .enum(Object.values(WorkoutDifficulty) as [string, ...string[]])
+      .optional(),
+    duration: z.number().int().optional(),
+    blockSnapshot: z.array(blockSchema),
+    accessType: z.enum(ProfileAccess),
+    createdBy: z.string(),
+    startDate: z.date(),
+    endDate: z.date(),
+  }),
+  blockLogs: z.array(blockLogSchema).optional(),
+  actualDuration: z.number().int(),
+  actualStartDate: z.date(),
+  actualEndDate: z.date(),
+  isCompleted: z.boolean(),
 });

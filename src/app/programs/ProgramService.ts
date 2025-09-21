@@ -6,6 +6,9 @@ import {
   MealRequest,
   MealResponse,
   WeekResponse,
+  WorkoutLogRequest,
+  WorkoutLogResponse,
+  BlockLog,
 } from "@seenelm/train-core";
 import { IProgramRepository } from "../../infrastructure/database/repositories/programs/ProgramRepository.js";
 import { Logger } from "../../common/logger.js";
@@ -29,6 +32,15 @@ export interface IProgramService {
     weekId: Types.ObjectId,
     mealRequest: MealRequest
   ): Promise<MealResponse>;
+  createWorkoutLog(
+    weekId: Types.ObjectId,
+    workoutLogRequest: WorkoutLogRequest
+  ): Promise<WorkoutLogResponse>;
+  addBlockLog(
+    weekId: Types.ObjectId,
+    workoutLogId: Types.ObjectId,
+    blockLog: BlockLog
+  ): Promise<void>;
   getWeekWorkouts(weekId: Types.ObjectId): Promise<WorkoutResponse[]>;
   getWeekMeals(weekId: Types.ObjectId): Promise<MealResponse[]>;
   getWeek(weekId: Types.ObjectId): Promise<WeekResponse>;
@@ -254,6 +266,78 @@ export default class ProgramService implements IProgramService {
     } finally {
       if (session) {
         session.endSession();
+      }
+    }
+  }
+  public async createWorkoutLog(
+    weekId: Types.ObjectId,
+    workoutLogRequest: WorkoutLogRequest
+  ): Promise<WorkoutLogResponse> {
+    try {
+      const workoutLog = this.weekRepository.toWorkoutLog(workoutLogRequest);
+      const workoutId = new Types.ObjectId(workoutLogRequest.workoutId);
+
+      const createdWorkoutLog = await this.weekRepository.createWorkoutLog(
+        weekId,
+        workoutId,
+        workoutLog
+      );
+
+      if (!createdWorkoutLog) {
+        throw APIError.InternalServerError("Failed to create workout log");
+      }
+
+      const workoutLogResponse =
+        this.weekRepository.toWorkoutLogResponse(createdWorkoutLog);
+
+      this.logger.info(
+        "Workout log created successfully: ",
+        workoutLogResponse
+      );
+      return workoutLogResponse;
+    } catch (error) {
+      this.logger.error("Error creating workout log: ", error);
+
+      if (error instanceof MongooseError || error instanceof MongoServerError) {
+        throw DatabaseError.handleMongoDBError(error);
+      } else {
+        throw APIError.InternalServerError("Failed to create workout log");
+      }
+    }
+  }
+
+  public async addBlockLog(
+    weekId: Types.ObjectId,
+    workoutLogId: Types.ObjectId,
+    blockLog: BlockLog
+  ): Promise<void> {
+    try {
+      const week = await this.weekRepository.findById(weekId);
+
+      if (!week) {
+        throw APIError.NotFound("Week not found");
+      }
+
+      await this.weekRepository.updateOne(
+        {
+          _id: weekId,
+          "workouts.$.workoutLogs._id": workoutLogId,
+        },
+        {
+          $push: {
+            "workouts.$.workoutLogs.$.blockLogs": blockLog,
+          },
+        }
+      );
+    } catch (error) {
+      this.logger.error("Error adding block log to workout log: ", error);
+
+      if (error instanceof MongooseError || error instanceof MongoServerError) {
+        throw DatabaseError.handleMongoDBError(error);
+      } else {
+        throw APIError.InternalServerError(
+          "Failed to add block log to workout log"
+        );
       }
     }
   }

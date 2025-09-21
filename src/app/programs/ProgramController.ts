@@ -8,6 +8,9 @@ import {
   MealRequest,
   MealResponse,
   WeekResponse,
+  WorkoutLogRequest,
+  WorkoutLogResponse,
+  BlockLog,
 } from "@seenelm/train-core";
 import { StatusCodes as HttpStatusCode } from "http-status-codes";
 import { Logger } from "../../common/logger.js";
@@ -89,6 +92,48 @@ export default class ProgramController {
       );
 
       return res.status(HttpStatusCode.CREATED).json(mealResponse);
+    } catch (error) {
+      next(error);
+    }
+  };
+
+  public createWorkoutLog = async (
+    req: Request,
+    res: Response,
+    next: NextFunction
+  ) => {
+    try {
+      const weekId = new Types.ObjectId(req.params.weekId);
+      const workoutLogRequest: WorkoutLogRequest = req.body;
+
+      const workoutLogResponse: WorkoutLogResponse =
+        await this.programService.createWorkoutLog(weekId, workoutLogRequest);
+
+      return res.status(HttpStatusCode.CREATED).json(workoutLogResponse);
+    } catch (error) {
+      next(error);
+    }
+  };
+
+  public addBlockLog = async (
+    req: Request,
+    res: Response,
+    next: NextFunction
+  ) => {
+    try {
+      const weekId = new Types.ObjectId(req.params.weekId);
+      const workoutLogId = new Types.ObjectId(req.params.workoutLogId);
+      const blockLogRequest: BlockLog = req.body;
+
+      await this.programService.addBlockLog(
+        weekId,
+        workoutLogId,
+        blockLogRequest
+      );
+
+      return res
+        .status(HttpStatusCode.CREATED)
+        .json({ message: "Block log added to workout log successfully" });
     } catch (error) {
       next(error);
     }

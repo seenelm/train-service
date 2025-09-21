@@ -427,6 +427,435 @@ router.post(
 
 /**
  * @swagger
+ * /programs/{programId}/week/{weekId}/workout/log:
+ *   post:
+ *     tags: [Programs]
+ *     summary: Create a workout log
+ *     description: Creates a new workout log entry for a specific week. Only program administrators or members can access this resource.
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: programId
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: Program ID
+ *         example: "507f1f77bcf86cd799439011"
+ *       - in: path
+ *         name: weekId
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: Week ID
+ *         example: "507f1f77bcf86cd799439012"
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - userId
+ *               - workoutId
+ *               - versionId
+ *               - workoutSnapshot
+ *               - blockLogs
+ *               - actualDuration
+ *               - actualStartDate
+ *               - actualEndDate
+ *               - isCompleted
+ *             properties:
+ *               userId:
+ *                 type: string
+ *                 description: ID of the user performing the workout
+ *                 example: "507f1f77bcf86cd799439011"
+ *               workoutId:
+ *                 type: string
+ *                 description: ID of the workout being logged
+ *                 example: "507f1f77bcf86cd799439012"
+ *               versionId:
+ *                 type: number
+ *                 description: Version of the workout
+ *                 example: 1
+ *               workoutSnapshot:
+ *                 type: object
+ *                 description: Snapshot of the workout at the time of logging
+ *                 properties:
+ *                   name:
+ *                     type: string
+ *                     example: "Upper Body Strength"
+ *                   description:
+ *                     type: string
+ *                     example: "Focus on upper body muscle groups"
+ *                   category:
+ *                     type: array
+ *                     items:
+ *                       type: string
+ *                     example: ["strength", "upper-body"]
+ *                   difficulty:
+ *                     type: string
+ *                     example: "intermediate"
+ *                   duration:
+ *                     type: number
+ *                     example: 60
+ *                   blockSnapshot:
+ *                     type: array
+ *                     description: Workout blocks/exercises
+ *                   accessType:
+ *                     type: string
+ *                     example: "0"
+ *                   createdBy:
+ *                     type: string
+ *                     example: "507f1f77bcf86cd799439011"
+ *                   startDate:
+ *                     type: string
+ *                     format: date-time
+ *                     example: "2024-01-15T09:00:00Z"
+ *                   endDate:
+ *                     type: string
+ *                     format: date-time
+ *                     example: "2024-01-15T10:00:00Z"
+ *               blockLogs:
+ *                 type: array
+ *                 description: Array of block logs
+ *                 items:
+ *                   type: object
+ *                   properties:
+ *                     actualRestBetweenExercisesSec:
+ *                       type: number
+ *                       example: 60
+ *                     actualRestAfterBlockSec:
+ *                       type: number
+ *                       example: 120
+ *                     exerciseLogs:
+ *                       type: array
+ *                       items:
+ *                         type: object
+ *                         properties:
+ *                           exerciseId:
+ *                             type: string
+ *                             example: "bench-press"
+ *                           actualSets:
+ *                             type: number
+ *                             example: 3
+ *                           actualReps:
+ *                             type: number
+ *                             example: 10
+ *                           actualWeight:
+ *                             type: number
+ *                             example: 135
+ *                           isCompleted:
+ *                             type: boolean
+ *                             example: true
+ *                           order:
+ *                             type: number
+ *                             example: 1
+ *                     order:
+ *                       type: number
+ *                       example: 1
+ *                     isCompleted:
+ *                       type: boolean
+ *                       example: true
+ *               actualDuration:
+ *                 type: number
+ *                 description: Actual duration of the workout in minutes
+ *                 example: 65
+ *               actualStartDate:
+ *                 type: string
+ *                 format: date-time
+ *                 description: Actual start time of the workout
+ *                 example: "2024-01-15T09:00:00Z"
+ *               actualEndDate:
+ *                 type: string
+ *                 format: date-time
+ *                 description: Actual end time of the workout
+ *                 example: "2024-01-15T10:05:00Z"
+ *               isCompleted:
+ *                 type: boolean
+ *                 description: Whether the workout was completed
+ *                 example: true
+ *     responses:
+ *       201:
+ *         description: Workout log created successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 id:
+ *                   type: string
+ *                   example: "507f1f77bcf86cd799439013"
+ *                 userId:
+ *                   type: string
+ *                   example: "507f1f77bcf86cd799439011"
+ *                 workoutId:
+ *                   type: string
+ *                   example: "507f1f77bcf86cd799439012"
+ *                 versionId:
+ *                   type: number
+ *                   example: 1
+ *                 workoutSnapshot:
+ *                   type: object
+ *                   properties:
+ *                     name:
+ *                       type: string
+ *                       example: "Upper Body Strength"
+ *                     description:
+ *                       type: string
+ *                       example: "Focus on upper body muscle groups"
+ *                     category:
+ *                       type: array
+ *                       items:
+ *                         type: string
+ *                       example: ["strength", "upper-body"]
+ *                     difficulty:
+ *                       type: string
+ *                       example: "intermediate"
+ *                     duration:
+ *                       type: number
+ *                       example: 60
+ *                     blockSnapshot:
+ *                       type: array
+ *                       description: Workout blocks/exercises
+ *                     accessType:
+ *                       type: string
+ *                       example: "0"
+ *                     createdBy:
+ *                       type: string
+ *                       example: "507f1f77bcf86cd799439011"
+ *                     startDate:
+ *                       type: string
+ *                       format: date-time
+ *                       example: "2024-01-15T09:00:00Z"
+ *                     endDate:
+ *                       type: string
+ *                       format: date-time
+ *                       example: "2024-01-15T10:00:00Z"
+ *                 blockLogs:
+ *                   type: array
+ *                   description: Array of block logs
+ *                   items:
+ *                     type: object
+ *                     properties:
+ *                       actualRestBetweenExercisesSec:
+ *                         type: number
+ *                         example: 60
+ *                       actualRestAfterBlockSec:
+ *                         type: number
+ *                         example: 120
+ *                       exerciseLogs:
+ *                         type: array
+ *                         items:
+ *                           type: object
+ *                           properties:
+ *                             exerciseId:
+ *                               type: string
+ *                               example: "bench-press"
+ *                             actualSets:
+ *                               type: number
+ *                               example: 3
+ *                             actualReps:
+ *                               type: number
+ *                               example: 10
+ *                             actualWeight:
+ *                               type: number
+ *                               example: 135
+ *                             isCompleted:
+ *                               type: boolean
+ *                               example: true
+ *                             order:
+ *                               type: number
+ *                               example: 1
+ *                       order:
+ *                         type: number
+ *                         example: 1
+ *                       isCompleted:
+ *                         type: boolean
+ *                         example: true
+ *                 actualDuration:
+ *                   type: number
+ *                   example: 65
+ *                 actualStartDate:
+ *                   type: string
+ *                   format: date-time
+ *                   example: "2024-01-15T09:00:00Z"
+ *                 actualEndDate:
+ *                   type: string
+ *                   format: date-time
+ *                   example: "2024-01-15T10:05:00Z"
+ *                 isCompleted:
+ *                   type: boolean
+ *                   example: true
+ *       400:
+ *         description: Bad request - validation failed
+ *       401:
+ *         description: Unauthorized
+ *       403:
+ *         description: Forbidden - User is not a program administrator or member
+ *       404:
+ *         description: Week not found
+ *       500:
+ *         description: Internal server error
+ */
+router.post(
+  "/:programId/week/:weekId/workout/log",
+  authMiddleware.authenticateToken,
+  programMiddleware.checkMemberOrAdminAuthorization,
+  ProgramMiddleware.validateWorkoutLogRequest,
+  programController.createWorkoutLog
+);
+
+/**
+ * @swagger
+ * /programs/{programId}/week/{weekId}/workout/log/block:
+ *   post:
+ *     tags: [Programs]
+ *     summary: Add a block log to a workout log
+ *     description: Adds a block log entry to an existing workout log within a specific week. Only program administrators or members can access this resource.
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: programId
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: Program ID
+ *         example: "507f1f77bcf86cd799439011"
+ *       - in: path
+ *         name: weekId
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: Week ID
+ *         example: "507f1f77bcf86cd799439012"
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - workoutLogId
+ *               - blockLog
+ *             properties:
+ *               workoutLogId:
+ *                 type: string
+ *                 description: ID of the workout log to add the block log to
+ *                 example: "507f1f77bcf86cd799439013"
+ *               blockLog:
+ *                 type: object
+ *                 required:
+ *                   - exerciseLogs
+ *                   - order
+ *                   - isCompleted
+ *                 properties:
+ *                   actualRestBetweenExercisesSec:
+ *                     type: number
+ *                     description: Actual rest time between exercises in seconds
+ *                     example: 60
+ *                   actualRestAfterBlockSec:
+ *                     type: number
+ *                     description: Actual rest time after the block in seconds
+ *                     example: 120
+ *                   exerciseLogs:
+ *                     type: array
+ *                     description: Array of exercise logs for this block
+ *                     items:
+ *                       type: object
+ *                       required:
+ *                         - exerciseId
+ *                         - isCompleted
+ *                         - order
+ *                       properties:
+ *                         exerciseId:
+ *                           type: string
+ *                           description: ID of the exercise
+ *                           example: "bench-press"
+ *                         actualSets:
+ *                           type: number
+ *                           description: Actual number of sets performed
+ *                           example: 3
+ *                         actualReps:
+ *                           type: number
+ *                           description: Actual number of reps performed
+ *                           example: 10
+ *                         actualDurationSec:
+ *                           type: number
+ *                           description: Actual duration in seconds
+ *                           example: 45
+ *                         actualWeight:
+ *                           type: number
+ *                           description: Actual weight used
+ *                           example: 135
+ *                         isCompleted:
+ *                           type: boolean
+ *                           description: Whether the exercise was completed
+ *                           example: true
+ *                         order:
+ *                           type: number
+ *                           description: Order of the exercise in the block
+ *                           example: 1
+ *                   order:
+ *                     type: number
+ *                     description: Order of the block in the workout
+ *                     example: 1
+ *                   isCompleted:
+ *                     type: boolean
+ *                     description: Whether the entire block was completed
+ *                     example: true
+ *     responses:
+ *       201:
+ *         description: Block log added to workout log successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: "Block log added to workout log successfully"
+ *       400:
+ *         description: Bad request - validation failed
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: "Block log request validation failed"
+ *                 errors:
+ *                   type: array
+ *                   items:
+ *                     type: object
+ *                     properties:
+ *                       field:
+ *                         type: string
+ *                         example: "blockLog.exerciseLogs"
+ *                       message:
+ *                         type: string
+ *                         example: "Block must have at least one exercise log"
+ *       401:
+ *         description: Unauthorized
+ *       403:
+ *         description: Forbidden - User is not a program administrator or member
+ *       404:
+ *         description: Week or workout log not found
+ *       500:
+ *         description: Internal server error
+ */
+router.post(
+  "/:programId/week/:weekId/workout/log/:workoutLogId/block",
+  authMiddleware.authenticateToken,
+  programMiddleware.checkMemberOrAdminAuthorization,
+  ProgramMiddleware.validateBlockLogRequest,
+  programController.addBlockLog
+);
+
+/**
+ * @swagger
  * /programs/{programId}/weeks/{weekId}/workouts:
  *   get:
  *     tags: [Programs]

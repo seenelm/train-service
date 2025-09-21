@@ -1,6 +1,6 @@
 import { BaseRepository, IBaseRepository } from "../BaseRepository.js";
 import Week from "../../entity/program/Week.js";
-import { WeekDocument } from "../../models/programs/weekModel.js";
+import { WeekDocument, WorkoutLog } from "../../models/programs/weekModel.js";
 import {
   WeekResponse,
   WorkoutResponse,
@@ -9,6 +9,8 @@ import {
   MealResponse,
   Macros,
   Ingredient,
+  WorkoutLogRequest,
+  WorkoutLogResponse,
 } from "@seenelm/train-core";
 import { Types, Model } from "mongoose";
 import { Workout, Notes } from "../../models/programs/weekModel.js";
@@ -45,10 +47,17 @@ export interface IWeekRepository extends IBaseRepository<Week, WeekDocument> {
   toWorkoutResponse(workout: Workout): WorkoutResponse;
   toNotesResponse(notes: Notes): NotesResponse;
   toWeekResponse(week: AggregatedWeek): WeekResponse;
+  toWorkoutLog(workoutLogRequest: WorkoutLogRequest): WorkoutLog;
+  toWorkoutLogResponse(workoutLog: WorkoutLog): WorkoutLogResponse;
   createWorkout(
     weekId: Types.ObjectId,
     workout: WorkoutRequest
   ): Promise<Workout | null>;
+  createWorkoutLog(
+    weekId: Types.ObjectId,
+    workoutId: Types.ObjectId,
+    workoutLog: WorkoutLog
+  ): Promise<WorkoutLog | null>;
   findWeek(weekId: Types.ObjectId): Promise<AggregatedWeek | null>;
 }
 
@@ -106,6 +115,33 @@ export default class WeekRepository
       notes: week.getNotes()?.map((notes) => this.toNotesResponse(notes)) || [],
       startDate: week.getStartDate(),
       endDate: week.getEndDate(),
+    };
+  }
+  toWorkoutLog(workoutLogRequest: WorkoutLogRequest): WorkoutLog {
+    return {
+      ...workoutLogRequest,
+      userId: new Types.ObjectId(workoutLogRequest.userId),
+      workoutId: new Types.ObjectId(workoutLogRequest.workoutId),
+      blockLogs: workoutLogRequest.blockLogs || [],
+      workoutSnapshot: {
+        ...workoutLogRequest.workoutSnapshot,
+        createdBy: new Types.ObjectId(
+          workoutLogRequest.workoutSnapshot.createdBy
+        ),
+      },
+    };
+  }
+
+  toWorkoutLogResponse(workoutLog: WorkoutLog): WorkoutLogResponse {
+    return {
+      ...workoutLog,
+      id: workoutLog._id?.toString() || "",
+      userId: workoutLog.userId.toString(),
+      workoutId: workoutLog.workoutId.toString(),
+      workoutSnapshot: {
+        ...workoutLog.workoutSnapshot,
+        createdBy: workoutLog.workoutSnapshot.createdBy.toString(),
+      },
     };
   }
 
@@ -188,6 +224,43 @@ export default class WeekRepository
       return updatedWeek.workouts[updatedWeek.workouts.length - 1] as Workout;
     } catch (error) {
       this.logger.error("Error creating workout: ", error);
+      throw error;
+    }
+  }
+
+  async createWorkoutLog(
+    weekId: Types.ObjectId,
+    workoutId: Types.ObjectId,
+    workoutLog: WorkoutLog
+  ): Promise<WorkoutLog | null> {
+    try {
+      const updatedWeek = await this.weekModel.findByIdAndUpdate(
+        {
+          _id: weekId,
+          "workouts._id": workoutId,
+        },
+        {
+          $push: { "workouts.$.workoutLogs": workoutLog },
+        },
+        { new: true }
+      );
+
+      if (!updatedWeek) {
+        return null;
+      }
+
+      const workout = (updatedWeek as WeekDocument).workouts.find(
+        (w: Workout) => w._id?.toString() === workoutId.toString()
+      );
+      if (!workout || !workout.workoutLogs) {
+        return null;
+      }
+
+      const lastWorkoutLog =
+        workout.workoutLogs[workout.workoutLogs.length - 1];
+      return lastWorkoutLog as WorkoutLog;
+    } catch (error) {
+      this.logger.error("Error creating workout log: ", error);
       throw error;
     }
   }

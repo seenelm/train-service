@@ -279,6 +279,7 @@ const WorkoutSnapshotSchema = new Schema(
 );
 
 export interface WorkoutLog {
+  _id?: Types.ObjectId;
   userId: Types.ObjectId;
   workoutId: Types.ObjectId;
   versionId: number;

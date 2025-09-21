@@ -3,6 +3,8 @@ import {
   createProgramSchema,
   createWorkoutSchema,
   mealRequestSchema,
+  workoutLogRequestSchema,
+  blockLogSchema,
 } from "./ProgramSchema.js";
 import { Logger } from "../../common/logger.js";
 import { ValidationErrorResponse } from "../../common/errors/ValidationErrorResponse.js";
@@ -56,6 +58,29 @@ export default class ProgramMiddleware {
         );
         return res.status(HttpStatusCode.BAD_REQUEST).json({
           message: "Create workout validation failed",
+          errors: validationErrors.map((error) => error.toJSON()),
+        });
+      }
+      req.body = result.data;
+      next();
+    } catch (error) {
+      next(error);
+    }
+  };
+
+  static validateWorkoutLogRequest = (
+    req: Request,
+    res: Response,
+    next: NextFunction
+  ) => {
+    try {
+      const result = workoutLogRequestSchema.safeParse(req.body);
+      if (!result.success) {
+        const validationErrors = ValidationErrorResponse.fromZodError(
+          result.error
+        );
+        return res.status(HttpStatusCode.BAD_REQUEST).json({
+          message: "Workout log validation failed",
           errors: validationErrors.map((error) => error.toJSON()),
         });
       }
@@ -206,6 +231,29 @@ export default class ProgramMiddleware {
         userId: req.user.getId().toString(),
         error: error instanceof Error ? error.message : error,
       });
+      next(error);
+    }
+  };
+
+  static validateBlockLogRequest = (
+    req: Request,
+    res: Response,
+    next: NextFunction
+  ) => {
+    try {
+      const result = blockLogSchema.safeParse(req.body);
+      if (!result.success) {
+        const validationErrors = ValidationErrorResponse.fromZodError(
+          result.error
+        );
+        return res.status(HttpStatusCode.BAD_REQUEST).json({
+          message: "Block log request validation failed",
+          errors: validationErrors.map((error) => error.toJSON()),
+        });
+      }
+      req.body = result.data;
+      next();
+    } catch (error) {
       next(error);
     }
   };
