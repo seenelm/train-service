@@ -37,7 +37,7 @@ const programMiddleware = new ProgramMiddleware(
 
 /**
  * @swagger
- * /programs:
+ * /program:
  *   post:
  *     summary: Create a new program
  *     tags: [Programs]
@@ -157,7 +157,7 @@ router.post(
 
 /**
  * @swagger
- * /programs/user/{userId}:
+ * /program/user/{userId}:
  *   get:
  *     summary: Get all programs for a specific user
  *     tags: [Programs]
@@ -427,7 +427,7 @@ router.post(
 
 /**
  * @swagger
- * /programs/{programId}/week/{weekId}/workout/log:
+ * /program/{programId}/week/{weekId}/workout/log:
  *   post:
  *     tags: [Programs]
  *     summary: Create a workout log
@@ -708,7 +708,7 @@ router.post(
 
 /**
  * @swagger
- * /programs/{programId}/week/{weekId}/workout/log/block:
+ * /program/{programId}/week/{weekId}/workout/log/block:
  *   post:
  *     tags: [Programs]
  *     summary: Add a block log to a workout log
@@ -864,7 +864,7 @@ router.post(
 
 /**
  * @swagger
- * /programs/{programId}/weeks/{weekId}/workouts:
+ * /program/{programId}/weeks/{weekId}/workouts:
  *   get:
  *     tags: [Programs]
  *     summary: Get all workouts for a week
@@ -980,7 +980,7 @@ router.get(
 
 /**
  * @swagger
- * /programs/{programId}/weeks/{weekId}/meals:
+ * /program/{programId}/weeks/{weekId}/meals:
  *   get:
  *     tags: [Programs]
  *     summary: Get all meals for a week
@@ -1079,7 +1079,7 @@ router.get(
 
 /**
  * @swagger
- * /programs/{programId}/week/{weekId}:
+ * /program/{programId}/week/{weekId}:
  *   get:
  *     tags: [Programs]
  *     summary: Get a specific week

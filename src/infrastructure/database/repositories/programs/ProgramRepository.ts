@@ -105,10 +105,10 @@ export default class ProgramRepository
       hasNutritionProgram: program.hasNutritionProgram,
       phases: program.phases,
       accessType: program.accessType,
-      admins: program.admins.map((id) => id.toString()),
+      admins: program.admins?.map((id) => id.toString()) || [],
       members: program.members?.map((id) => id.toString()) || [],
       createdBy: program.createdBy.toString(),
-      weeks: program.weeks,
+      weeks: program.weeks || [],
     };
   }
 

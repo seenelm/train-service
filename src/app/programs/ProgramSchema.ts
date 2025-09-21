@@ -109,7 +109,7 @@ export const createWorkoutSchema = z.object({
 
   duration: z.number().int().optional(),
 
-  blocks: z.array(blockSchema),
+  blocks: z.array(blockSchema).optional(),
 
   accessType: z.enum(ProfileAccess),
 
@@ -120,9 +120,15 @@ export const createWorkoutSchema = z.object({
         : ValidationErrorMessage.CREATOR_ID_INVALID_FORMAT,
   }),
 
-  startDate: z.date(),
+  startDate: z.union([
+    z.date(),
+    z.string().transform((val) => new Date(val))
+  ]),
 
-  endDate: z.date(),
+  endDate: z.union([
+    z.date(),
+    z.string().transform((val) => new Date(val))
+  ]),
 });
 
 export const mealRequestSchema = z.object({

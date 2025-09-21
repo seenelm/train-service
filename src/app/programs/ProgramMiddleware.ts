@@ -52,6 +52,25 @@ export default class ProgramMiddleware {
     next: NextFunction
   ) => {
     try {
+      // If blocks is undefined or empty, set it to an empty array
+      if (!req.body.blocks) {
+        req.body.blocks = [];
+      }
+      
+      // Convert date strings to Date objects
+      if (req.body.startDate && typeof req.body.startDate === 'string') {
+        req.body.startDate = new Date(req.body.startDate);
+      }
+      
+      if (req.body.endDate && typeof req.body.endDate === 'string') {
+        req.body.endDate = new Date(req.body.endDate);
+      }
+      
+      // Convert accessType from number to string if needed
+      if (req.body.accessType !== undefined && typeof req.body.accessType === 'number') {
+        req.body.accessType = req.body.accessType.toString();
+      }
+      
       const result = createWorkoutSchema.safeParse(req.body);
       if (!result.success) {
         const validationErrors = ValidationErrorResponse.fromZodError(

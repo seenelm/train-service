@@ -209,6 +209,7 @@ export default class WeekRepository
         ...workout,
         createdBy: new Types.ObjectId(workout.createdBy),
         versionId: 1, // Default version for new workouts
+        blocks: workout.blocks || [], // Ensure blocks is always an array even if not provided
       };
 
       const updatedWeek = await this.weekModel.findByIdAndUpdate(
