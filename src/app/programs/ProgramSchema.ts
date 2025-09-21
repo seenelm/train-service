@@ -180,3 +180,52 @@ export const workoutLogRequestSchema = z.object({
   actualEndDate: z.date(),
   isCompleted: z.boolean(),
 });
+
+export const mealLogRequestSchema = z.object({
+  versionId: z.number().int(),
+  userId: z.string(),
+  mealId: z.string(),
+  mealSnapshot: z.object({
+    createdBy: z.string(),
+    mealName: z.string().transform((val) => val.trim()),
+    macrosSnapshot: z.object({
+      protein: z.number().int(),
+      carbs: z.number().int(),
+      fats: z.number().int(),
+    }),
+    ingredientSnapshot: z.array(
+      z.object({
+        name: z.string().transform((val) => val.trim()),
+        portionSnapshot: z.object({
+          amount: z.number().int(),
+          unit: z.enum(Object.values(Unit) as [string, ...string[]]),
+        }),
+      })
+    ),
+    instructions: z.string().optional(),
+    startDate: z.date(),
+    endDate: z.date(),
+  }),
+  actualMacros: z
+    .object({
+      protein: z.number().int(),
+      carbs: z.number().int(),
+      fats: z.number().int(),
+    })
+    .optional(),
+  actualIngredients: z
+    .array(
+      z.object({
+        name: z.string().transform((val) => val.trim()),
+        portion: z.object({
+          amount: z.number().int(),
+          unit: z.enum(Object.values(Unit) as [string, ...string[]]),
+        }),
+      })
+    )
+    .optional(),
+  notes: z.string().optional(),
+  isCompleted: z.boolean(),
+  actualStartDate: z.date(),
+  actualEndDate: z.date(),
+});

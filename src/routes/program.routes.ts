@@ -854,6 +854,14 @@ router.post(
   programController.addBlockLog
 );
 
+router.post(
+  "/:programId/week/:weekId/meal/log",
+  authMiddleware.authenticateToken,
+  programMiddleware.checkMemberOrAdminAuthorization,
+  ProgramMiddleware.validateMealLogRequest,
+  programController.addMealLog
+);
+
 /**
  * @swagger
  * /programs/{programId}/weeks/{weekId}/workouts:

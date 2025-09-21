@@ -11,6 +11,7 @@ import {
   WorkoutLogRequest,
   WorkoutLogResponse,
   BlockLog,
+  MealLogRequest,
 } from "@seenelm/train-core";
 import { StatusCodes as HttpStatusCode } from "http-status-codes";
 import { Logger } from "../../common/logger.js";
@@ -131,9 +132,21 @@ export default class ProgramController {
         blockLogRequest
       );
 
-      return res
-        .status(HttpStatusCode.CREATED)
-        .json({ message: "Block log added to workout log successfully" });
+      return res.status(HttpStatusCode.CREATED).json({ success: true });
+    } catch (error) {
+      next(error);
+    }
+  };
+
+  public addMealLog = async (
+    req: Request,
+    res: Response,
+    next: NextFunction
+  ) => {
+    try {
+      const mealLogRequest: MealLogRequest = req.body;
+      await this.programService.addMealLog(mealLogRequest);
+      return res.status(HttpStatusCode.CREATED).json({ success: true });
     } catch (error) {
       next(error);
     }

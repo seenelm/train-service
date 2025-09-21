@@ -5,6 +5,7 @@ import {
   mealRequestSchema,
   workoutLogRequestSchema,
   blockLogSchema,
+  mealLogRequestSchema,
 } from "./ProgramSchema.js";
 import { Logger } from "../../common/logger.js";
 import { ValidationErrorResponse } from "../../common/errors/ValidationErrorResponse.js";
@@ -104,6 +105,29 @@ export default class ProgramMiddleware {
         );
         return res.status(HttpStatusCode.BAD_REQUEST).json({
           message: "Create meal validation failed",
+          errors: validationErrors.map((error) => error.toJSON()),
+        });
+      }
+      req.body = result.data;
+      next();
+    } catch (error) {
+      next(error);
+    }
+  };
+
+  static validateMealLogRequest = (
+    req: Request,
+    res: Response,
+    next: NextFunction
+  ) => {
+    try {
+      const result = mealLogRequestSchema.safeParse(req.body);
+      if (!result.success) {
+        const validationErrors = ValidationErrorResponse.fromZodError(
+          result.error
+        );
+        return res.status(HttpStatusCode.BAD_REQUEST).json({
+          message: "Meal log validation failed",
           errors: validationErrors.map((error) => error.toJSON()),
         });
       }

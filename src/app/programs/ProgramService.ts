@@ -9,6 +9,7 @@ import {
   WorkoutLogRequest,
   WorkoutLogResponse,
   BlockLog,
+  MealLogRequest,
 } from "@seenelm/train-core";
 import { IProgramRepository } from "../../infrastructure/database/repositories/programs/ProgramRepository.js";
 import { Logger } from "../../common/logger.js";
@@ -41,6 +42,7 @@ export interface IProgramService {
     workoutLogId: Types.ObjectId,
     blockLog: BlockLog
   ): Promise<void>;
+  addMealLog(mealLogRequest: MealLogRequest): Promise<void>;
   getWeekWorkouts(weekId: Types.ObjectId): Promise<WorkoutResponse[]>;
   getWeekMeals(weekId: Types.ObjectId): Promise<MealResponse[]>;
   getWeek(weekId: Types.ObjectId): Promise<WeekResponse>;
@@ -338,6 +340,29 @@ export default class ProgramService implements IProgramService {
         throw APIError.InternalServerError(
           "Failed to add block log to workout log"
         );
+      }
+    }
+  }
+
+  public async addMealLog(mealLogRequest: MealLogRequest): Promise<void> {
+    try {
+      const mealLog = this.mealRepository.toMealLog(mealLogRequest);
+      const mealId = new Types.ObjectId(mealLogRequest.mealId);
+
+      await this.mealRepository.findByIdAndUpdate(
+        mealId,
+        {
+          $push: { logs: mealLog },
+        },
+        { new: true }
+      );
+    } catch (error) {
+      this.logger.error("Error adding meal log to week: ", error);
+
+      if (error instanceof MongooseError || error instanceof MongoServerError) {
+        throw DatabaseError.handleMongoDBError(error);
+      } else {
+        throw APIError.InternalServerError("Failed to add meal log to week");
       }
     }
   }

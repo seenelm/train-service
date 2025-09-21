@@ -1,6 +1,6 @@
 import { BaseRepository, IBaseRepository } from "../BaseRepository.js";
-import { MealDocument } from "../../models/programs/mealModel.js";
-import { MealRequest, MealResponse } from "@seenelm/train-core";
+import { MealDocument, MealLog } from "../../models/programs/mealModel.js";
+import { MealRequest, MealResponse, MealLogRequest } from "@seenelm/train-core";
 import { Types, Model } from "mongoose";
 import { Logger } from "../../../../common/logger.js";
 import Meal from "../../entity/program/Meal.js";
@@ -8,6 +8,7 @@ import Meal from "../../entity/program/Meal.js";
 export interface IMealRepository extends IBaseRepository<Meal, MealDocument> {
   toResponse(meal: Meal): MealResponse;
   toDocument(mealRequest: MealRequest): Partial<MealDocument>;
+  toMealLog(mealLogRequest: MealLogRequest): MealLog;
 }
 
 export default class MealRepository
@@ -44,6 +45,18 @@ export default class MealRepository
     return {
       ...mealRequest,
       createdBy: new Types.ObjectId(mealRequest.createdBy),
+    };
+  }
+
+  toMealLog(mealLogRequest: MealLogRequest): MealLog {
+    return {
+      ...mealLogRequest,
+      userId: new Types.ObjectId(mealLogRequest.userId),
+      mealId: new Types.ObjectId(mealLogRequest.mealId),
+      mealSnapshot: {
+        ...mealLogRequest.mealSnapshot,
+        createdBy: new Types.ObjectId(mealLogRequest.mealSnapshot.createdBy),
+      },
     };
   }
 
