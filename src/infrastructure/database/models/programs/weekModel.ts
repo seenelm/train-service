@@ -6,7 +6,7 @@ import {
 } from "@seenelm/train-core";
 
 export interface Exercise {
-  exerciseId: string;
+  name: string;
   targetSets?: number;
   targetReps?: number;
   targetDurationSec?: number;
@@ -19,7 +19,7 @@ export interface Exercise {
 
 const ExerciseSchema = new Schema(
   {
-    exerciseId: {
+    name: {
       type: String,
       required: true,
     },
@@ -64,7 +64,7 @@ export interface Block {
 }
 
 export interface ExerciseSnapshot {
-  exerciseId: string;
+  name: string;
   targetSets?: number;
   targetReps?: number;
   targetDurationSec?: number;
@@ -75,7 +75,7 @@ export interface ExerciseSnapshot {
 
 const ExerciseSnapshotSchema = new Schema(
   {
-    exerciseId: { type: String, required: true },
+    name: { type: String, required: true },
     targetSets: { type: Number, required: false },
     targetReps: { type: Number, required: false },
     targetDurationSec: { type: Number, required: false },
@@ -87,7 +87,7 @@ const ExerciseSnapshotSchema = new Schema(
 );
 
 export interface ExerciseLog {
-  exerciseId: string;
+  name: string;
   actualSets?: number;
   actualReps?: number;
   actualDurationSec?: number;
@@ -129,7 +129,7 @@ export interface BlockLog {
 
 const ExerciseLogSchema = new Schema(
   {
-    exerciseId: {
+    name: {
       type: String,
       required: true,
     },
@@ -231,7 +231,7 @@ export interface Workout {
   category?: string[];
   difficulty?: WorkoutDifficulty;
   duration?: number;
-  blocks: Block[];
+  blocks?: Block[];
   accessType: ProfileAccess;
   createdBy: Types.ObjectId;
   startDate: Date;

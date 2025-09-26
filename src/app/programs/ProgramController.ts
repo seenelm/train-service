@@ -78,6 +78,45 @@ export default class ProgramController {
     }
   };
 
+  public updateWorkout = async (
+    req: Request,
+    res: Response,
+    next: NextFunction
+  ) => {
+    try {
+      const weekId = new Types.ObjectId(req.params.weekId);
+      const workoutId = new Types.ObjectId(req.params.workoutId);
+      const workoutRequest: WorkoutRequest = req.body;
+
+      await this.programService.updateWorkout(
+        weekId,
+        workoutId,
+        workoutRequest
+      );
+
+      return res.status(HttpStatusCode.OK).json({ success: true });
+    } catch (error) {
+      next(error);
+    }
+  };
+
+  public deleteWorkout = async (
+    req: Request,
+    res: Response,
+    next: NextFunction
+  ) => {
+    try {
+      const weekId = new Types.ObjectId(req.params.weekId);
+      const workoutId = new Types.ObjectId(req.params.workoutId);
+
+      await this.programService.deleteWorkout(weekId, workoutId);
+
+      return res.status(HttpStatusCode.OK).json({ success: true });
+    } catch (error) {
+      next(error);
+    }
+  };
+
   public createMeal = async (
     req: Request,
     res: Response,

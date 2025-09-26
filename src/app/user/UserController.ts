@@ -40,6 +40,7 @@ export default class UserController {
   public login = async (req: Request, res: Response, next: NextFunction) => {
     try {
       const userLoginRequest: UserLoginRequest = req.body;
+      this.logger.info("User login request: ", userLoginRequest);
 
       const userResponse: UserResponse = await this.userService.loginUser(
         userLoginRequest

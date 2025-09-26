@@ -111,7 +111,7 @@ export default class WeekRepository
       workouts:
         week.getWorkouts()?.map((workout) => this.toWorkoutResponse(workout)) ||
         [],
-      meals: [], // TODO: Convert ObjectId[] to MealResponse[] when needed
+      meals: [],
       notes: week.getNotes()?.map((notes) => this.toNotesResponse(notes)) || [],
       startDate: week.getStartDate(),
       endDate: week.getEndDate(),
@@ -182,7 +182,7 @@ export default class WeekRepository
       category: workout.category,
       difficulty: workout.difficulty,
       duration: workout.duration,
-      blocks: workout.blocks,
+      blocks: workout.blocks || [],
       accessType: workout.accessType,
       createdBy: workout.createdBy.toString(),
       startDate: workout.startDate,

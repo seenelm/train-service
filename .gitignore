@@ -9,3 +9,4 @@ config/firebase-config.json
 
 nutrition-program.md
 example.md
+nodemon.json

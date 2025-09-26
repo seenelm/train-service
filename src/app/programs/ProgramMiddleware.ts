@@ -1,7 +1,7 @@
 import { Request, Response, NextFunction } from "express";
 import {
-  createProgramSchema,
-  createWorkoutSchema,
+  programRequestSchema,
+  workoutRequestSchema,
   mealRequestSchema,
   workoutLogRequestSchema,
   blockLogSchema,
@@ -29,7 +29,7 @@ export default class ProgramMiddleware {
     next: NextFunction
   ) => {
     try {
-      const result = createProgramSchema.safeParse(req.body);
+      const result = programRequestSchema.safeParse(req.body);
       if (!result.success) {
         const validationErrors = ValidationErrorResponse.fromZodError(
           result.error
@@ -46,32 +46,13 @@ export default class ProgramMiddleware {
     }
   };
 
-  static validateCreateWorkout = (
+  static validateWorkoutRequest = (
     req: Request,
     res: Response,
     next: NextFunction
   ) => {
     try {
-      // If blocks is undefined or empty, set it to an empty array
-      if (!req.body.blocks) {
-        req.body.blocks = [];
-      }
-      
-      // Convert date strings to Date objects
-      if (req.body.startDate && typeof req.body.startDate === 'string') {
-        req.body.startDate = new Date(req.body.startDate);
-      }
-      
-      if (req.body.endDate && typeof req.body.endDate === 'string') {
-        req.body.endDate = new Date(req.body.endDate);
-      }
-      
-      // Convert accessType from number to string if needed
-      if (req.body.accessType !== undefined && typeof req.body.accessType === 'number') {
-        req.body.accessType = req.body.accessType.toString();
-      }
-      
-      const result = createWorkoutSchema.safeParse(req.body);
+      const result = workoutRequestSchema.safeParse(req.body);
       if (!result.success) {
         const validationErrors = ValidationErrorResponse.fromZodError(
           result.error

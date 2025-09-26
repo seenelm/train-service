@@ -29,6 +29,15 @@ export interface IProgramService {
     weekId: Types.ObjectId,
     workoutRequest: WorkoutRequest
   ): Promise<WorkoutResponse>;
+  updateWorkout(
+    weekId: Types.ObjectId,
+    workoutId: Types.ObjectId,
+    workoutRequest: WorkoutRequest
+  ): Promise<void>;
+  deleteWorkout(
+    weekId: Types.ObjectId,
+    workoutId: Types.ObjectId
+  ): Promise<void>;
   createMeal(
     weekId: Types.ObjectId,
     mealRequest: MealRequest
@@ -223,6 +232,86 @@ export default class ProgramService implements IProgramService {
         throw DatabaseError.handleMongoDBError(error);
       } else {
         throw APIError.InternalServerError("Failed to create workout");
+      }
+    }
+  }
+
+  public async updateWorkout(
+    weekId: Types.ObjectId,
+    workoutId: Types.ObjectId,
+    workoutRequest: WorkoutRequest
+  ): Promise<void> {
+    try {
+      const week = await this.weekRepository.findById(weekId);
+
+      if (!week) {
+        throw APIError.NotFound("Week not found");
+      }
+
+      const workout = week
+        .getWorkouts()
+        .find((w) => w._id?.toString() === workoutId.toString());
+
+      if (!workout) {
+        throw APIError.NotFound("Workout not found");
+      }
+
+      const updatedWorkoutDocument = {
+        ...workoutRequest,
+        createdBy: new Types.ObjectId(workoutRequest.createdBy),
+        versionId: workout.versionId + 1,
+        blocks: workoutRequest.blocks || [],
+      };
+
+      await this.weekRepository.updateOne(
+        {
+          _id: weekId,
+          "workouts._id": workoutId,
+        },
+        {
+          $set: { workouts: updatedWorkoutDocument },
+        }
+      );
+    } catch (error) {
+      this.logger.error("Error updating workout: ", error);
+
+      if (error instanceof MongooseError || error instanceof MongoServerError) {
+        throw DatabaseError.handleMongoDBError(error);
+      } else {
+        throw APIError.InternalServerError("Failed to update workout");
+      }
+    }
+  }
+  public async deleteWorkout(
+    weekId: Types.ObjectId,
+    workoutId: Types.ObjectId
+  ): Promise<void> {
+    try {
+      const week = await this.weekRepository.findById(weekId);
+
+      if (!week) {
+        throw APIError.NotFound("Week not found");
+      }
+
+      const workout = week
+        .getWorkouts()
+        .find((w) => w._id?.toString() === workoutId.toString());
+
+      if (!workout) {
+        throw APIError.NotFound("Workout not found");
+      }
+
+      await this.weekRepository.updateOne(
+        { _id: weekId },
+        { $pull: { workouts: { _id: workoutId } } }
+      );
+    } catch (error) {
+      this.logger.error("Error deleting workout: ", error);
+
+      if (error instanceof MongooseError || error instanceof MongoServerError) {
+        throw DatabaseError.handleMongoDBError(error);
+      } else {
+        throw APIError.InternalServerError("Failed to delete workout");
       }
     }
   }

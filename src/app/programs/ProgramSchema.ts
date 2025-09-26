@@ -13,20 +13,14 @@ const phaseSchema = z.object({
   endWeek: z.number().int(),
 });
 
-// Exercise schema for workout validation
 const exerciseSchema = z.object({
-  exerciseId: z.string({
-    error: (issue) =>
-      issue.input === undefined
-        ? ValidationErrorMessage.EXERCISE_ID_REQUIRED
-        : ValidationErrorMessage.EXERCISE_ID_INVALID_FORMAT,
-  }),
+  name: z.string(),
   targetSets: z.number().int().optional(),
   targetReps: z.number().int().optional(),
   targetDurationSec: z.number().int().optional(),
   targetWeight: z.number().optional(),
   notes: z.string().optional(),
-  order: z.number().int().min(1),
+  order: z.number().int(),
 });
 
 const blockSchema = z.object({
@@ -35,14 +29,12 @@ const blockSchema = z.object({
   description: z.string().optional(),
   restBetweenExercisesSec: z.number().int().optional(),
   restAfterBlockSec: z.number().int().optional(),
-  exercises: z
-    .array(exerciseSchema)
-    .min(1, "Block must have at least one exercise"),
-  order: z.number().int().min(1),
+  exercises: z.array(exerciseSchema),
+  order: z.number().int(),
 });
 
 const exerciseLogSchema = z.object({
-  exerciseId: z.string(),
+  name: z.string(),
   actualSets: z.number().int().optional(),
   actualReps: z.number().int().optional(),
   actualDurationSec: z.number().int().optional(),
@@ -59,76 +51,43 @@ export const blockLogSchema = z.object({
   isCompleted: z.boolean(),
 });
 
-export const createProgramSchema = z.object({
-  name: z
-    .string()
-    .min(1, ValidationErrorMessage.PROGRAM_NAME_REQUIRED)
-    .transform((val) => val.trim()),
-
+export const programRequestSchema = z.object({
+  name: z.string().transform((val) => val.trim()),
   types: z
-    .array(z.string().min(1, "Program type cannot be empty"))
+    .array(z.string())
     .optional()
-    .transform((val) =>
-      val?.map((type) => type.trim()).filter((type) => type.length > 0)
-    ),
-
-  numWeeks: z
-    .number()
-    .int()
-    .min(1, ValidationErrorMessage.PROGRAM_DURATION_INVALID),
-
+    .transform((val) => val?.map((type) => type.trim())),
+  numWeeks: z.number().int(),
   hasNutritionProgram: z.boolean().optional(),
-
   phases: z.array(phaseSchema).optional(),
-
-  accessType: z.enum(ProfileAccess),
-
+  accessType: z.union([
+    z.literal(ProfileAccess.Public),
+    z.literal(ProfileAccess.Private),
+  ]),
+  admins: z.array(z.string()),
+  members: z.array(z.string()).optional(),
   createdBy: z.string(),
 });
 
-export const createWorkoutSchema = z.object({
-  name: z
-    .string({
-      error: (issue) =>
-        issue.input === undefined
-          ? ValidationErrorMessage.NAME_REQUIRED
-          : ValidationErrorMessage.NAME_INVALID_FORMAT,
-    })
-    .transform((val) => val.trim()),
-
+export const workoutRequestSchema = z.object({
+  name: z.string().transform((val) => val.trim()),
   description: z
     .string()
     .optional()
     .transform((val) => val?.trim()),
-
-  category: z.array(z.string().min(1, "Category cannot be empty")).optional(),
-
+  category: z.array(z.string()).optional(),
   difficulty: z
     .enum(Object.values(WorkoutDifficulty) as [string, ...string[]])
     .optional(),
-
   duration: z.number().int().optional(),
-
   blocks: z.array(blockSchema).optional(),
-
-  accessType: z.enum(ProfileAccess),
-
-  createdBy: z.string({
-    error: (issue) =>
-      issue.input === undefined
-        ? ValidationErrorMessage.CREATOR_ID_REQUIRED
-        : ValidationErrorMessage.CREATOR_ID_INVALID_FORMAT,
-  }),
-
-  startDate: z.union([
-    z.date(),
-    z.string().transform((val) => new Date(val))
+  accessType: z.union([
+    z.literal(ProfileAccess.Public),
+    z.literal(ProfileAccess.Private),
   ]),
-
-  endDate: z.union([
-    z.date(),
-    z.string().transform((val) => new Date(val))
-  ]),
+  createdBy: z.string(),
+  startDate: z.union([z.date(), z.string().transform((val) => new Date(val))]),
+  endDate: z.union([z.date(), z.string().transform((val) => new Date(val))]),
 });
 
 export const mealRequestSchema = z.object({

@@ -765,6 +765,12 @@ export default class UserService implements IUserService {
         { _id: userId },
         {
           $pull: { refreshTokens: { token: oldToken, deviceId } },
+        }
+      );
+
+      await this.userRepository.updateOne(
+        { _id: userId },
+        {
           $push: { refreshTokens: newRefreshToken },
         }
       );

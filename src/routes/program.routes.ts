@@ -53,6 +53,7 @@ const programMiddleware = new ProgramMiddleware(
  *               - name
  *               - numWeeks
  *               - accessType
+ *               - admins
  *               - createdBy
  *             properties:
  *               name:
@@ -91,10 +92,22 @@ const programMiddleware = new ProgramMiddleware(
  *                       type: number
  *                       example: 4
  *               accessType:
- *                 type: string
- *                 enum: [0, 1]
- *                 description: Program access type (0=Public, 1=Private)
- *                 example: 0
+ *                 type: number
+ *                 enum: [1, 2]
+ *                 description: Program access type (1=Public, 2=Private)
+ *                 example: 1
+ *               admins:
+ *                 type: array
+ *                 items:
+ *                   type: string
+ *                 description: Array of admin user IDs
+ *                 example: ["507f1f77bcf86cd799439011", "507f1f77bcf86cd799439012"]
+ *               members:
+ *                 type: array
+ *                 items:
+ *                   type: string
+ *                 description: Array of member user IDs (optional)
+ *                 example: ["507f1f77bcf86cd799439013", "507f1f77bcf86cd799439014"]
  *               createdBy:
  *                 type: string
  *                 description: User ID of the creator
@@ -117,8 +130,18 @@ const programMiddleware = new ProgramMiddleware(
  *                   type: number
  *                   example: 12
  *                 accessType:
- *                   type: string
- *                   example: "0"
+ *                   type: number
+ *                   example: 1
+ *                 admins:
+ *                   type: array
+ *                   items:
+ *                     type: string
+ *                   example: ["507f1f77bcf86cd799439011", "507f1f77bcf86cd799439012"]
+ *                 members:
+ *                   type: array
+ *                   items:
+ *                     type: string
+ *                   example: ["507f1f77bcf86cd799439013", "507f1f77bcf86cd799439014"]
  *                 createdBy:
  *                   type: string
  *                   example: "507f1f77bcf86cd799439011"
@@ -251,7 +274,7 @@ router.get(
 
 /**
  * @swagger
- * /programs/{programId}/workouts:
+ * /program/{programId}/week/{weekId}/workout:
  *   post:
  *     tags: [Programs]
  *     summary: Create a new workout for a program
@@ -266,6 +289,13 @@ router.get(
  *           type: string
  *         description: Program ID
  *         example: "507f1f77bcf86cd799439011"
+ *       - in: path
+ *         name: weekId
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: Week ID
+ *         example: "507f1f77bcf86cd799439012"
  *     requestBody:
  *       required: true
  *       content:
@@ -274,7 +304,6 @@ router.get(
  *             type: object
  *             required:
  *               - name
- *               - blocks
  *               - accessType
  *               - createdBy
  *               - startDate
@@ -308,52 +337,92 @@ router.get(
  *                 description: Workout blocks/exercises
  *                 items:
  *                   type: object
+ *                   required:
+ *                     - type
+ *                     - exercises
+ *                     - order
  *                   properties:
  *                     type:
  *                       type: string
- *                       enum: ["single", "superset", "circuit"]
+ *                       enum: ["single", "superset", "cluster", "circuit", "giant set", "every minute on the minute", "as many reps/rounds as possible"]
+ *                       description: Type of workout block
+ *                       example: "single"
  *                     name:
  *                       type: string
+ *                       description: Block name
  *                       example: "Main Strength Block"
+ *                     description:
+ *                       type: string
+ *                       description: Block description
+ *                       example: "Focus on compound movements"
+ *                     restBetweenExercisesSec:
+ *                       type: number
+ *                       description: Rest time between exercises in seconds
+ *                       example: 60
+ *                     restAfterBlockSec:
+ *                       type: number
+ *                       description: Rest time after block completion in seconds
+ *                       example: 120
  *                     exercises:
  *                       type: array
+ *                       description: Array of exercises in this block
  *                       items:
  *                         type: object
+ *                         required:
+ *                           - name
+ *                           - order
  *                         properties:
- *                           exerciseId:
+ *                           name:
  *                             type: string
- *                             example: "bench-press"
+ *                             description: Exercise name
+ *                             example: "Bench Press"
  *                           targetSets:
  *                             type: number
+ *                             description: Target number of sets
  *                             example: 3
  *                           targetReps:
  *                             type: number
+ *                             description: Target number of reps
  *                             example: 10
+ *                           targetDurationSec:
+ *                             type: number
+ *                             description: Target duration in seconds
+ *                             example: 45
  *                           targetWeight:
  *                             type: number
+ *                             description: Target weight
  *                             example: 135
+ *                           notes:
+ *                             type: string
+ *                             description: Exercise notes
+ *                             example: "Focus on controlled movement"
+ *                           order:
+ *                             type: number
+ *                             description: Order of exercise in the block
+ *                             example: 1
  *                     order:
  *                       type: number
+ *                       description: Order of block in the workout
  *                       example: 1
  *               accessType:
- *                 type: string
- *                 enum: ["0", "1"]
- *                 description: Access type (0=Public, 1=Private)
- *                 example: "0"
+ *                 type: number
+ *                 enum: [1, 2]
+ *                 description: Access type (1=Public, 2=Private)
+ *                 example: 1
  *               createdBy:
  *                 type: string
  *                 description: Creator user ID
  *                 example: "507f1f77bcf86cd799439011"
  *               startDate:
  *                 type: string
- *                 format: date-time
+ *                 format: date
  *                 description: Workout start date
- *                 example: "2024-01-15T09:00:00Z"
+ *                 example: "2024-01-15"
  *               endDate:
  *                 type: string
- *                 format: date-time
+ *                 format: date
  *                 description: Workout end date
- *                 example: "2024-01-15T10:00:00Z"
+ *                 example: "2024-01-15"
  *     responses:
  *       201:
  *         description: Workout created successfully
@@ -385,19 +454,19 @@ router.get(
  *                 blocks:
  *                   type: array
  *                 accessType:
- *                   type: string
- *                   example: "0"
+ *                   type: number
+ *                   example: 1
  *                 createdBy:
  *                   type: string
  *                   example: "507f1f77bcf86cd799439011"
  *                 startDate:
  *                   type: string
- *                   format: date-time
- *                   example: "2024-01-15T09:00:00Z"
+ *                   format: date
+ *                   example: "2024-01-15"
  *                 endDate:
  *                   type: string
- *                   format: date-time
- *                   example: "2024-01-15T10:00:00Z"
+ *                   format: date
+ *                   example: "2024-01-15"
  *       400:
  *         description: Bad request - validation failed
  *       401:
@@ -413,8 +482,258 @@ router.post(
   "/:programId/week/:weekId/workout",
   authMiddleware.authenticateToken,
   programMiddleware.checkAdminAuthorization,
-  ProgramMiddleware.validateCreateWorkout,
+  ProgramMiddleware.validateWorkoutRequest,
   programController.createWorkout
+);
+
+/**
+ * @swagger
+ * /program/{programId}/week/{weekId}/workout/{workoutId}:
+ *   put:
+ *     tags: [Programs]
+ *     summary: Update a workout
+ *     description: Updates an existing workout within a specific program. Only program administrators can update workouts. The version number will be incremented by 1.
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: programId
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: Program ID
+ *         example: "507f1f77bcf86cd799439011"
+ *       - in: path
+ *         name: weekId
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: Week ID
+ *         example: "507f1f77bcf86cd799439012"
+ *       - in: path
+ *         name: workoutId
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: Workout ID
+ *         example: "507f1f77bcf86cd799439013"
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - name
+ *               - accessType
+ *               - createdBy
+ *               - startDate
+ *               - endDate
+ *             properties:
+ *               name:
+ *                 type: string
+ *                 description: Workout name
+ *                 example: "Updated Upper Body Strength"
+ *               description:
+ *                 type: string
+ *                 description: Workout description
+ *                 example: "Updated focus on upper body muscle groups"
+ *               category:
+ *                 type: array
+ *                 items:
+ *                   type: string
+ *                 description: Workout categories
+ *                 example: ["strength", "upper-body"]
+ *               difficulty:
+ *                 type: string
+ *                 enum: ["beginner", "intermediate", "advanced"]
+ *                 description: Workout difficulty level
+ *                 example: "intermediate"
+ *               duration:
+ *                 type: number
+ *                 description: Estimated workout duration in minutes
+ *                 example: 60
+ *               blocks:
+ *                 type: array
+ *                 description: Workout blocks/exercises
+ *                 items:
+ *                   type: object
+ *                   required:
+ *                     - type
+ *                     - exercises
+ *                     - order
+ *                   properties:
+ *                     type:
+ *                       type: string
+ *                       enum: ["single", "superset", "cluster", "circuit", "giant set", "every minute on the minute", "as many reps/rounds as possible"]
+ *                       description: Type of workout block
+ *                       example: "single"
+ *                     name:
+ *                       type: string
+ *                       description: Block name
+ *                       example: "Main Strength Block"
+ *                     description:
+ *                       type: string
+ *                       description: Block description
+ *                       example: "Focus on compound movements"
+ *                     restBetweenExercisesSec:
+ *                       type: number
+ *                       description: Rest time between exercises in seconds
+ *                       example: 60
+ *                     restAfterBlockSec:
+ *                       type: number
+ *                       description: Rest time after block completion in seconds
+ *                       example: 120
+ *                     exercises:
+ *                       type: array
+ *                       description: Array of exercises in this block
+ *                       items:
+ *                         type: object
+ *                         required:
+ *                           - name
+ *                           - order
+ *                         properties:
+ *                           name:
+ *                             type: string
+ *                             description: Exercise name
+ *                             example: "Bench Press"
+ *                           targetSets:
+ *                             type: number
+ *                             description: Target number of sets
+ *                             example: 3
+ *                           targetReps:
+ *                             type: number
+ *                             description: Target number of reps
+ *                             example: 10
+ *                           targetDurationSec:
+ *                             type: number
+ *                             description: Target duration in seconds
+ *                             example: 45
+ *                           targetWeight:
+ *                             type: number
+ *                             description: Target weight
+ *                             example: 135
+ *                           notes:
+ *                             type: string
+ *                             description: Exercise notes
+ *                             example: "Focus on controlled movement"
+ *                           order:
+ *                             type: number
+ *                             description: Order of exercise in the block
+ *                             example: 1
+ *                     order:
+ *                       type: number
+ *                       description: Order of block in the workout
+ *                       example: 1
+ *               accessType:
+ *                 type: number
+ *                 enum: [1, 2]
+ *                 description: Access type (1=Public, 2=Private)
+ *                 example: 1
+ *               createdBy:
+ *                 type: string
+ *                 description: Creator user ID
+ *                 example: "507f1f77bcf86cd799439011"
+ *               startDate:
+ *                 type: string
+ *                 format: date
+ *                 description: Workout start date
+ *                 example: "2024-01-15"
+ *               endDate:
+ *                 type: string
+ *                 format: date
+ *                 description: Workout end date
+ *                 example: "2024-01-15"
+ *     responses:
+ *       200:
+ *         description: Workout updated successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: true
+ *                   description: Indicates the workout was successfully updated
+ *       400:
+ *         description: Bad request - validation failed
+ *       401:
+ *         description: Unauthorized
+ *       403:
+ *         description: Forbidden - user is not a program administrator
+ *       404:
+ *         description: Program, week, or workout not found
+ *       500:
+ *         description: Internal server error
+ */
+router.put(
+  "/:programId/week/:weekId/workout/:workoutId",
+  authMiddleware.authenticateToken,
+  programMiddleware.checkAdminAuthorization,
+  ProgramMiddleware.validateWorkoutRequest,
+  programController.updateWorkout
+);
+
+/**
+ * @swagger
+ * /program/{programId}/week/{weekId}/workout/{workoutId}:
+ *   delete:
+ *     tags: [Programs]
+ *     summary: Delete a workout
+ *     description: Deletes an existing workout from a specific program week. Only program administrators can delete workouts.
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: programId
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: Program ID
+ *         example: "507f1f77bcf86cd799439011"
+ *       - in: path
+ *         name: weekId
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: Week ID
+ *         example: "507f1f77bcf86cd799439012"
+ *       - in: path
+ *         name: workoutId
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: Workout ID
+ *         example: "507f1f77bcf86cd799439013"
+ *     responses:
+ *       200:
+ *         description: Workout deleted successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: true
+ *                   description: Indicates the workout was successfully deleted
+ *       400:
+ *         description: Bad request - invalid parameters
+ *       401:
+ *         description: Unauthorized
+ *       403:
+ *         description: Forbidden - user is not a program administrator
+ *       404:
+ *         description: Program, week, or workout not found
+ *       500:
+ *         description: Internal server error
+ */
+router.delete(
+  "/:programId/week/:weekId/workout/:workoutId",
+  authMiddleware.authenticateToken,
+  programMiddleware.checkAdminAuthorization,
+  programController.deleteWorkout
 );
 
 router.post(
