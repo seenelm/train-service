@@ -237,11 +237,26 @@ router.post(
  *                           type: number
  *                           example: 4
  *                   accessType:
- *                     type: string
- *                     example: "0"
+ *                     type: number
+ *                     enum: [1, 2]
+ *                     description: Access type (1=Public, 2=Private)
+ *                     example: 1
+ *                   admins:
+ *                     type: array
+ *                     items:
+ *                       type: string
+ *                     description: Array of admin user IDs
+ *                     example: ["507f1f77bcf86cd799439011", "507f1f77bcf86cd799439012"]
  *                   createdBy:
  *                     type: string
+ *                     description: User ID of the creator
  *                     example: "507f1f77bcf86cd799439011"
+ *                   members:
+ *                     type: array
+ *                     items:
+ *                       type: string
+ *                     description: Array of member user IDs (optional)
+ *                     example: ["507f1f77bcf86cd799439013", "507f1f77bcf86cd799439014"]
  *                   weeks:
  *                     type: array
  *                     items:
