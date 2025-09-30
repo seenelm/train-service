@@ -751,12 +751,637 @@ router.delete(
   programController.deleteWorkout
 );
 
+/**
+ * @swagger
+ * /program/{programId}/week/{weekId}/meal:
+ *   post:
+ *     tags: [Programs]
+ *     summary: Create a new meal for a program week
+ *     description: Creates a new meal within a specific program week. Only program administrators can create meals.
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: programId
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: Program ID
+ *         example: "507f1f77bcf86cd799439011"
+ *       - in: path
+ *         name: weekId
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: Week ID
+ *         example: "507f1f77bcf86cd799439012"
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - createdBy
+ *               - mealName
+ *               - startDate
+ *               - endDate
+ *             properties:
+ *               createdBy:
+ *                 type: string
+ *                 description: Creator user ID
+ *                 example: "507f1f77bcf86cd799439011"
+ *               mealName:
+ *                 type: string
+ *                 description: Name of the meal
+ *                 example: "Grilled Chicken Breast"
+ *               macros:
+ *                 type: object
+ *                 description: Nutritional macros (optional)
+ *                 properties:
+ *                   protein:
+ *                     type: number
+ *                     description: Protein in grams
+ *                     example: 30
+ *                   carbs:
+ *                     type: number
+ *                     description: Carbohydrates in grams
+ *                     example: 5
+ *                   fats:
+ *                     type: number
+ *                     description: Fats in grams
+ *                     example: 8
+ *               ingredients:
+ *                 type: array
+ *                 description: List of ingredients (optional)
+ *                 items:
+ *                   type: object
+ *                   required:
+ *                     - name
+ *                     - portion
+ *                   properties:
+ *                     name:
+ *                       type: string
+ *                       description: Ingredient name
+ *                       example: "Chicken Breast"
+ *                     portion:
+ *                       type: object
+ *                       required:
+ *                         - amount
+ *                         - unit
+ *                       properties:
+ *                         amount:
+ *                           type: number
+ *                           description: Amount of ingredient
+ *                           example: 200
+ *                         unit:
+ *                           type: string
+ *                           enum: ["g", "kg", "oz", "lb", "ml", "l", "cup", "tbsp", "tsp", "piece"]
+ *                           description: Unit of measurement
+ *                           example: "g"
+ *               instructions:
+ *                 type: string
+ *                 description: Cooking instructions (optional)
+ *                 example: "Season chicken with salt and pepper, grill for 6-7 minutes per side"
+ *               startDate:
+ *                 type: string
+ *                 format: date
+ *                 description: Meal start date
+ *                 example: "2024-01-15"
+ *               endDate:
+ *                 type: string
+ *                 format: date
+ *                 description: Meal end date
+ *                 example: "2024-01-15"
+ *     responses:
+ *       201:
+ *         description: Meal created successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 id:
+ *                   type: string
+ *                   example: "507f1f77bcf86cd799439013"
+ *                 versionId:
+ *                   type: number
+ *                   example: 1
+ *                 createdBy:
+ *                   type: string
+ *                   example: "507f1f77bcf86cd799439011"
+ *                 mealName:
+ *                   type: string
+ *                   example: "Grilled Chicken Breast"
+ *                 macros:
+ *                   type: object
+ *                   properties:
+ *                     protein:
+ *                       type: number
+ *                       example: 30
+ *                     carbs:
+ *                       type: number
+ *                       example: 5
+ *                     fats:
+ *                       type: number
+ *                       example: 8
+ *                 ingredients:
+ *                   type: array
+ *                   items:
+ *                     type: object
+ *                     properties:
+ *                       name:
+ *                         type: string
+ *                         example: "Chicken Breast"
+ *                       portion:
+ *                         type: object
+ *                         properties:
+ *                           amount:
+ *                             type: number
+ *                             example: 200
+ *                           unit:
+ *                             type: string
+ *                             example: "g"
+ *                 instructions:
+ *                   type: string
+ *                   example: "Season chicken with salt and pepper, grill for 6-7 minutes per side"
+ *                 startDate:
+ *                   type: string
+ *                   format: date
+ *                   example: "2024-01-15"
+ *                 endDate:
+ *                   type: string
+ *                   format: date
+ *                   example: "2024-01-15"
+ *       400:
+ *         description: Bad request - validation failed
+ *       401:
+ *         description: Unauthorized
+ *       403:
+ *         description: Forbidden - user is not a program administrator
+ *       404:
+ *         description: Program or week not found
+ *       500:
+ *         description: Internal server error
+ */
 router.post(
   "/:programId/week/:weekId/meal",
   authMiddleware.authenticateToken,
   programMiddleware.checkAdminAuthorization,
   ProgramMiddleware.validateMealRequest,
   programController.createMeal
+);
+
+/**
+ * @swagger
+ * /program/{programId}/week/{weekId}/meal/{mealId}:
+ *   put:
+ *     tags: [Programs]
+ *     summary: Update a meal
+ *     description: Updates an existing meal within a specific program week. Only program administrators can update meals. The version number will be incremented by 1.
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: programId
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: Program ID
+ *         example: "507f1f77bcf86cd799439011"
+ *       - in: path
+ *         name: weekId
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: Week ID
+ *         example: "507f1f77bcf86cd799439012"
+ *       - in: path
+ *         name: mealId
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: Meal ID
+ *         example: "507f1f77bcf86cd799439013"
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - createdBy
+ *               - mealName
+ *               - startDate
+ *               - endDate
+ *             properties:
+ *               createdBy:
+ *                 type: string
+ *                 description: Creator user ID
+ *                 example: "507f1f77bcf86cd799439011"
+ *               mealName:
+ *                 type: string
+ *                 description: Name of the meal
+ *                 example: "Updated Grilled Chicken Breast"
+ *               macros:
+ *                 type: object
+ *                 description: Nutritional macros (optional)
+ *                 properties:
+ *                   protein:
+ *                     type: number
+ *                     description: Protein in grams
+ *                     example: 35
+ *                   carbs:
+ *                     type: number
+ *                     description: Carbohydrates in grams
+ *                     example: 8
+ *                   fats:
+ *                     type: number
+ *                     description: Fats in grams
+ *                     example: 10
+ *               ingredients:
+ *                 type: array
+ *                 description: List of ingredients (optional)
+ *                 items:
+ *                   type: object
+ *                   required:
+ *                     - name
+ *                     - portion
+ *                   properties:
+ *                     name:
+ *                       type: string
+ *                       description: Ingredient name
+ *                       example: "Chicken Breast"
+ *                     portion:
+ *                       type: object
+ *                       required:
+ *                         - amount
+ *                         - unit
+ *                       properties:
+ *                         amount:
+ *                           type: number
+ *                           description: Amount of ingredient
+ *                           example: 250
+ *                         unit:
+ *                           type: string
+ *                           enum: ["g", "kg", "oz", "lb", "ml", "l", "cup", "tbsp", "tsp", "piece"]
+ *                           description: Unit of measurement
+ *                           example: "g"
+ *               instructions:
+ *                 type: string
+ *                 description: Cooking instructions (optional)
+ *                 example: "Updated: Season chicken with salt, pepper, and herbs, grill for 7-8 minutes per side"
+ *               startDate:
+ *                 type: string
+ *                 format: date
+ *                 description: Meal start date
+ *                 example: "2024-01-15"
+ *               endDate:
+ *                 type: string
+ *                 format: date
+ *                 description: Meal end date
+ *                 example: "2024-01-15"
+ *     responses:
+ *       200:
+ *         description: Meal updated successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: true
+ *                   description: Indicates the meal was successfully updated
+ *       400:
+ *         description: Bad request - validation failed
+ *       401:
+ *         description: Unauthorized
+ *       403:
+ *         description: Forbidden - user is not a program administrator
+ *       404:
+ *         description: Program, week, or meal not found
+ *       500:
+ *         description: Internal server error
+ */
+router.put(
+  "/:programId/week/:weekId/meal/:mealId",
+  authMiddleware.authenticateToken,
+  programMiddleware.checkAdminAuthorization,
+  ProgramMiddleware.validateMealRequest,
+  programController.updateMeal
+);
+
+/**
+ * @swagger
+ * /program/{programId}/week/{weekId}/meal/{mealId}:
+ *   delete:
+ *     tags: [Programs]
+ *     summary: Delete a meal
+ *     description: Deletes an existing meal from a specific program week. Only program administrators can delete meals.
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: programId
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: Program ID
+ *         example: "507f1f77bcf86cd799439011"
+ *       - in: path
+ *         name: weekId
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: Week ID
+ *         example: "507f1f77bcf86cd799439012"
+ *       - in: path
+ *         name: mealId
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: Meal ID
+ *         example: "507f1f77bcf86cd799439013"
+ *     responses:
+ *       200:
+ *         description: Meal deleted successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: true
+ *                   description: Indicates the meal was successfully deleted
+ *       400:
+ *         description: Bad request - invalid parameters
+ *       401:
+ *         description: Unauthorized
+ *       403:
+ *         description: Forbidden - user is not a program administrator
+ *       404:
+ *         description: Program, week, or meal not found
+ *       500:
+ *         description: Internal server error
+ */
+router.delete(
+  "/:programId/week/:weekId/meal/:mealId",
+  authMiddleware.authenticateToken,
+  programMiddleware.checkAdminAuthorization,
+  programController.deleteMeal
+);
+
+/**
+ * @swagger
+ * /program/{programId}/week/{weekId}/note:
+ *   post:
+ *     tags: [Programs]
+ *     summary: Create a new note for a program week
+ *     description: Creates a new note within a specific program week. Only program administrators can create notes.
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: programId
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: Program ID
+ *         example: "507f1f77bcf86cd799439011"
+ *       - in: path
+ *         name: weekId
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: Week ID
+ *         example: "507f1f77bcf86cd799439012"
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - title
+ *               - content
+ *               - startDate
+ *               - endDate
+ *             properties:
+ *               title:
+ *                 type: string
+ *                 description: Title of the note
+ *                 example: "Week 1 Training Notes"
+ *               content:
+ *                 type: string
+ *                 description: Content of the note
+ *                 example: "Focus on proper form and technique. Start with lighter weights to establish good movement patterns."
+ *               startDate:
+ *                 type: string
+ *                 format: date
+ *                 description: Note start date
+ *                 example: "2024-01-15"
+ *               endDate:
+ *                 type: string
+ *                 format: date
+ *                 description: Note end date
+ *                 example: "2024-01-21"
+ *     responses:
+ *       201:
+ *         description: Note created successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 id:
+ *                   type: string
+ *                   example: "507f1f77bcf86cd799439013"
+ *                 title:
+ *                   type: string
+ *                   example: "Week 1 Training Notes"
+ *                 content:
+ *                   type: string
+ *                   example: "Focus on proper form and technique. Start with lighter weights to establish good movement patterns."
+ *                 startDate:
+ *                   type: string
+ *                   format: date
+ *                   example: "2024-01-15"
+ *                 endDate:
+ *                   type: string
+ *                   format: date
+ *                   example: "2024-01-21"
+ *       400:
+ *         description: Bad request - validation failed
+ *       401:
+ *         description: Unauthorized
+ *       403:
+ *         description: Forbidden - user is not a program administrator
+ *       404:
+ *         description: Program or week not found
+ *       500:
+ *         description: Internal server error
+ */
+router.post(
+  "/:programId/week/:weekId/note",
+  authMiddleware.authenticateToken,
+  programMiddleware.checkAdminAuthorization,
+  ProgramMiddleware.validateNoteRequest,
+  programController.createNote
+);
+
+/**
+ * @swagger
+ * /program/{programId}/week/{weekId}/note/{noteId}:
+ *   put:
+ *     tags: [Programs]
+ *     summary: Update a note
+ *     description: Updates an existing note within a specific program week. Only program administrators can update notes.
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: programId
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: Program ID
+ *         example: "507f1f77bcf86cd799439011"
+ *       - in: path
+ *         name: weekId
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: Week ID
+ *         example: "507f1f77bcf86cd799439012"
+ *       - in: path
+ *         name: noteId
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: Note ID
+ *         example: "507f1f77bcf86cd799439013"
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - title
+ *               - content
+ *               - startDate
+ *               - endDate
+ *             properties:
+ *               title:
+ *                 type: string
+ *                 description: Title of the note
+ *                 example: "Updated Week 1 Training Notes"
+ *               content:
+ *                 type: string
+ *                 description: Content of the note
+ *                 example: "Updated: Focus on proper form and technique. Start with lighter weights to establish good movement patterns. Pay attention to breathing during exercises."
+ *               startDate:
+ *                 type: string
+ *                 format: date
+ *                 description: Note start date
+ *                 example: "2024-01-15"
+ *               endDate:
+ *                 type: string
+ *                 format: date
+ *                 description: Note end date
+ *                 example: "2024-01-21"
+ *     responses:
+ *       200:
+ *         description: Note updated successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: true
+ *                   description: Indicates the note was successfully updated
+ *       400:
+ *         description: Bad request - validation failed
+ *       401:
+ *         description: Unauthorized
+ *       403:
+ *         description: Forbidden - user is not a program administrator
+ *       404:
+ *         description: Program, week, or note not found
+ *       500:
+ *         description: Internal server error
+ */
+router.put(
+  "/:programId/week/:weekId/note/:noteId",
+  authMiddleware.authenticateToken,
+  programMiddleware.checkAdminAuthorization,
+  ProgramMiddleware.validateNoteRequest,
+  programController.updateNote
+);
+
+/**
+ * @swagger
+ * /program/{programId}/week/{weekId}/note/{noteId}:
+ *   delete:
+ *     tags: [Programs]
+ *     summary: Delete a note
+ *     description: Deletes an existing note from a specific program week. Only program administrators can delete notes.
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: programId
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: Program ID
+ *         example: "507f1f77bcf86cd799439011"
+ *       - in: path
+ *         name: weekId
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: Week ID
+ *         example: "507f1f77bcf86cd799439012"
+ *       - in: path
+ *         name: noteId
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: Note ID
+ *         example: "507f1f77bcf86cd799439013"
+ *     responses:
+ *       200:
+ *         description: Note deleted successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: true
+ *                   description: Indicates the note was successfully deleted
+ *       400:
+ *         description: Bad request - invalid parameters
+ *       401:
+ *         description: Unauthorized
+ *       403:
+ *         description: Forbidden - user is not a program administrator
+ *       404:
+ *         description: Program, week, or note not found
+ *       500:
+ *         description: Internal server error
+ */
+router.delete(
+  "/:programId/week/:weekId/note/:noteId",
+  authMiddleware.authenticateToken,
+  programMiddleware.checkAdminAuthorization,
+  programController.deleteNote
 );
 
 /**

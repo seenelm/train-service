@@ -11,6 +11,7 @@ import {
   Ingredient,
   WorkoutLogRequest,
   WorkoutLogResponse,
+  NotesRequest,
 } from "@seenelm/train-core";
 import { Types, Model } from "mongoose";
 import { Workout, Notes } from "../../models/programs/weekModel.js";
@@ -49,6 +50,7 @@ export interface IWeekRepository extends IBaseRepository<Week, WeekDocument> {
   toWeekResponse(week: AggregatedWeek): WeekResponse;
   toWorkoutLog(workoutLogRequest: WorkoutLogRequest): WorkoutLog;
   toWorkoutLogResponse(workoutLog: WorkoutLog): WorkoutLogResponse;
+  toNoteDocument(noteRequest: NotesRequest): Notes;
   createWorkout(
     weekId: Types.ObjectId,
     workout: WorkoutRequest
@@ -59,6 +61,7 @@ export interface IWeekRepository extends IBaseRepository<Week, WeekDocument> {
     workoutLog: WorkoutLog
   ): Promise<WorkoutLog | null>;
   findWeek(weekId: Types.ObjectId): Promise<AggregatedWeek | null>;
+  createNote(note: Notes, weekId: Types.ObjectId): Promise<Notes | null>;
 }
 
 export default class WeekRepository
@@ -102,6 +105,12 @@ export default class WeekRepository
     }
 
     return builder.build();
+  }
+
+  toNoteDocument(noteRequest: NotesRequest): Notes {
+    return {
+      ...noteRequest,
+    };
   }
 
   toResponse(week: Week): WeekResponse {
@@ -225,6 +234,25 @@ export default class WeekRepository
       return updatedWeek.workouts[updatedWeek.workouts.length - 1] as Workout;
     } catch (error) {
       this.logger.error("Error creating workout: ", error);
+      throw error;
+    }
+  }
+
+  async createNote(note: Notes, weekId: Types.ObjectId): Promise<Notes | null> {
+    try {
+      const updatedWeek = await this.weekModel.findByIdAndUpdate(
+        weekId,
+        { $push: { notes: note } },
+        { new: true }
+      );
+
+      if (!updatedWeek) {
+        return null;
+      }
+
+      return updatedWeek.notes?.[updatedWeek.notes.length - 1] as Notes;
+    } catch (error) {
+      this.logger.error("Error creating note: ", error);
       throw error;
     }
   }

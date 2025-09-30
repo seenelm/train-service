@@ -6,6 +6,7 @@ import {
   workoutLogRequestSchema,
   blockLogSchema,
   mealLogRequestSchema,
+  noteRequestSchema,
 } from "./ProgramSchema.js";
 import { Logger } from "../../common/logger.js";
 import { ValidationErrorResponse } from "../../common/errors/ValidationErrorResponse.js";
@@ -128,6 +129,29 @@ export default class ProgramMiddleware {
         );
         return res.status(HttpStatusCode.BAD_REQUEST).json({
           message: "Meal log validation failed",
+          errors: validationErrors.map((error) => error.toJSON()),
+        });
+      }
+      req.body = result.data;
+      next();
+    } catch (error) {
+      next(error);
+    }
+  };
+
+  static validateNoteRequest = (
+    req: Request,
+    res: Response,
+    next: NextFunction
+  ) => {
+    try {
+      const result = noteRequestSchema.safeParse(req.body);
+      if (!result.success) {
+        const validationErrors = ValidationErrorResponse.fromZodError(
+          result.error
+        );
+        return res.status(HttpStatusCode.BAD_REQUEST).json({
+          message: "Note validation failed",
           errors: validationErrors.map((error) => error.toJSON()),
         });
       }

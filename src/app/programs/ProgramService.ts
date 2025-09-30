@@ -10,6 +10,9 @@ import {
   WorkoutLogResponse,
   BlockLog,
   MealLogRequest,
+  WeekRequest,
+  NotesRequest,
+  NotesResponse,
 } from "@seenelm/train-core";
 import { IProgramRepository } from "../../infrastructure/database/repositories/programs/ProgramRepository.js";
 import { Logger } from "../../common/logger.js";
@@ -42,6 +45,12 @@ export interface IProgramService {
     weekId: Types.ObjectId,
     mealRequest: MealRequest
   ): Promise<MealResponse>;
+  updateMeal(
+    weekId: Types.ObjectId,
+    mealId: Types.ObjectId,
+    mealRequest: MealRequest
+  ): Promise<void>;
+  deleteMeal(weekId: Types.ObjectId, mealId: Types.ObjectId): Promise<void>;
   createWorkoutLog(
     weekId: Types.ObjectId,
     workoutLogRequest: WorkoutLogRequest
@@ -55,6 +64,18 @@ export interface IProgramService {
   getWeekWorkouts(weekId: Types.ObjectId): Promise<WorkoutResponse[]>;
   getWeekMeals(weekId: Types.ObjectId): Promise<MealResponse[]>;
   getWeek(weekId: Types.ObjectId): Promise<WeekResponse>;
+  updateWeek(weekId: Types.ObjectId, weekRequest: WeekRequest): Promise<void>;
+  deleteWeek(programId: Types.ObjectId, weekId: Types.ObjectId): Promise<void>;
+  createNote(
+    weekId: Types.ObjectId,
+    noteRequest: NotesRequest
+  ): Promise<NotesResponse>;
+  updateNote(
+    weekId: Types.ObjectId,
+    noteId: Types.ObjectId,
+    noteRequest: NotesRequest
+  ): Promise<void>;
+  deleteNote(weekId: Types.ObjectId, noteId: Types.ObjectId): Promise<void>;
 }
 
 export default class ProgramService implements IProgramService {
@@ -360,6 +381,94 @@ export default class ProgramService implements IProgramService {
       }
     }
   }
+
+  public async updateMeal(
+    weekId: Types.ObjectId,
+    mealId: Types.ObjectId,
+    mealRequest: MealRequest
+  ): Promise<void> {
+    try {
+      const week = await this.weekRepository.findById(weekId);
+
+      if (!week) {
+        throw APIError.NotFound("Week not found");
+      }
+
+      const meal = await this.mealRepository.findById(mealId);
+
+      if (!meal) {
+        throw APIError.NotFound("Meal not found");
+      }
+
+      const updatedMealDocument = {
+        ...mealRequest,
+        createdBy: new Types.ObjectId(mealRequest.createdBy),
+        versionId: meal.getVersionId() + 1,
+      };
+
+      await this.mealRepository.updateOne(
+        { _id: mealId },
+        { $set: updatedMealDocument }
+      );
+    } catch (error) {
+      this.logger.error("Error updating meal: ", error);
+
+      if (error instanceof MongooseError || error instanceof MongoServerError) {
+        throw DatabaseError.handleMongoDBError(error);
+      } else {
+        throw APIError.InternalServerError("Failed to update meal");
+      }
+    }
+  }
+
+  public async deleteMeal(
+    weekId: Types.ObjectId,
+    mealId: Types.ObjectId
+  ): Promise<void> {
+    const session = await mongoose.startSession();
+    try {
+      session.startTransaction();
+
+      const week = await this.weekRepository.findById(weekId);
+
+      if (!week) {
+        throw APIError.NotFound("Week not found");
+      }
+
+      const meal = await this.mealRepository.findById(mealId);
+
+      if (!meal) {
+        throw APIError.NotFound("Meal not found");
+      }
+
+      await this.mealRepository.findByIdAndDelete(mealId, { session });
+
+      await this.weekRepository.updateOne(
+        { _id: weekId },
+        { $pull: { meals: mealId } },
+        { session }
+      );
+
+      await session.commitTransaction();
+    } catch (error) {
+      this.logger.error("Error deleting meal: ", error);
+
+      if (session) {
+        await session.abortTransaction();
+      }
+
+      if (error instanceof MongooseError || error instanceof MongoServerError) {
+        throw DatabaseError.handleMongoDBError(error);
+      } else {
+        throw APIError.InternalServerError("Failed to delete meal");
+      }
+    } finally {
+      if (session) {
+        session.endSession();
+      }
+    }
+  }
+
   public async createWorkoutLog(
     weekId: Types.ObjectId,
     workoutLogRequest: WorkoutLogRequest
@@ -538,6 +647,170 @@ export default class ProgramService implements IProgramService {
         throw DatabaseError.handleMongoDBError(error);
       } else {
         throw APIError.InternalServerError("Failed to get week");
+      }
+    }
+  }
+
+  public async updateWeek(
+    weekId: Types.ObjectId,
+    weekRequest: WeekRequest
+  ): Promise<void> {
+    try {
+      const week = await this.weekRepository.findById(weekId);
+
+      if (!week) {
+        throw APIError.NotFound("Week not found");
+      }
+
+      await this.weekRepository.updateOne(
+        { _id: weekId },
+        { $set: weekRequest }
+      );
+    } catch (error) {
+      this.logger.error("Error updating week: ", error);
+
+      if (error instanceof MongooseError || error instanceof MongoServerError) {
+        throw DatabaseError.handleMongoDBError(error);
+      } else {
+        throw APIError.InternalServerError("Failed to update week");
+      }
+    }
+  }
+
+  public async deleteWeek(
+    programId: Types.ObjectId,
+    weekId: Types.ObjectId
+  ): Promise<void> {
+    const session = await mongoose.startSession();
+    try {
+      session.startTransaction();
+      const week = await this.weekRepository.findById(weekId);
+
+      if (!week) {
+        throw APIError.NotFound("Week not found");
+      }
+
+      await this.weekRepository.findByIdAndDelete(weekId, { session });
+
+      await this.programRepository.updateOne(
+        { _id: programId },
+        { $pull: { weeks: weekId } },
+        { session }
+      );
+
+      // Should it also delete all meals?
+
+      await session.commitTransaction();
+    } catch (error) {
+      this.logger.error("Error deleting week: ", error);
+      if (session) {
+        await session.abortTransaction();
+      }
+
+      if (error instanceof MongooseError || error instanceof MongoServerError) {
+        throw DatabaseError.handleMongoDBError(error);
+      } else {
+        throw APIError.InternalServerError("Failed to delete week");
+      }
+    } finally {
+      if (session) {
+        session.endSession();
+      }
+    }
+  }
+
+  public async createNote(
+    weekId: Types.ObjectId,
+    noteRequest: NotesRequest
+  ): Promise<NotesResponse> {
+    try {
+      const noteDocument = this.weekRepository.toNoteDocument(noteRequest);
+
+      const note = await this.weekRepository.createNote(noteDocument, weekId);
+
+      if (!note) {
+        throw APIError.InternalServerError("Failed to create note");
+      }
+
+      return this.weekRepository.toNotesResponse(note);
+    } catch (error) {
+      this.logger.error("Error creating note: ", error);
+
+      if (error instanceof MongooseError || error instanceof MongoServerError) {
+        throw DatabaseError.handleMongoDBError(error);
+      } else {
+        throw APIError.InternalServerError("Failed to create note");
+      }
+    }
+  }
+
+  public async updateNote(
+    weekId: Types.ObjectId,
+    noteId: Types.ObjectId,
+    noteRequest: NotesRequest
+  ): Promise<void> {
+    try {
+      const week = await this.weekRepository.findById(weekId);
+
+      if (!week) {
+        throw APIError.NotFound("Week not found");
+      }
+
+      const note = week
+        .getNotes()
+        ?.find((n) => n._id?.toString() === noteId.toString());
+
+      if (!note) {
+        throw APIError.NotFound("Note not found");
+      }
+
+      const updatedNote = this.weekRepository.toNoteDocument(noteRequest);
+
+      await this.weekRepository.updateOne(
+        { _id: weekId, "notes._id": noteId },
+        { $set: { notes: updatedNote } }
+      );
+    } catch (error) {
+      this.logger.error("Error updating note: ", error);
+
+      if (error instanceof MongooseError || error instanceof MongoServerError) {
+        throw DatabaseError.handleMongoDBError(error);
+      } else {
+        throw APIError.InternalServerError("Failed to update note");
+      }
+    }
+  }
+
+  public async deleteNote(
+    weekId: Types.ObjectId,
+    noteId: Types.ObjectId
+  ): Promise<void> {
+    try {
+      const week = await this.weekRepository.findById(weekId);
+
+      if (!week) {
+        throw APIError.NotFound("Week not found");
+      }
+
+      const note = week
+        .getNotes()
+        ?.find((n) => n._id?.toString() === noteId.toString());
+
+      if (!note) {
+        throw APIError.NotFound("Note not found");
+      }
+
+      await this.weekRepository.updateOne(
+        { _id: weekId, "notes._id": noteId },
+        { $pull: { notes: noteId } }
+      );
+    } catch (error) {
+      this.logger.error("Error deleting note: ", error);
+
+      if (error instanceof MongooseError || error instanceof MongoServerError) {
+        throw DatabaseError.handleMongoDBError(error);
+      } else {
+        throw APIError.InternalServerError("Failed to delete note");
       }
     }
   }

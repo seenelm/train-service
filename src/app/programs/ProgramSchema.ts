@@ -90,35 +90,28 @@ export const workoutRequestSchema = z.object({
   endDate: z.union([z.date(), z.string().transform((val) => new Date(val))]),
 });
 
-export const mealRequestSchema = z.object({
-  createdBy: z.string({
-    error: (issue) =>
-      issue.input === undefined
-        ? ValidationErrorMessage.CREATOR_ID_REQUIRED
-        : ValidationErrorMessage.CREATOR_ID_INVALID_FORMAT,
+const macrosSchema = z.object({
+  protein: z.number().int(),
+  carbs: z.number().int(),
+  fats: z.number().int(),
+});
+
+const ingredientSchema = z.object({
+  name: z.string().transform((val) => val.trim()),
+  portion: z.object({
+    amount: z.number().int(),
+    unit: z.enum(Object.values(Unit) as [string, ...string[]]),
   }),
+});
+
+export const mealRequestSchema = z.object({
+  createdBy: z.string(),
   mealName: z.string().transform((val) => val.trim()),
-  macros: z
-    .object({
-      protein: z.number().int(),
-      carbs: z.number().int(),
-      fats: z.number().int(),
-    })
-    .optional(),
-  ingredients: z
-    .array(
-      z.object({
-        name: z.string().transform((val) => val.trim()),
-        portion: z.object({
-          amount: z.number().int(),
-          unit: z.enum(Object.values(Unit) as [string, ...string[]]),
-        }),
-      })
-    )
-    .optional(),
+  macros: macrosSchema.optional(),
+  ingredients: z.array(ingredientSchema).optional(),
   instructions: z.string().optional(),
-  startDate: z.date(),
-  endDate: z.date(),
+  startDate: z.union([z.date(), z.string().transform((val) => new Date(val))]),
+  endDate: z.union([z.date(), z.string().transform((val) => new Date(val))]),
 });
 
 export const workoutLogRequestSchema = z.object({
@@ -193,4 +186,11 @@ export const mealLogRequestSchema = z.object({
   isCompleted: z.boolean(),
   actualStartDate: z.date(),
   actualEndDate: z.date(),
+});
+
+export const noteRequestSchema = z.object({
+  title: z.string().transform((val) => val.trim()),
+  content: z.string().transform((val) => val.trim()),
+  startDate: z.union([z.date(), z.string().transform((val) => new Date(val))]),
+  endDate: z.union([z.date(), z.string().transform((val) => new Date(val))]),
 });

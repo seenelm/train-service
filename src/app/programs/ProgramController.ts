@@ -12,6 +12,8 @@ import {
   WorkoutLogResponse,
   BlockLog,
   MealLogRequest,
+  NotesRequest,
+  NotesResponse,
 } from "@seenelm/train-core";
 import { StatusCodes as HttpStatusCode } from "http-status-codes";
 import { Logger } from "../../common/logger.js";
@@ -132,6 +134,95 @@ export default class ProgramController {
       );
 
       return res.status(HttpStatusCode.CREATED).json(mealResponse);
+    } catch (error) {
+      next(error);
+    }
+  };
+
+  public updateMeal = async (
+    req: Request,
+    res: Response,
+    next: NextFunction
+  ) => {
+    try {
+      const weekId = new Types.ObjectId(req.params.weekId);
+      const mealId = new Types.ObjectId(req.params.mealId);
+      const mealRequest: MealRequest = req.body;
+
+      await this.programService.updateMeal(weekId, mealId, mealRequest);
+
+      return res.status(HttpStatusCode.OK).json({ success: true });
+    } catch (error) {
+      next(error);
+    }
+  };
+
+  public deleteMeal = async (
+    req: Request,
+    res: Response,
+    next: NextFunction
+  ) => {
+    try {
+      const weekId = new Types.ObjectId(req.params.weekId);
+      const mealId = new Types.ObjectId(req.params.mealId);
+
+      await this.programService.deleteMeal(weekId, mealId);
+
+      return res.status(HttpStatusCode.OK).json({ success: true });
+    } catch (error) {
+      next(error);
+    }
+  };
+
+  public createNote = async (
+    req: Request,
+    res: Response,
+    next: NextFunction
+  ) => {
+    try {
+      const weekId = new Types.ObjectId(req.params.weekId);
+      const noteRequest: NotesRequest = req.body;
+
+      const noteResponse: NotesResponse = await this.programService.createNote(
+        weekId,
+        noteRequest
+      );
+
+      return res.status(HttpStatusCode.CREATED).json(noteResponse);
+    } catch (error) {
+      next(error);
+    }
+  };
+
+  public updateNote = async (
+    req: Request,
+    res: Response,
+    next: NextFunction
+  ) => {
+    try {
+      const weekId = new Types.ObjectId(req.params.weekId);
+      const noteId = new Types.ObjectId(req.params.noteId);
+      const noteRequest: NotesRequest = req.body;
+
+      await this.programService.updateNote(weekId, noteId, noteRequest);
+
+      return res.status(HttpStatusCode.OK).json({ success: true });
+    } catch (error) {
+      next(error);
+    }
+  };
+
+  public deleteNote = async (
+    req: Request,
+    res: Response,
+    next: NextFunction
+  ) => {
+    try {
+      const weekId = new Types.ObjectId(req.params.weekId);
+      const noteId = new Types.ObjectId(req.params.noteId);
+      await this.programService.deleteNote(weekId, noteId);
+
+      return res.status(HttpStatusCode.OK).json({ success: true });
     } catch (error) {
       next(error);
     }
