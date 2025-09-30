@@ -801,8 +801,8 @@ export default class ProgramService implements IProgramService {
       }
 
       await this.weekRepository.updateOne(
-        { _id: weekId, "notes._id": noteId },
-        { $pull: { notes: noteId } }
+        { _id: weekId },
+        { $pull: { notes: { _id: noteId } } }
       );
     } catch (error) {
       this.logger.error("Error deleting note: ", error);
