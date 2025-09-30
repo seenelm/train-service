@@ -194,3 +194,17 @@ export const noteRequestSchema = z.object({
   startDate: z.union([z.date(), z.string().transform((val) => new Date(val))]),
   endDate: z.union([z.date(), z.string().transform((val) => new Date(val))]),
 });
+
+export const weekRequestSchema = z.object({
+  name: z
+    .string()
+    .transform((val) => val.trim())
+    .optional(),
+  description: z
+    .string()
+    .transform((val) => val.trim())
+    .optional(),
+  weekNumber: z.number().int(),
+  startDate: z.union([z.date(), z.string().transform((val) => new Date(val))]),
+  endDate: z.union([z.date(), z.string().transform((val) => new Date(val))]),
+});

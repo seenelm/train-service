@@ -7,6 +7,7 @@ import {
   blockLogSchema,
   mealLogRequestSchema,
   noteRequestSchema,
+  weekRequestSchema,
 } from "./ProgramSchema.js";
 import { Logger } from "../../common/logger.js";
 import { ValidationErrorResponse } from "../../common/errors/ValidationErrorResponse.js";
@@ -296,6 +297,29 @@ export default class ProgramMiddleware {
         );
         return res.status(HttpStatusCode.BAD_REQUEST).json({
           message: "Block log request validation failed",
+          errors: validationErrors.map((error) => error.toJSON()),
+        });
+      }
+      req.body = result.data;
+      next();
+    } catch (error) {
+      next(error);
+    }
+  };
+
+  static validateWeekRequest = (
+    req: Request,
+    res: Response,
+    next: NextFunction
+  ) => {
+    try {
+      const result = weekRequestSchema.safeParse(req.body);
+      if (!result.success) {
+        const validationErrors = ValidationErrorResponse.fromZodError(
+          result.error
+        );
+        return res.status(HttpStatusCode.BAD_REQUEST).json({
+          message: "Week request validation failed",
           errors: validationErrors.map((error) => error.toJSON()),
         });
       }

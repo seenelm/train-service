@@ -14,6 +14,7 @@ import {
   MealLogRequest,
   NotesRequest,
   NotesResponse,
+  WeekRequest,
 } from "@seenelm/train-core";
 import { StatusCodes as HttpStatusCode } from "http-status-codes";
 import { Logger } from "../../common/logger.js";
@@ -325,6 +326,23 @@ export default class ProgramController {
       );
 
       return res.status(HttpStatusCode.OK).json(weekResponse);
+    } catch (error) {
+      next(error);
+    }
+  };
+
+  public updateWeek = async (
+    req: Request,
+    res: Response,
+    next: NextFunction
+  ) => {
+    try {
+      const weekId = new Types.ObjectId(req.params.weekId);
+      const weekRequest: WeekRequest = req.body;
+
+      await this.programService.updateWeek(weekId, weekRequest);
+
+      return res.status(HttpStatusCode.OK).json({ success: true });
     } catch (error) {
       next(error);
     }

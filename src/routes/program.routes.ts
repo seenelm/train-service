@@ -180,6 +180,95 @@ router.post(
 
 /**
  * @swagger
+ * /program/{programId}/week/{weekId}:
+ *   put:
+ *     tags: [Programs]
+ *     summary: Update a week
+ *     description: Updates an existing week within a specific program. Only program administrators can update weeks.
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: programId
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: Program ID
+ *         example: "507f1f77bcf86cd799439011"
+ *       - in: path
+ *         name: weekId
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: Week ID
+ *         example: "507f1f77bcf86cd799439012"
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - weekNumber
+ *               - startDate
+ *               - endDate
+ *             properties:
+ *               name:
+ *                 type: string
+ *                 description: Week name (optional)
+ *                 example: "Week 1 - Foundation"
+ *               description:
+ *                 type: string
+ *                 description: Week description (optional)
+ *                 example: "Focus on basic movements and establishing good form"
+ *               weekNumber:
+ *                 type: number
+ *                 description: Week number in the program
+ *                 example: 1
+ *                 minimum: 1
+ *               startDate:
+ *                 type: string
+ *                 format: date
+ *                 description: Week start date
+ *                 example: "2024-01-15"
+ *               endDate:
+ *                 type: string
+ *                 format: date
+ *                 description: Week end date
+ *                 example: "2024-01-21"
+ *     responses:
+ *       200:
+ *         description: Week updated successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: true
+ *                   description: Indicates the week was successfully updated
+ *       400:
+ *         description: Bad request - validation failed
+ *       401:
+ *         description: Unauthorized
+ *       403:
+ *         description: Forbidden - user is not a program administrator
+ *       404:
+ *         description: Program or week not found
+ *       500:
+ *         description: Internal server error
+ */
+router.put(
+  "/:programId/week/:weekId",
+  authMiddleware.authenticateToken,
+  programMiddleware.checkAdminAuthorization,
+  ProgramMiddleware.validateWeekRequest,
+  programController.updateWeek
+);
+
+/**
+ * @swagger
  * /program/user/{userId}:
  *   get:
  *     summary: Get all programs for a specific user
