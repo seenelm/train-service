@@ -297,6 +297,7 @@ export default class UserService implements IUserService {
         isActive: true,
         email,
         authProvider: "google",
+        agreeToTerms: googleAuthRequest.agreeToTerms,
       } as UserRequest;
 
       const refreshToken = this.createRefreshToken(deviceId);
