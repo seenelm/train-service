@@ -5,7 +5,6 @@ import {
   BlockType,
   Unit,
 } from "@seenelm/train-core";
-import { ValidationErrorMessage } from "../../common/enums.js";
 
 const phaseSchema = z.object({
   name: z.string().transform((val) => val.trim()),

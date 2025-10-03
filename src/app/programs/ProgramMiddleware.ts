@@ -64,6 +64,7 @@ export default class ProgramMiddleware {
           errors: validationErrors.map((error) => error.toJSON()),
         });
       }
+
       req.body = result.data;
       next();
     } catch (error) {
@@ -105,6 +106,7 @@ export default class ProgramMiddleware {
         const validationErrors = ValidationErrorResponse.fromZodError(
           result.error
         );
+
         return res.status(HttpStatusCode.BAD_REQUEST).json({
           message: "Create meal validation failed",
           errors: validationErrors.map((error) => error.toJSON()),
@@ -176,6 +178,11 @@ export default class ProgramMiddleware {
         throw APIError.BadRequest("Program ID is required");
       }
 
+      // Validate that programId is a valid ObjectId format
+      if (!Types.ObjectId.isValid(programId)) {
+        throw APIError.BadRequest("Invalid Program ID format");
+      }
+
       const program = await this.programRepository.findById(
         new Types.ObjectId(programId)
       );
@@ -227,6 +234,11 @@ export default class ProgramMiddleware {
 
       if (!programId) {
         throw APIError.BadRequest("Program ID is required");
+      }
+
+      // Validate that programId is a valid ObjectId format
+      if (!Types.ObjectId.isValid(programId)) {
+        throw APIError.BadRequest("Invalid Program ID format");
       }
 
       const program = await this.programRepository.findById(

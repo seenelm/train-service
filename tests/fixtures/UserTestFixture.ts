@@ -83,6 +83,7 @@ export default class UserTestFixture {
       idToken: this.GOOGLE_ID,
       name: this.NAME,
       deviceId: this.DEVICE_ID,
+      agreeToTerms: true,
       ...updatedData,
     };
   }
