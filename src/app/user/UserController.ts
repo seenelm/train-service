@@ -12,7 +12,6 @@ import {
 } from "@seenelm/train-core";
 import { StatusCodes as HttpStatusCode } from "http-status-codes";
 import { Logger } from "../../common/logger.js";
-import { AuthError } from "../../common/errors/AuthError.js";
 
 export default class UserController {
   private userService: IUserService;
@@ -26,7 +25,6 @@ export default class UserController {
   public register = async (req: Request, res: Response, next: NextFunction) => {
     try {
       const userRegisterRequest: UserRequest = req.body;
-      this.logger.info("User registration request: ", userRegisterRequest);
 
       const userResponse: UserResponse = await this.userService.registerUser(
         userRegisterRequest
@@ -41,7 +39,6 @@ export default class UserController {
   public login = async (req: Request, res: Response, next: NextFunction) => {
     try {
       const userLoginRequest: UserLoginRequest = req.body;
-      this.logger.info("User login request: ", userLoginRequest);
 
       const userResponse: UserResponse = await this.userService.loginUser(
         userLoginRequest
@@ -118,7 +115,6 @@ export default class UserController {
   ) => {
     try {
       const refreshTokensRequest = req.body as RefreshTokenRequest;
-      this.logger.info("Refresh tokens request: ", refreshTokensRequest);
 
       const userResponse = await this.userService.refreshTokens(
         refreshTokensRequest
