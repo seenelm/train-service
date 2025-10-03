@@ -9,6 +9,7 @@ import {
   ProfileAccess,
 } from "@seenelm/train-core";
 import { Types, Model } from "mongoose";
+import { Logger } from "../../../../common/logger.js";
 
 export interface ProgramWithWeeks {
   _id: Types.ObjectId;
@@ -32,6 +33,7 @@ export interface IProgramRepository
   toResponse(program: Program): ProgramResponse;
   getUserProgramsWithWeeks(userId: Types.ObjectId): Promise<ProgramWithWeeks[]>;
   toResponseWithWeeks(program: ProgramWithWeeks): ProgramResponse;
+  getProgramById(programId: Types.ObjectId): Promise<ProgramWithWeeks | null>;
 }
 
 export default class ProgramRepository
@@ -39,10 +41,12 @@ export default class ProgramRepository
   implements IProgramRepository
 {
   private programModel: Model<ProgramDocument>;
+  private logger: Logger;
 
   constructor(programModel: Model<ProgramDocument>) {
     super(programModel);
     this.programModel = programModel;
+    this.logger = Logger.getInstance();
   }
 
   toEntity(doc: ProgramDocument): Program {
@@ -110,6 +114,65 @@ export default class ProgramRepository
       createdBy: program.createdBy.toString(),
       weeks: program.weeks || [],
     };
+  }
+
+  public async getProgramById(
+    programId: Types.ObjectId
+  ): Promise<ProgramWithWeeks | null> {
+    try {
+      const result = await this.programModel.aggregate<ProgramWithWeeks>([
+        { $match: { _id: programId } },
+        {
+          $lookup: {
+            from: "weeks",
+            localField: "weeks",
+            foreignField: "_id",
+            as: "weekDetails",
+          },
+        },
+        {
+          $project: {
+            _id: 1,
+            name: 1,
+            types: 1,
+            numWeeks: 1,
+            hasNutritionProgram: 1,
+            phases: 1,
+            accessType: 1,
+            admins: 1,
+            members: 1,
+            createdBy: 1,
+            createdAt: 1,
+            updatedAt: 1,
+            weeks: {
+              $map: {
+                input: "$weekDetails",
+                as: "week",
+                in: {
+                  id: { $toString: "$$week._id" },
+                  name: "$$week.name",
+                  description: "$$week.description",
+                  weekNumber: "$$week.weekNumber",
+                },
+              },
+            },
+          },
+        },
+        { $limit: 1 },
+      ]);
+
+      if (result.length === 0) {
+        return null;
+      }
+
+      return result[0];
+    } catch (error) {
+      this.logger.error(
+        "Error finding week with meals using aggregate: ",
+        error
+      );
+      throw error;
+    }
   }
 
   async getUserProgramsWithWeeks(

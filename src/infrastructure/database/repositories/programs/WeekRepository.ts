@@ -58,7 +58,8 @@ export interface IWeekRepository extends IBaseRepository<Week, WeekDocument> {
   createWorkoutLog(
     weekId: Types.ObjectId,
     workoutId: Types.ObjectId,
-    workoutLog: WorkoutLog
+    workoutLog: WorkoutLog,
+    workoutIndex: number
   ): Promise<WorkoutLog | null>;
   findWeek(weekId: Types.ObjectId): Promise<AggregatedWeek | null>;
   createNote(note: Notes, weekId: Types.ObjectId): Promise<Notes | null>;
@@ -110,6 +111,7 @@ export default class WeekRepository
   toNoteDocument(noteRequest: NotesRequest): Notes {
     return {
       ...noteRequest,
+      createdBy: new Types.ObjectId(noteRequest.createdBy),
     };
   }
 
@@ -143,14 +145,42 @@ export default class WeekRepository
 
   toWorkoutLogResponse(workoutLog: WorkoutLog): WorkoutLogResponse {
     return {
-      ...workoutLog,
       id: workoutLog._id?.toString() || "",
       userId: workoutLog.userId.toString(),
       workoutId: workoutLog.workoutId.toString(),
+      versionId: workoutLog.versionId,
       workoutSnapshot: {
-        ...workoutLog.workoutSnapshot,
+        name: workoutLog.workoutSnapshot.name,
+        description: workoutLog.workoutSnapshot.description,
+        category: workoutLog.workoutSnapshot.category,
+        difficulty: workoutLog.workoutSnapshot.difficulty,
+        duration: workoutLog.workoutSnapshot.duration,
+        accessType: workoutLog.workoutSnapshot.accessType,
         createdBy: workoutLog.workoutSnapshot.createdBy.toString(),
+        startDate: workoutLog.workoutSnapshot.startDate,
+        endDate: workoutLog.workoutSnapshot.endDate,
+        blockSnapshot: workoutLog.workoutSnapshot.blockSnapshot,
       },
+      blockLogs:
+        workoutLog.blockLogs?.map((blockLog) => ({
+          actualRestBetweenExercisesSec: blockLog.actualRestBetweenExercisesSec,
+          actualRestAfterBlockSec: blockLog.actualRestAfterBlockSec,
+          exerciseLogs: blockLog.exerciseLogs.map((exerciseLog) => ({
+            name: exerciseLog.name,
+            actualSets: exerciseLog.actualSets,
+            actualReps: exerciseLog.actualReps,
+            actualDurationSec: exerciseLog.actualDurationSec,
+            actualWeight: exerciseLog.actualWeight,
+            isCompleted: exerciseLog.isCompleted,
+            order: exerciseLog.order,
+          })),
+          order: blockLog.order,
+          isCompleted: blockLog.isCompleted,
+        })) || [],
+      actualDuration: workoutLog.actualDuration,
+      actualStartDate: workoutLog.actualStartDate,
+      actualEndDate: workoutLog.actualEndDate,
+      isCompleted: workoutLog.isCompleted,
     };
   }
 
@@ -202,6 +232,7 @@ export default class WeekRepository
   toNotesResponse(notes: Notes): NotesResponse {
     return {
       id: notes._id?.toString() || "",
+      createdBy: notes.createdBy.toString(),
       title: notes.title,
       content: notes.content,
       startDate: notes.startDate,
@@ -260,34 +291,45 @@ export default class WeekRepository
   async createWorkoutLog(
     weekId: Types.ObjectId,
     workoutId: Types.ObjectId,
-    workoutLog: WorkoutLog
+    workoutLog: WorkoutLog,
+    workoutIndex: number
   ): Promise<WorkoutLog | null> {
     try {
-      const updatedWeek = await this.weekModel.findByIdAndUpdate(
+      const updatedWeek = await this.weekModel.findOneAndUpdate(
+        { _id: weekId },
         {
-          _id: weekId,
-          "workouts._id": workoutId,
-        },
-        {
-          $push: { "workouts.$.workoutLogs": workoutLog },
+          $push: {
+            [`workouts.${workoutIndex}.workoutLogs`]: workoutLog,
+          },
         },
         { new: true }
       );
 
       if (!updatedWeek) {
+        this.logger.error("Failed to update week with workout log", {
+          weekId: weekId.toString(),
+          workoutId: workoutId.toString(),
+          workoutIndex,
+        });
         return null;
       }
 
-      const workout = (updatedWeek as WeekDocument).workouts.find(
-        (w: Workout) => w._id?.toString() === workoutId.toString()
-      );
-      if (!workout || !workout.workoutLogs) {
+      const updatedWorkout = (updatedWeek as WeekDocument).workouts[
+        workoutIndex
+      ];
+      if (!updatedWorkout || !updatedWorkout.workoutLogs) {
+        this.logger.error("Workout or workoutLogs not found after update", {
+          weekId: weekId.toString(),
+          workoutId: workoutId.toString(),
+          workoutIndex,
+        });
         return null;
       }
 
       const lastWorkoutLog =
-        workout.workoutLogs[workout.workoutLogs.length - 1];
-      return lastWorkoutLog as WorkoutLog;
+        updatedWorkout.workoutLogs[updatedWorkout.workoutLogs.length - 1];
+
+      return lastWorkoutLog;
     } catch (error) {
       this.logger.error("Error creating workout log: ", error);
       throw error;

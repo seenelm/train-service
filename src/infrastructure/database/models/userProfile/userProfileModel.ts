@@ -7,7 +7,6 @@ import {
   StatsItem,
 } from "@seenelm/train-core";
 
-// Social media link interface
 export interface SocialLink {
   platform: SocialPlatform;
   url: string;

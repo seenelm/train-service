@@ -46,6 +46,21 @@ export default class ProgramController {
     }
   };
 
+  public getProgramById = async (
+    req: Request,
+    res: Response,
+    next: NextFunction
+  ) => {
+    try {
+      const programId = new Types.ObjectId(req.params.programId);
+      const programResponse: ProgramResponse =
+        await this.programService.getProgramById(programId);
+      return res.status(HttpStatusCode.OK).json(programResponse);
+    } catch (error) {
+      next(error);
+    }
+  };
+
   public getUserPrograms = async (
     req: Request,
     res: Response,

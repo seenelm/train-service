@@ -411,6 +411,7 @@ const WorkoutSchema = new Schema(
 
 export interface Notes {
   _id?: Types.ObjectId;
+  createdBy: Types.ObjectId;
   title: string;
   content: string;
   startDate: Date;
@@ -421,6 +422,11 @@ export interface Notes {
 
 const NotesSchema = new Schema(
   {
+    createdBy: {
+      type: Types.ObjectId,
+      ref: "User",
+      required: true,
+    },
     title: { type: String, required: true },
     content: { type: String, required: true },
     startDate: { type: Date, required: true },

@@ -57,7 +57,10 @@ export interface IUserService {
   ): Promise<RefreshTokenResponse>;
   requestPasswordReset(request: RequestPasswordResetRequest): Promise<void>;
   resetPasswordWithCode(request: ResetPasswordWithCodeRequest): Promise<void>;
-  logoutUser(logoutRequest: LogoutRequest): Promise<void>;
+  logoutUser(
+    userId: Types.ObjectId,
+    logoutRequest: LogoutRequest
+  ): Promise<void>;
   expireRefreshToken(refreshTokenRequest: RefreshTokenRequest): Promise<void>;
   getResetCode(userId: string): Promise<string | null>;
 }
@@ -539,12 +542,16 @@ export default class UserService implements IUserService {
     }
   }
 
-  public async logoutUser(logoutRequest: LogoutRequest): Promise<void> {
+  public async logoutUser(
+    userId: Types.ObjectId,
+    logoutRequest: LogoutRequest
+  ): Promise<void> {
     const { refreshToken, deviceId } = logoutRequest;
 
     try {
       const result = await this.userRepository.findOneAndUpdate(
         {
+          _id: userId,
           "refreshTokens.token": refreshToken,
           "refreshTokens.deviceId": deviceId,
         },
@@ -552,8 +559,7 @@ export default class UserService implements IUserService {
           $pull: {
             refreshTokens: { token: refreshToken, deviceId },
           },
-        },
-        { new: false }
+        }
       );
 
       if (!result) {

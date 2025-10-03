@@ -24,9 +24,11 @@ import { IWeekRepository } from "../../infrastructure/database/repositories/prog
 import mongoose from "mongoose";
 import { ClientSession } from "mongoose";
 import { IMealRepository } from "../../infrastructure/database/repositories/programs/MealRepository.js";
+import { Workout } from "../../infrastructure/database/models/programs/weekModel.js";
 
 export interface IProgramService {
   createProgram(programRequest: ProgramRequest): Promise<ProgramResponse>;
+  getProgramById(programId: Types.ObjectId): Promise<ProgramResponse>;
   getUserPrograms(userId: Types.ObjectId): Promise<ProgramResponse[]>;
   createWorkout(
     weekId: Types.ObjectId,
@@ -93,6 +95,27 @@ export default class ProgramService implements IProgramService {
     this.weekRepository = weekRepository;
     this.mealRepository = mealRepository;
     this.logger = Logger.getInstance();
+  }
+
+  public async getProgramById(
+    programId: Types.ObjectId
+  ): Promise<ProgramResponse> {
+    try {
+      const program = await this.programRepository.getProgramById(programId);
+
+      if (!program) {
+        throw APIError.NotFound("Program not found");
+      }
+
+      return this.programRepository.toResponseWithWeeks(program);
+    } catch (error) {
+      this.logger.error("Error getting program by id: ", error);
+      if (error instanceof MongooseError || error instanceof MongoServerError) {
+        throw DatabaseError.handleMongoDBError(error);
+      } else {
+        throw APIError.InternalServerError("Failed to get program by id");
+      }
+    }
   }
 
   public async createProgram(
@@ -474,13 +497,35 @@ export default class ProgramService implements IProgramService {
     workoutLogRequest: WorkoutLogRequest
   ): Promise<WorkoutLogResponse> {
     try {
-      const workoutLog = this.weekRepository.toWorkoutLog(workoutLogRequest);
       const workoutId = new Types.ObjectId(workoutLogRequest.workoutId);
+
+      const week = await this.weekRepository.findById(weekId);
+      if (!week) {
+        this.logger.error("Week not found", { weekId: weekId.toString() });
+        throw APIError.NotFound("Week not found");
+      }
+
+      const workouts = week.getWorkouts();
+      const workoutIndex = workouts.findIndex(
+        (w: Workout) => w._id?.toString() === workoutId.toString()
+      );
+
+      if (workoutIndex === -1) {
+        this.logger.error("Workout not found in week", {
+          weekId: weekId.toString(),
+          workoutId: workoutId.toString(),
+          availableWorkoutIds: workouts.map((w) => w._id?.toString()),
+        });
+        throw APIError.NotFound("Workout not found in the specified week");
+      }
+
+      const workoutLog = this.weekRepository.toWorkoutLog(workoutLogRequest);
 
       const createdWorkoutLog = await this.weekRepository.createWorkoutLog(
         weekId,
         workoutId,
-        workoutLog
+        workoutLog,
+        workoutIndex
       );
 
       if (!createdWorkoutLog) {

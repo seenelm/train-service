@@ -14,6 +14,7 @@ import UserMiddleware from "../app/user/UserMiddleware.js";
 import PasswordResetRepository from "../infrastructure/database/repositories/user/PasswordResetRepository.js";
 import { PasswordResetModel } from "../infrastructure/database/models/user/passwordResetModel.js";
 import EmailService from "../infrastructure/EmailService.js";
+import { AuthMiddleware } from "../common/middleware/AuthMiddleware.js";
 
 /**
  * @swagger
@@ -25,6 +26,7 @@ import EmailService from "../infrastructure/EmailService.js";
 const router = Router();
 
 const userMiddleware = new UserMiddleware();
+const authMiddleware = new AuthMiddleware(new UserRepository(UserModel));
 
 const userService = new UserService(
   new UserRepository(UserModel),
@@ -351,7 +353,7 @@ router.post(
  *             schema:
  *               $ref: '#/components/schemas/Error'
  */
-router.post("/logout", userMiddleware.validateLogout, userController.logout);
+router.post("/logout", authMiddleware.authenticateToken, userController.logout);
 
 /**
  * @swagger

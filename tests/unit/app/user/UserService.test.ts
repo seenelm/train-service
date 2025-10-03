@@ -648,7 +648,7 @@ describe("UserService", () => {
       vi.spyOn(mockUserRepository, "findOneAndUpdate").mockResolvedValue(user);
 
       // Act
-      await userService.logoutUser(logoutRequest);
+      await userService.logoutUser(user.getId(), logoutRequest);
 
       // Assert
       expect(mockUserRepository.findOneAndUpdate).toHaveBeenCalledWith(
@@ -670,17 +670,19 @@ describe("UserService", () => {
     it("should throw 404 error if user is not found", async () => {
       // Arrange
       const logoutRequest = UserTestFixture.createLogoutRequest();
+      const user = UserTestFixture.createUserEntity();
       vi.spyOn(mockUserRepository, "findOneAndUpdate").mockResolvedValue(null);
 
       // Act & Assert
-      await expect(userService.logoutUser(logoutRequest)).rejects.toThrowError(
-        APIError.NotFound(APIErrorType.UserNotFound)
-      );
+      await expect(
+        userService.logoutUser(user.getId(), logoutRequest)
+      ).rejects.toThrowError(APIError.NotFound(APIErrorType.UserNotFound));
     });
 
     it("should handle database errors", async () => {
       // Arrange
       const logoutRequest = UserTestFixture.createLogoutRequest();
+      const user = UserTestFixture.createUserEntity();
       const dbError = new MongooseError.DocumentNotFoundError("User not found");
 
       vi.spyOn(mockUserRepository, "findOneAndUpdate").mockRejectedValueOnce(
@@ -688,9 +690,9 @@ describe("UserService", () => {
       );
 
       // Act & Assert
-      await expect(userService.logoutUser(logoutRequest)).rejects.toThrowError(
-        DatabaseError.handleMongoDBError(dbError)
-      );
+      await expect(
+        userService.logoutUser(user.getId(), logoutRequest)
+      ).rejects.toThrowError(DatabaseError.handleMongoDBError(dbError));
     });
   });
 

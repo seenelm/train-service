@@ -40,14 +40,14 @@ const exerciseLogSchema = z.object({
   actualDurationSec: z.number().int().optional(),
   actualWeight: z.number().int().optional(),
   isCompleted: z.boolean(),
-  order: z.number().int().min(1),
+  order: z.number().int(),
 });
 
 export const blockLogSchema = z.object({
   actualRestBetweenExercisesSec: z.number().int().optional(),
   actualRestAfterBlockSec: z.number().int().optional(),
   exerciseLogs: z.array(exerciseLogSchema),
-  order: z.number().int().min(1),
+  order: z.number().int(),
   isCompleted: z.boolean(),
 });
 
@@ -104,6 +104,14 @@ const ingredientSchema = z.object({
   }),
 });
 
+const ingredientSnapshotSchema = z.object({
+  name: z.string().transform((val) => val.trim()),
+  portionSnapshot: z.object({
+    amount: z.number().int(),
+    unit: z.enum(Object.values(Unit) as [string, ...string[]]),
+  }),
+});
+
 export const mealRequestSchema = z.object({
   createdBy: z.string(),
   mealName: z.string().transform((val) => val.trim()),
@@ -114,28 +122,52 @@ export const mealRequestSchema = z.object({
   endDate: z.union([z.date(), z.string().transform((val) => new Date(val))]),
 });
 
+export const mealSnapshotSchema = z.object({
+  createdBy: z.string(),
+  mealName: z.string().transform((val) => val.trim()),
+  macrosSnapshot: macrosSchema.optional(),
+  ingredientSnapshot: z.array(ingredientSnapshotSchema).optional(),
+  instructions: z.string().optional(),
+  startDate: z.union([z.date(), z.string().transform((val) => new Date(val))]),
+  endDate: z.union([z.date(), z.string().transform((val) => new Date(val))]),
+});
+
+export const workoutSnapshotSchema = z.object({
+  name: z.string().transform((val) => val.trim()),
+  description: z
+    .string()
+    .optional()
+    .transform((val) => val?.trim()),
+  category: z.array(z.string()).optional(),
+  difficulty: z
+    .enum(Object.values(WorkoutDifficulty) as [string, ...string[]])
+    .optional(),
+  duration: z.number().int().optional(),
+  blocks: z.array(blockSchema),
+  accessType: z.union([
+    z.literal(ProfileAccess.Public),
+    z.literal(ProfileAccess.Private),
+  ]),
+  createdBy: z.string(),
+  startDate: z.union([z.date(), z.string().transform((val) => new Date(val))]),
+  endDate: z.union([z.date(), z.string().transform((val) => new Date(val))]),
+});
+
 export const workoutLogRequestSchema = z.object({
   userId: z.string(),
   workoutId: z.string(),
   versionId: z.number().int(),
-  workoutSnapshot: z.object({
-    name: z.string().transform((val) => val.trim()),
-    description: z.string().optional(),
-    category: z.array(z.string().min(1, "Category cannot be empty")).optional(),
-    difficulty: z
-      .enum(Object.values(WorkoutDifficulty) as [string, ...string[]])
-      .optional(),
-    duration: z.number().int().optional(),
-    blockSnapshot: z.array(blockSchema),
-    accessType: z.enum(ProfileAccess),
-    createdBy: z.string(),
-    startDate: z.date(),
-    endDate: z.date(),
-  }),
+  workoutSnapshot: workoutSnapshotSchema,
   blockLogs: z.array(blockLogSchema).optional(),
   actualDuration: z.number().int(),
-  actualStartDate: z.date(),
-  actualEndDate: z.date(),
+  actualStartDate: z.union([
+    z.date(),
+    z.string().transform((val) => new Date(val)),
+  ]),
+  actualEndDate: z.union([
+    z.date(),
+    z.string().transform((val) => new Date(val)),
+  ]),
   isCompleted: z.boolean(),
 });
 
@@ -143,52 +175,23 @@ export const mealLogRequestSchema = z.object({
   versionId: z.number().int(),
   userId: z.string(),
   mealId: z.string(),
-  mealSnapshot: z.object({
-    createdBy: z.string(),
-    mealName: z.string().transform((val) => val.trim()),
-    macrosSnapshot: z.object({
-      protein: z.number().int(),
-      carbs: z.number().int(),
-      fats: z.number().int(),
-    }),
-    ingredientSnapshot: z.array(
-      z.object({
-        name: z.string().transform((val) => val.trim()),
-        portionSnapshot: z.object({
-          amount: z.number().int(),
-          unit: z.enum(Object.values(Unit) as [string, ...string[]]),
-        }),
-      })
-    ),
-    instructions: z.string().optional(),
-    startDate: z.date(),
-    endDate: z.date(),
-  }),
-  actualMacros: z
-    .object({
-      protein: z.number().int(),
-      carbs: z.number().int(),
-      fats: z.number().int(),
-    })
-    .optional(),
-  actualIngredients: z
-    .array(
-      z.object({
-        name: z.string().transform((val) => val.trim()),
-        portion: z.object({
-          amount: z.number().int(),
-          unit: z.enum(Object.values(Unit) as [string, ...string[]]),
-        }),
-      })
-    )
-    .optional(),
+  mealSnapshot: mealSnapshotSchema,
+  actualMacros: macrosSchema.optional(),
+  actualIngredients: z.array(ingredientSchema).optional(),
   notes: z.string().optional(),
   isCompleted: z.boolean(),
-  actualStartDate: z.date(),
-  actualEndDate: z.date(),
+  actualStartDate: z.union([
+    z.date(),
+    z.string().transform((val) => new Date(val)),
+  ]),
+  actualEndDate: z.union([
+    z.date(),
+    z.string().transform((val) => new Date(val)),
+  ]),
 });
 
 export const noteRequestSchema = z.object({
+  createdBy: z.string(),
   title: z.string().transform((val) => val.trim()),
   content: z.string().transform((val) => val.trim()),
   startDate: z.union([z.date(), z.string().transform((val) => new Date(val))]),

@@ -12,6 +12,7 @@ import {
 } from "@seenelm/train-core";
 import { StatusCodes as HttpStatusCode } from "http-status-codes";
 import { Logger } from "../../common/logger.js";
+import { AuthError } from "../../common/errors/AuthError.js";
 
 export default class UserController {
   private userService: IUserService;
@@ -132,12 +133,11 @@ export default class UserController {
   public logout = async (req: Request, res: Response, next: NextFunction) => {
     try {
       const logoutRequest = req.body as LogoutRequest;
+      const userId = req.user.getId();
 
-      await this.userService.logoutUser(logoutRequest);
+      await this.userService.logoutUser(userId, logoutRequest);
 
-      return res.status(HttpStatusCode.OK).json({
-        message: "User logged out successfully",
-      });
+      return res.status(HttpStatusCode.OK).json({ success: true });
     } catch (error) {
       next(error);
     }

@@ -83,8 +83,8 @@ export interface MealDocument extends Document {
 export interface MealSnapshot {
   createdBy: Types.ObjectId;
   mealName: string;
-  macrosSnapshot: MacrosSnapshot;
-  ingredientSnapshot: IngredientSnapshot[];
+  macrosSnapshot?: MacrosSnapshot;
+  ingredientSnapshot?: IngredientSnapshot[];
   instructions?: string;
   startDate: Date;
   endDate: Date;
@@ -136,11 +136,11 @@ const MealSnapshotSchema = new Schema(
     },
     macrosSnapshot: {
       type: MacrosSnapshotSchema,
-      required: true,
+      required: false,
     },
     ingredientSnapshot: {
       type: [IngredientSnapshotSchema],
-      required: true,
+      required: false,
     },
     instructions: {
       type: String,
