@@ -2785,139 +2785,41 @@ router.get(
  *                 id:
  *                   type: string
  *                   example: "507f1f77bcf86cd799439012"
+ *                 name:
+ *                   type: string
+ *                   example: "Week 1 - Foundation"
+ *                 description:
+ *                   type: string
+ *                   example: "Building strength and endurance"
  *                 weekNumber:
  *                   type: number
  *                   example: 1
  *                 workouts:
  *                   type: array
  *                   items:
- *                     type: object
- *                     properties:
- *                       id:
- *                         type: string
- *                         example: "507f1f77bcf86cd799439013"
- *                       name:
- *                         type: string
- *                         example: "Upper Body Strength"
- *                       description:
- *                         type: string
- *                         example: "Focus on upper body muscle groups"
- *                       category:
- *                         type: array
- *                         items:
- *                           type: string
- *                         example: ["strength", "upper-body"]
- *                       difficulty:
- *                         type: string
- *                         example: "intermediate"
- *                       duration:
- *                         type: number
- *                         example: 60
- *                       blocks:
- *                         type: array
- *                         description: Workout blocks/exercises
- *                       accessType:
- *                         type: string
- *                         example: "0"
- *                       createdBy:
- *                         type: string
- *                         example: "507f1f77bcf86cd799439011"
- *                       startDate:
- *                         type: string
- *                         format: date-time
- *                         example: "2024-01-15T09:00:00Z"
- *                       endDate:
- *                         type: string
- *                         format: date-time
- *                         example: "2024-01-15T10:00:00Z"
+ *                     type: string
+ *                   description: Array of workout ObjectId strings
+ *                   example: ["507f1f77bcf86cd799439013", "507f1f77bcf86cd799439014"]
  *                 meals:
  *                   type: array
- *                   description: Array of meal responses
  *                   items:
- *                     type: object
- *                     properties:
- *                       id:
- *                         type: string
- *                         example: "507f1f77bcf86cd799439014"
- *                       versionId:
- *                         type: number
- *                         example: 1
- *                       createdBy:
- *                         type: string
- *                         example: "507f1f77bcf86cd799439011"
- *                       mealName:
- *                         type: string
- *                         example: "Grilled Chicken Breast"
- *                       macros:
- *                         type: object
- *                         properties:
- *                           protein:
- *                             type: number
- *                             example: 30
- *                           carbs:
- *                             type: number
- *                             example: 5
- *                           fats:
- *                             type: number
- *                             example: 8
- *                       ingredients:
- *                         type: array
- *                         items:
- *                           type: object
- *                           properties:
- *                             name:
- *                               type: string
- *                               example: "Chicken Breast"
- *                             portion:
- *                               type: object
- *                               properties:
- *                                 amount:
- *                                   type: number
- *                                   example: 200
- *                                 unit:
- *                                   type: string
- *                                   example: "g"
- *                       instructions:
- *                         type: string
- *                         example: "Season chicken with salt and pepper, grill for 6-7 minutes per side"
- *                       startDate:
- *                         type: string
- *                         format: date-time
- *                         example: "2024-01-15T12:00:00Z"
- *                       endDate:
- *                         type: string
- *                         format: date-time
- *                         example: "2024-01-15T13:00:00Z"
+ *                     type: string
+ *                   description: Array of meal ObjectId strings
+ *                   example: ["507f1f77bcf86cd799439015", "507f1f77bcf86cd799439016"]
  *                 notes:
  *                   type: array
  *                   items:
- *                     type: object
- *                     properties:
- *                       id:
- *                         type: string
- *                         example: "507f1f77bcf86cd799439016"
- *                       title:
- *                         type: string
- *                         example: "Week 1 Notes"
- *                       content:
- *                         type: string
- *                         example: "Focus on proper form and technique"
- *                       startDate:
- *                         type: string
- *                         format: date-time
- *                         example: "2024-01-15T00:00:00Z"
- *                       endDate:
- *                         type: string
- *                         format: date-time
- *                         example: "2024-01-21T23:59:59Z"
+ *                     type: string
+ *                   description: Array of note ObjectId strings
+ *                   example: ["507f1f77bcf86cd799439017", "507f1f77bcf86cd799439018"]
  *                 startDate:
  *                   type: string
- *                   format: date-time
- *                   example: "2024-01-15T00:00:00Z"
+ *                   format: date
+ *                   example: "2024-01-15"
  *                 endDate:
  *                   type: string
- *                   format: date-time
- *                   example: "2024-01-21T23:59:59Z"
+ *                   format: date
+ *                   example: "2024-01-21"
  *       401:
  *         description: Unauthorized
  *       403:
