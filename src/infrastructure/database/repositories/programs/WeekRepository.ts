@@ -34,9 +34,9 @@ export interface AggregatedWeek {
   name?: string;
   description?: string;
   weekNumber: number;
-  workouts: Workout[];
-  meals?: AggregatedMeal[];
-  notes?: Notes[];
+  workouts: Types.ObjectId[];
+  meals?: Types.ObjectId[];
+  notes?: Types.ObjectId[];
   startDate: Date;
   endDate: Date;
   createdAt?: Date;
@@ -44,7 +44,6 @@ export interface AggregatedWeek {
 }
 
 export interface IWeekRepository extends IBaseRepository<Week, WeekDocument> {
-  toResponse(week: Week): WeekResponse;
   toWorkoutResponse(workout: Workout): WorkoutResponse;
   toNotesResponse(notes: Notes): NotesResponse;
   toWeekResponse(week: AggregatedWeek): WeekResponse;
@@ -115,19 +114,6 @@ export default class WeekRepository
     };
   }
 
-  toResponse(week: Week): WeekResponse {
-    return {
-      id: week.getId().toString(),
-      weekNumber: week.getWeekNumber(),
-      workouts:
-        week.getWorkouts()?.map((workout) => this.toWorkoutResponse(workout)) ||
-        [],
-      meals: [],
-      notes: week.getNotes()?.map((notes) => this.toNotesResponse(notes)) || [],
-      startDate: week.getStartDate(),
-      endDate: week.getEndDate(),
-    };
-  }
   toWorkoutLog(workoutLogRequest: WorkoutLogRequest): WorkoutLog {
     return {
       ...workoutLogRequest,
@@ -190,9 +176,9 @@ export default class WeekRepository
       name: week.name,
       description: week.description,
       weekNumber: week.weekNumber,
-      workouts: week.workouts.map((workout) => this.toWorkoutResponse(workout)),
-      meals: week.meals?.map((meal) => this.toMealResponse(meal)) || [],
-      notes: week.notes?.map((notes) => this.toNotesResponse(notes)) || [],
+      workouts: week.workouts.map((workout) => workout.toString()),
+      meals: week.meals?.map((meal) => meal.toString()) || [],
+      notes: week.notes?.map((notes) => notes.toString()) || [],
       startDate: week.startDate,
       endDate: week.endDate,
     };
@@ -248,8 +234,8 @@ export default class WeekRepository
       const workoutDocument = {
         ...workout,
         createdBy: new Types.ObjectId(workout.createdBy),
-        versionId: 1, // Default version for new workouts
-        blocks: workout.blocks || [], // Ensure blocks is always an array even if not provided
+        versionId: 1,
+        blocks: workout.blocks || [],
       };
 
       const updatedWeek = await this.weekModel.findByIdAndUpdate(
@@ -341,11 +327,18 @@ export default class WeekRepository
       const result = await this.weekModel.aggregate<AggregatedWeek>([
         { $match: { _id: weekId } },
         {
-          $lookup: {
-            from: "meals",
-            localField: "meals",
-            foreignField: "_id",
-            as: "meals",
+          $project: {
+            _id: 1,
+            name: 1,
+            description: 1,
+            weekNumber: 1,
+            workouts: 1,
+            meals: 1,
+            notes: 1,
+            startDate: 1,
+            endDate: 1,
+            createdAt: 1,
+            updatedAt: 1,
           },
         },
         { $limit: 1 },
@@ -357,10 +350,7 @@ export default class WeekRepository
 
       return result[0];
     } catch (error) {
-      this.logger.error(
-        "Error finding week with meals using aggregate: ",
-        error
-      );
+      this.logger.error("Error finding week: ", error);
       throw error;
     }
   }

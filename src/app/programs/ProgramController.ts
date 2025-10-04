@@ -135,6 +135,24 @@ export default class ProgramController {
     }
   };
 
+  public getWorkoutById = async (
+    req: Request,
+    res: Response,
+    next: NextFunction
+  ) => {
+    try {
+      const weekId = new Types.ObjectId(req.params.weekId);
+      const workoutId = new Types.ObjectId(req.params.workoutId);
+
+      const workoutResponse: WorkoutResponse =
+        await this.programService.getWorkoutById(weekId, workoutId);
+
+      return res.status(HttpStatusCode.OK).json(workoutResponse);
+    } catch (error) {
+      next(error);
+    }
+  };
+
   public createMeal = async (
     req: Request,
     res: Response,

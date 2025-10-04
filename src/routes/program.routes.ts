@@ -959,6 +959,137 @@ router.delete(
 
 /**
  * @swagger
+ * /program/{programId}/week/{weekId}/workout/{workoutId}:
+ *   get:
+ *     tags: [Programs]
+ *     summary: Get a workout by ID
+ *     description: Retrieves a specific workout from a program week. Only program administrators or members can access this resource.
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: programId
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: Program ID
+ *         example: "507f1f77bcf86cd799439011"
+ *       - in: path
+ *         name: weekId
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: Week ID
+ *         example: "507f1f77bcf86cd799439012"
+ *       - in: path
+ *         name: workoutId
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: Workout ID
+ *         example: "507f1f77bcf86cd799439013"
+ *     responses:
+ *       200:
+ *         description: Workout retrieved successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 id:
+ *                   type: string
+ *                   example: "507f1f77bcf86cd799439013"
+ *                 name:
+ *                   type: string
+ *                   example: "Upper Body Strength"
+ *                 description:
+ *                   type: string
+ *                   example: "Focus on chest, back, and arms"
+ *                 category:
+ *                   type: string
+ *                   example: "strength"
+ *                 difficulty:
+ *                   type: string
+ *                   enum: ["beginner", "intermediate", "advanced"]
+ *                   example: "intermediate"
+ *                 duration:
+ *                   type: number
+ *                   example: 60
+ *                 blocks:
+ *                   type: array
+ *                   items:
+ *                     type: object
+ *                     properties:
+ *                       type:
+ *                         type: string
+ *                         enum: ["single", "superset", "cluster", "circuit", "giant set", "every minute on the minute", "as many reps/rounds as possible"]
+ *                         example: "single"
+ *                       name:
+ *                         type: string
+ *                         example: "Chest Press"
+ *                       exercises:
+ *                         type: array
+ *                         items:
+ *                           type: object
+ *                           properties:
+ *                             name:
+ *                               type: string
+ *                               example: "Bench Press"
+ *                             sets:
+ *                               type: number
+ *                               example: 3
+ *                             reps:
+ *                               type: number
+ *                               example: 10
+ *                             durationSec:
+ *                               type: number
+ *                               example: 60
+ *                             weight:
+ *                               type: number
+ *                               example: 135
+ *                             order:
+ *                               type: number
+ *                               example: 1
+ *                       order:
+ *                         type: number
+ *                         example: 1
+ *                 accessType:
+ *                   type: number
+ *                   enum: [1, 2]
+ *                   example: 1
+ *                 createdBy:
+ *                   type: string
+ *                   example: "507f1f77bcf86cd799439011"
+ *                 startDate:
+ *                   type: string
+ *                   format: date
+ *                   example: "2024-01-15"
+ *                 endDate:
+ *                   type: string
+ *                   format: date
+ *                   example: "2024-01-21"
+ *                 versionId:
+ *                   type: number
+ *                   example: 1
+ *       400:
+ *         description: Bad request - invalid parameters
+ *       401:
+ *         description: Unauthorized - invalid or missing token
+ *       403:
+ *         description: Forbidden - user is not authorized to access this resource
+ *       404:
+ *         description: Program, week, or workout not found
+ *       500:
+ *         description: Internal server error
+ */
+router.get(
+  "/:programId/week/:weekId/workout/:workoutId",
+  authMiddleware.authenticateToken,
+  programController.getWorkoutById
+);
+
+/**
+ * @swagger
  * /program/{programId}/week/{weekId}/meal:
  *   post:
  *     tags: [Programs]

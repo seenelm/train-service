@@ -30,6 +30,10 @@ export interface IProgramService {
   createProgram(programRequest: ProgramRequest): Promise<ProgramResponse>;
   getProgramById(programId: Types.ObjectId): Promise<ProgramResponse>;
   getUserPrograms(userId: Types.ObjectId): Promise<ProgramResponse[]>;
+  getWorkoutById(
+    weekId: Types.ObjectId,
+    workoutId: Types.ObjectId
+  ): Promise<WorkoutResponse>;
   createWorkout(
     weekId: Types.ObjectId,
     workoutRequest: WorkoutRequest
@@ -356,6 +360,42 @@ export default class ProgramService implements IProgramService {
         throw DatabaseError.handleMongoDBError(error);
       } else {
         throw APIError.InternalServerError("Failed to delete workout");
+      }
+    }
+  }
+
+  public async getWorkoutById(
+    weekId: Types.ObjectId,
+    workoutId: Types.ObjectId
+  ): Promise<WorkoutResponse> {
+    try {
+      const week = await this.weekRepository.findById(weekId);
+
+      if (!week) {
+        throw APIError.NotFound("Week not found");
+      }
+
+      const workout = week
+        .getWorkouts()
+        .find((w) => w._id?.toString() === workoutId.toString());
+
+      if (!workout) {
+        throw APIError.NotFound("Workout not found");
+      }
+
+      return this.weekRepository.toWorkoutResponse(workout);
+    } catch (error) {
+      this.logger.error("Error getting workout by id: ", error);
+
+      if (error instanceof APIError) {
+        throw error;
+      } else if (
+        error instanceof MongooseError ||
+        error instanceof MongoServerError
+      ) {
+        throw DatabaseError.handleMongoDBError(error);
+      } else {
+        throw APIError.InternalServerError("Failed to get workout");
       }
     }
   }
