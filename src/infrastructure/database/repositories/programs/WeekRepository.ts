@@ -332,9 +332,11 @@ export default class WeekRepository
             name: 1,
             description: 1,
             weekNumber: 1,
-            workouts: 1,
+            workouts: {
+              $map: { input: "$workouts", as: "workout", in: "$$workout._id" },
+            },
             meals: 1,
-            notes: 1,
+            notes: { $map: { input: "$notes", as: "note", in: "$$note._id" } },
             startDate: 1,
             endDate: 1,
             createdAt: 1,

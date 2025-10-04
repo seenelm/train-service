@@ -146,11 +146,7 @@ const programMiddleware = new ProgramMiddleware(
  *       500:
  *         description: Internal server error
  */
-router.get(
-  "/:programId",
-  authMiddleware.authenticateToken,
-  programController.getProgramById
-);
+router.get("/:programId", programController.getProgramById);
 
 /**
  * @swagger
