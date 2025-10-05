@@ -4,6 +4,7 @@ import {
   WorkoutDifficulty,
   BlockType,
   Unit,
+  MeasurementType,
 } from "@seenelm/train-core";
 
 const phaseSchema = z.object({
@@ -14,10 +15,14 @@ const phaseSchema = z.object({
 
 const exerciseSchema = z.object({
   name: z.string(),
-  targetSets: z.number().int().optional(),
+  rest: z.number().int().optional(),
   targetReps: z.number().int().optional(),
   targetDurationSec: z.number().int().optional(),
   targetWeight: z.number().optional(),
+  targetDistance: z.number().optional(),
+  measurementType: z.enum(
+    Object.values(MeasurementType) as [string, ...string[]]
+  ),
   notes: z.string().optional(),
   order: z.number().int(),
 });
@@ -26,25 +31,26 @@ const blockSchema = z.object({
   type: z.enum(Object.values(BlockType) as [string, ...string[]]),
   name: z.string().optional(),
   description: z.string().optional(),
-  restBetweenExercisesSec: z.number().int().optional(),
-  restAfterBlockSec: z.number().int().optional(),
+  rest: z.number().int().optional(),
+  targetSets: z.number().int().optional(),
   exercises: z.array(exerciseSchema),
   order: z.number().int(),
 });
 
 const exerciseLogSchema = z.object({
   name: z.string(),
-  actualSets: z.number().int().optional(),
+  actualRest: z.number().int().optional(),
   actualReps: z.number().int().optional(),
   actualDurationSec: z.number().int().optional(),
   actualWeight: z.number().int().optional(),
+  actualDistance: z.number().int().optional(),
   isCompleted: z.boolean(),
   order: z.number().int(),
 });
 
 export const blockLogSchema = z.object({
-  actualRestBetweenExercisesSec: z.number().int().optional(),
-  actualRestAfterBlockSec: z.number().int().optional(),
+  actualRest: z.number().int().optional(),
+  actualSets: z.number().int().optional(),
   exerciseLogs: z.array(exerciseLogSchema),
   order: z.number().int(),
   isCompleted: z.boolean(),

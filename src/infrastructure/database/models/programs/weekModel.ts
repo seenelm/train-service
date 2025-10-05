@@ -3,16 +3,19 @@ import {
   ProfileAccess,
   BlockType,
   WorkoutDifficulty,
+  MeasurementType,
 } from "@seenelm/train-core";
 
 export interface Exercise {
   name: string;
-  targetSets?: number;
+  rest?: number;
   targetReps?: number;
   targetDurationSec?: number;
   targetWeight?: number;
+  targetDistance?: number;
   notes?: string;
   order: number;
+  measurementType: MeasurementType;
   createdAt?: Date;
   updatedAt?: Date;
 }
@@ -23,7 +26,7 @@ const ExerciseSchema = new Schema(
       type: String,
       required: true,
     },
-    targetSets: {
+    rest: {
       type: Number,
       required: false,
     },
@@ -39,9 +42,18 @@ const ExerciseSchema = new Schema(
       type: Number,
       required: false,
     },
+    targetDistance: {
+      type: Number,
+      required: false,
+    },
     notes: {
       type: String,
       required: false,
+    },
+    measurementType: {
+      type: String,
+      enum: Object.values(MeasurementType),
+      required: true,
     },
     order: {
       type: Number,
@@ -54,9 +66,9 @@ const ExerciseSchema = new Schema(
 export interface Block {
   type: BlockType;
   name?: string;
+  targetSets?: number;
   description?: string;
-  restBetweenExercisesSec?: number;
-  restAfterBlockSec?: number;
+  rest?: number;
   exercises: Exercise[];
   order: number;
   createdAt?: Date;
@@ -65,10 +77,12 @@ export interface Block {
 
 export interface ExerciseSnapshot {
   name: string;
-  targetSets?: number;
+  rest?: number;
   targetReps?: number;
   targetDurationSec?: number;
   targetWeight?: number;
+  targetDistance?: number;
+  measurementType: MeasurementType;
   notes?: string;
   order: number;
 }
@@ -76,10 +90,16 @@ export interface ExerciseSnapshot {
 const ExerciseSnapshotSchema = new Schema(
   {
     name: { type: String, required: true },
-    targetSets: { type: Number, required: false },
+    rest: { type: Number, required: false },
     targetReps: { type: Number, required: false },
     targetDurationSec: { type: Number, required: false },
     targetWeight: { type: Number, required: false },
+    targetDistance: { type: Number, required: false },
+    measurementType: {
+      type: String,
+      enum: Object.values(MeasurementType),
+      required: true,
+    },
     notes: { type: String, required: false },
     order: { type: Number, required: true },
   },
@@ -88,10 +108,11 @@ const ExerciseSnapshotSchema = new Schema(
 
 export interface ExerciseLog {
   name: string;
-  actualSets?: number;
+  actualRest?: number;
   actualReps?: number;
   actualDurationSec?: number;
   actualWeight?: number;
+  actualDistance?: number;
   isCompleted: boolean;
   order: number;
 }
@@ -99,9 +120,9 @@ export interface ExerciseLog {
 export interface BlockSnapshot {
   type: BlockType;
   name?: string;
+  targetSets?: number;
   description?: string;
-  restBetweenExercisesSec?: number;
-  restAfterBlockSec?: number;
+  rest?: number;
   exerciseSnapshot: ExerciseSnapshot[];
   order: number;
 }
@@ -111,8 +132,8 @@ const BlockSnapshotSchema = new Schema(
     type: { type: String, enum: Object.values(BlockType), required: true },
     name: { type: String, required: false },
     description: { type: String, required: false },
-    restBetweenExercisesSec: { type: Number, required: false },
-    restAfterBlockSec: { type: Number, required: false },
+    rest: { type: Number, required: false },
+    targetSets: { type: Number, required: false },
     exerciseSnapshot: { type: [ExerciseSnapshotSchema], required: true },
     order: { type: Number, required: true },
   },
@@ -120,8 +141,8 @@ const BlockSnapshotSchema = new Schema(
 );
 
 export interface BlockLog {
-  actualRestBetweenExercisesSec?: number;
-  actualRestAfterBlockSec?: number;
+  actualRest?: number;
+  actualSets?: number;
   exerciseLogs: ExerciseLog[];
   order: number;
   isCompleted: boolean;
@@ -133,7 +154,7 @@ const ExerciseLogSchema = new Schema(
       type: String,
       required: true,
     },
-    actualSets: {
+    actualRest: {
       type: Number,
       required: false,
     },
@@ -146,6 +167,10 @@ const ExerciseLogSchema = new Schema(
       required: false,
     },
     actualWeight: {
+      type: Number,
+      required: false,
+    },
+    actualDistance: {
       type: Number,
       required: false,
     },
@@ -163,11 +188,11 @@ const ExerciseLogSchema = new Schema(
 
 const BlockLogSchema = new Schema(
   {
-    actualRestBetweenExercisesSec: {
+    actualRest: {
       type: Number,
       required: false,
     },
-    actualRestAfterBlockSec: {
+    actualSets: {
       type: Number,
       required: false,
     },
@@ -202,11 +227,11 @@ const BlockSchema = new Schema(
       type: String,
       required: false,
     },
-    restBetweenExercisesSec: {
+    rest: {
       type: Number,
       required: false,
     },
-    restAfterBlockSec: {
+    targetSets: {
       type: Number,
       required: false,
     },

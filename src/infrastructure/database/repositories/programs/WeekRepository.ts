@@ -149,13 +149,14 @@ export default class WeekRepository
       },
       blockLogs:
         workoutLog.blockLogs?.map((blockLog) => ({
-          actualRestBetweenExercisesSec: blockLog.actualRestBetweenExercisesSec,
-          actualRestAfterBlockSec: blockLog.actualRestAfterBlockSec,
+          actualRest: blockLog.actualRest,
+          actualSets: blockLog.actualSets,
           exerciseLogs: blockLog.exerciseLogs.map((exerciseLog) => ({
             name: exerciseLog.name,
-            actualSets: exerciseLog.actualSets,
+            actualRest: exerciseLog.actualRest,
             actualReps: exerciseLog.actualReps,
             actualDurationSec: exerciseLog.actualDurationSec,
+            actualDistance: exerciseLog.actualDistance,
             actualWeight: exerciseLog.actualWeight,
             isCompleted: exerciseLog.isCompleted,
             order: exerciseLog.order,
