@@ -649,14 +649,14 @@ router.get(
  *                 example: "507f1f77bcf86cd799439011"
  *               startDate:
  *                 type: string
- *                 format: date
- *                 description: Workout start date
- *                 example: "2024-01-15"
+ *                 format: date-time
+ *                 description: Workout start date and time
+ *                 example: "2024-01-15T01:00:00.000Z"
  *               endDate:
  *                 type: string
- *                 format: date
- *                 description: Workout end date
- *                 example: "2024-01-15"
+ *                 format: date-time
+ *                 description: Workout end date and time
+ *                 example: "2024-01-15T02:00:00.000Z"
  *     responses:
  *       201:
  *         description: Workout created successfully

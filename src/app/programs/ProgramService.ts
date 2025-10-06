@@ -355,7 +355,7 @@ export default class ProgramService implements IProgramService {
     try {
       const week = await this.weekRepository.findById(weekId);
 
-      if (!week || !week.getIsActive()) {
+      if (!week) {
         throw APIError.NotFound("Week not found");
       }
 
@@ -400,7 +400,7 @@ export default class ProgramService implements IProgramService {
     try {
       const week = await this.weekRepository.findById(weekId);
 
-      if (!week || !week.getIsActive()) {
+      if (!week) {
         throw APIError.NotFound("Week not found");
       }
 
@@ -434,7 +434,7 @@ export default class ProgramService implements IProgramService {
     try {
       const week = await this.weekRepository.findById(weekId);
 
-      if (!week || !week.getIsActive()) {
+      if (!week) {
         throw APIError.NotFound("Week not found");
       }
 
@@ -473,7 +473,7 @@ export default class ProgramService implements IProgramService {
       session.startTransaction();
       const week = await this.weekRepository.findById(weekId);
 
-      if (!week || !week.getIsActive()) {
+      if (!week) {
         throw APIError.NotFound("Week not found");
       }
 
@@ -516,7 +516,7 @@ export default class ProgramService implements IProgramService {
     try {
       const week = await this.weekRepository.findById(weekId);
 
-      if (!week || !week.getIsActive()) {
+      if (!week) {
         throw APIError.NotFound("Week not found");
       }
 
@@ -557,7 +557,7 @@ export default class ProgramService implements IProgramService {
 
       const week = await this.weekRepository.findById(weekId);
 
-      if (!week || !week.getIsActive()) {
+      if (!week) {
         throw APIError.NotFound("Week not found");
       }
 
@@ -786,7 +786,7 @@ export default class ProgramService implements IProgramService {
     try {
       const week = await this.weekRepository.findById(weekId);
 
-      if (!week || !week.getIsActive()) {
+      if (!week) {
         throw APIError.NotFound("Week not found");
       }
 
@@ -815,7 +815,7 @@ export default class ProgramService implements IProgramService {
     try {
       const week = await this.weekRepository.findById(weekId);
 
-      if (!week || !week.getIsActive()) {
+      if (!week) {
         throw APIError.NotFound("Week not found");
       }
 
@@ -873,7 +873,7 @@ export default class ProgramService implements IProgramService {
     try {
       const week = await this.weekRepository.findById(weekId);
 
-      if (!week || !week.getIsActive()) {
+      if (!week) {
         throw APIError.NotFound("Week not found");
       }
 
@@ -896,7 +896,7 @@ export default class ProgramService implements IProgramService {
     try {
       const week = await this.weekRepository.findById(weekId);
 
-      if (!week || !week.getIsActive()) {
+      if (!week) {
         throw APIError.NotFound("Week not found");
       }
 

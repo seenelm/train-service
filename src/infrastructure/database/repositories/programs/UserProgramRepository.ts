@@ -99,6 +99,8 @@ export default class UserProgramRepository
             ],
           },
         },
+        { $unwind: "$programDetails" },
+        { $replaceRoot: { newRoot: "$programDetails" } },
       ]);
 
       return result;
