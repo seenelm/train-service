@@ -62,6 +62,8 @@ export interface IProgramService {
   ): Promise<void>;
   deleteMeal(weekId: Types.ObjectId, mealId: Types.ObjectId): Promise<void>;
   createWorkoutLog(
+    userId: Types.ObjectId,
+    programId: Types.ObjectId,
     weekId: Types.ObjectId,
     workoutLogRequest: WorkoutLogRequest
   ): Promise<WorkoutLogResponse>;
@@ -70,7 +72,11 @@ export interface IProgramService {
     workoutLogId: Types.ObjectId,
     blockLog: BlockLog
   ): Promise<void>;
-  addMealLog(mealLogRequest: MealLogRequest): Promise<void>;
+  addMealLog(
+    userId: Types.ObjectId,
+    programId: Types.ObjectId,
+    mealLogRequest: MealLogRequest
+  ): Promise<void>;
   getWeekWorkouts(weekId: Types.ObjectId): Promise<WorkoutResponse[]>;
   getWeekMeals(weekId: Types.ObjectId): Promise<MealResponse[]>;
   getWeek(weekId: Types.ObjectId): Promise<WeekResponse>;
@@ -246,7 +252,7 @@ export default class ProgramService implements IProgramService {
   ): Promise<ProgramResponse[]> {
     try {
       const programsWithWeeks =
-        await this.programRepository.getUserProgramsWithWeeks(userId);
+        await this.userProgramRepository.getUserProgramsWithWeeks(userId);
 
       if (!programsWithWeeks) {
         throw APIError.NotFound("No programs with weeks found for user");
@@ -271,7 +277,6 @@ export default class ProgramService implements IProgramService {
       }
     }
   }
-
   private async createWeekDocuments(
     programId: Types.ObjectId,
     numWeeks: number,
@@ -350,7 +355,7 @@ export default class ProgramService implements IProgramService {
     try {
       const week = await this.weekRepository.findById(weekId);
 
-      if (!week) {
+      if (!week || !week.getIsActive()) {
         throw APIError.NotFound("Week not found");
       }
 
@@ -395,7 +400,7 @@ export default class ProgramService implements IProgramService {
     try {
       const week = await this.weekRepository.findById(weekId);
 
-      if (!week) {
+      if (!week || !week.getIsActive()) {
         throw APIError.NotFound("Week not found");
       }
 
@@ -429,7 +434,7 @@ export default class ProgramService implements IProgramService {
     try {
       const week = await this.weekRepository.findById(weekId);
 
-      if (!week) {
+      if (!week || !week.getIsActive()) {
         throw APIError.NotFound("Week not found");
       }
 
@@ -468,7 +473,7 @@ export default class ProgramService implements IProgramService {
       session.startTransaction();
       const week = await this.weekRepository.findById(weekId);
 
-      if (!week) {
+      if (!week || !week.getIsActive()) {
         throw APIError.NotFound("Week not found");
       }
 
@@ -511,7 +516,7 @@ export default class ProgramService implements IProgramService {
     try {
       const week = await this.weekRepository.findById(weekId);
 
-      if (!week) {
+      if (!week || !week.getIsActive()) {
         throw APIError.NotFound("Week not found");
       }
 
@@ -552,7 +557,7 @@ export default class ProgramService implements IProgramService {
 
       const week = await this.weekRepository.findById(weekId);
 
-      if (!week) {
+      if (!week || !week.getIsActive()) {
         throw APIError.NotFound("Week not found");
       }
 
@@ -591,10 +596,16 @@ export default class ProgramService implements IProgramService {
   }
 
   public async createWorkoutLog(
+    userId: Types.ObjectId,
+    programId: Types.ObjectId,
     weekId: Types.ObjectId,
     workoutLogRequest: WorkoutLogRequest
   ): Promise<WorkoutLogResponse> {
+    const session = await mongoose.startSession();
+
     try {
+      session.startTransaction();
+
       const workoutId = new Types.ObjectId(workoutLogRequest.workoutId);
 
       const week = await this.weekRepository.findById(weekId);
@@ -630,6 +641,10 @@ export default class ProgramService implements IProgramService {
         throw APIError.InternalServerError("Failed to create workout log");
       }
 
+      await this.addProgramMember(programId, userId, session);
+
+      await session.commitTransaction();
+
       const workoutLogResponse =
         this.weekRepository.toWorkoutLogResponse(createdWorkoutLog);
 
@@ -641,11 +656,49 @@ export default class ProgramService implements IProgramService {
     } catch (error) {
       this.logger.error("Error creating workout log: ", error);
 
+      if (session) {
+        await session.abortTransaction();
+      }
+
       if (error instanceof MongooseError || error instanceof MongoServerError) {
         throw DatabaseError.handleMongoDBError(error);
       } else {
         throw APIError.InternalServerError("Failed to create workout log");
       }
+    } finally {
+      if (session) {
+        session.endSession();
+      }
+    }
+  }
+
+  private async addProgramMember(
+    programId: Types.ObjectId,
+    userId: Types.ObjectId,
+    session: ClientSession
+  ): Promise<void> {
+    try {
+      const program = await this.programRepository.findById(programId);
+      if (!program) {
+        throw APIError.NotFound("Program not found");
+      }
+
+      if (program.getMembers()?.some((memberId) => memberId.equals(userId))) {
+        this.logger.info("User is already a member of the program", {
+          programId: programId.toString(),
+          userId: userId.toString(),
+        });
+        return;
+      }
+
+      await this.programRepository.updateOne(
+        { _id: programId },
+        { $push: { members: userId } },
+        { session }
+      );
+    } catch (error) {
+      this.logger.error("Error adding program member: ", error);
+      throw error;
     }
   }
 
@@ -685,8 +738,17 @@ export default class ProgramService implements IProgramService {
     }
   }
 
-  public async addMealLog(mealLogRequest: MealLogRequest): Promise<void> {
+  public async addMealLog(
+    userId: Types.ObjectId,
+    programId: Types.ObjectId,
+    mealLogRequest: MealLogRequest
+  ): Promise<void> {
+    const session = await mongoose.startSession();
     try {
+      session.startTransaction();
+
+      await this.addProgramMember(programId, userId, session);
+
       const mealLog = this.mealRepository.toMealLog(mealLogRequest);
       const mealId = new Types.ObjectId(mealLogRequest.mealId);
 
@@ -695,15 +757,25 @@ export default class ProgramService implements IProgramService {
         {
           $push: { logs: mealLog },
         },
-        { new: true }
+        { session }
       );
+
+      await session.commitTransaction();
     } catch (error) {
       this.logger.error("Error adding meal log to week: ", error);
+
+      if (session) {
+        await session.abortTransaction();
+      }
 
       if (error instanceof MongooseError || error instanceof MongoServerError) {
         throw DatabaseError.handleMongoDBError(error);
       } else {
         throw APIError.InternalServerError("Failed to add meal log to week");
+      }
+    } finally {
+      if (session) {
+        session.endSession();
       }
     }
   }
@@ -714,7 +786,7 @@ export default class ProgramService implements IProgramService {
     try {
       const week = await this.weekRepository.findById(weekId);
 
-      if (!week) {
+      if (!week || !week.getIsActive()) {
         throw APIError.NotFound("Week not found");
       }
 
@@ -743,7 +815,7 @@ export default class ProgramService implements IProgramService {
     try {
       const week = await this.weekRepository.findById(weekId);
 
-      if (!week) {
+      if (!week || !week.getIsActive()) {
         throw APIError.NotFound("Week not found");
       }
 
@@ -801,7 +873,7 @@ export default class ProgramService implements IProgramService {
     try {
       const week = await this.weekRepository.findById(weekId);
 
-      if (!week) {
+      if (!week || !week.getIsActive()) {
         throw APIError.NotFound("Week not found");
       }
 
@@ -824,7 +896,7 @@ export default class ProgramService implements IProgramService {
     try {
       const week = await this.weekRepository.findById(weekId);
 
-      if (!week) {
+      if (!week || !week.getIsActive()) {
         throw APIError.NotFound("Week not found");
       }
 

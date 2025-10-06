@@ -122,13 +122,25 @@ export default class ProgramRepository
   ): Promise<ProgramWithWeeks | null> {
     try {
       const result = await this.programModel.aggregate<ProgramWithWeeks>([
-        { $match: { _id: programId } },
+        {
+          $match: {
+            _id: programId,
+            isActive: true,
+          },
+        },
         {
           $lookup: {
             from: "weeks",
             localField: "weeks",
             foreignField: "_id",
             as: "weekDetails",
+            pipeline: [
+              {
+                $match: {
+                  isActive: true,
+                },
+              },
+            ],
           },
         },
         {
@@ -168,10 +180,7 @@ export default class ProgramRepository
 
       return result[0];
     } catch (error) {
-      this.logger.error(
-        "Error finding week with meals using aggregate: ",
-        error
-      );
+      this.logger.error("Error finding program by id: ", error);
       throw error;
     }
   }
@@ -188,6 +197,8 @@ export default class ProgramRepository
               { admins: userId },
               { members: userId },
             ],
+            // Only return active programs
+            isActive: true,
           },
         },
         {
@@ -196,6 +207,14 @@ export default class ProgramRepository
             localField: "weeks",
             foreignField: "_id",
             as: "weekDetails",
+            // Add pipeline to filter only active weeks
+            pipeline: [
+              {
+                $match: {
+                  isActive: true,
+                },
+              },
+            ],
           },
         },
         {

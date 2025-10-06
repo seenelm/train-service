@@ -11,6 +11,7 @@ export default class Week {
   private notes?: Notes[];
   private startDate: Date;
   private endDate: Date;
+  private isActive: boolean;
   private createdAt?: Date;
   private updatedAt?: Date;
 
@@ -24,6 +25,7 @@ export default class Week {
     this.notes = builder.notes;
     this.startDate = builder.startDate;
     this.endDate = builder.endDate;
+    this.isActive = builder.isActive;
     this.createdAt = builder.createdAt;
     this.updatedAt = builder.updatedAt;
   }
@@ -34,6 +36,10 @@ export default class Week {
 
   public getId(): Types.ObjectId {
     return this.id;
+  }
+
+  public getIsActive(): boolean {
+    return this.isActive;
   }
 
   public getName(): string | undefined {
@@ -87,6 +93,7 @@ export class WeekBuilder {
   public notes?: Notes[];
   public startDate!: Date;
   public endDate!: Date;
+  public isActive!: boolean;
   public createdAt?: Date;
   public updatedAt?: Date;
 
@@ -140,6 +147,11 @@ export class WeekBuilder {
 
   setUpdatedAt(updatedAt: Date): this {
     this.updatedAt = updatedAt;
+    return this;
+  }
+
+  setIsActive(isActive: boolean): this {
+    this.isActive = isActive;
     return this;
   }
 

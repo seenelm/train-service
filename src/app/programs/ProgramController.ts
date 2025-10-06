@@ -283,10 +283,17 @@ export default class ProgramController {
   ) => {
     try {
       const weekId = new Types.ObjectId(req.params.weekId);
+      const programId = new Types.ObjectId(req.params.programId);
+      const userId = req.user.getId();
       const workoutLogRequest: WorkoutLogRequest = req.body;
 
       const workoutLogResponse: WorkoutLogResponse =
-        await this.programService.createWorkoutLog(weekId, workoutLogRequest);
+        await this.programService.createWorkoutLog(
+          userId,
+          programId,
+          weekId,
+          workoutLogRequest
+        );
 
       return res.status(HttpStatusCode.CREATED).json(workoutLogResponse);
     } catch (error) {
@@ -322,8 +329,10 @@ export default class ProgramController {
     next: NextFunction
   ) => {
     try {
+      const programId = new Types.ObjectId(req.params.programId);
+      const userId = req.user.getId();
       const mealLogRequest: MealLogRequest = req.body;
-      await this.programService.addMealLog(mealLogRequest);
+      await this.programService.addMealLog(userId, programId, mealLogRequest);
       return res.status(HttpStatusCode.CREATED).json({ success: true });
     } catch (error) {
       next(error);

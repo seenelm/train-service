@@ -326,7 +326,7 @@ export default class WeekRepository
   async findWeek(weekId: Types.ObjectId): Promise<AggregatedWeek | null> {
     try {
       const result = await this.weekModel.aggregate<AggregatedWeek>([
-        { $match: { _id: weekId } },
+        { $match: { _id: weekId, isActive: true } },
         {
           $project: {
             _id: 1,
