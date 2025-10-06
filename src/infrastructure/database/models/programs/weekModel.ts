@@ -371,6 +371,7 @@ export interface WeekDocument extends Document {
   notes?: Notes[];
   startDate: Date;
   endDate: Date;
+  isActive: boolean;
   createdAt?: Date;
   updatedAt?: Date;
 }
@@ -470,6 +471,11 @@ const WeekSchema = new Schema(
     notes: [{ type: NotesSchema, required: false }],
     startDate: { type: Date, required: true },
     endDate: { type: Date, required: true },
+    isActive: {
+      type: Boolean,
+      required: true,
+      default: true,
+    },
   },
   { timestamps: true }
 );

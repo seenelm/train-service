@@ -11,6 +11,8 @@ import UserRepository from "../infrastructure/database/repositories/user/UserRep
 import { UserModel } from "../infrastructure/database/models/user/userModel.js";
 import MealRepository from "../infrastructure/database/repositories/programs/MealRepository.js";
 import { MealModel } from "../infrastructure/database/models/programs/mealModel.js";
+import UserProgramRepository from "../infrastructure/database/repositories/programs/UserProgramRepository.js";
+import { UserProgramModel } from "../infrastructure/database/models/programs/userProgramModel.js";
 
 /**
  * @swagger
@@ -26,7 +28,8 @@ const authMiddleware = new AuthMiddleware(new UserRepository(UserModel));
 const programService = new ProgramService(
   new ProgramRepository(ProgramModel),
   new WeekRepository(WeekModel),
-  new MealRepository(MealModel)
+  new MealRepository(MealModel),
+  new UserProgramRepository(UserProgramModel)
 );
 
 const programController = new ProgramController(programService);
@@ -291,6 +294,13 @@ router.post(
   programController.createProgram
 );
 
+router.delete(
+  "/:programId",
+  authMiddleware.authenticateToken,
+  programMiddleware.checkAdminAuthorization,
+  programController.deleteProgram
+);
+
 /**
  * @swagger
  * /program/{programId}/week/{weekId}:
@@ -378,6 +388,13 @@ router.put(
   programMiddleware.checkAdminAuthorization,
   ProgramMiddleware.validateWeekRequest,
   programController.updateWeek
+);
+
+router.delete(
+  "/:programId/week/:weekId",
+  authMiddleware.authenticateToken,
+  programMiddleware.checkAdminAuthorization,
+  programController.deleteWeek
 );
 
 /**

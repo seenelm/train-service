@@ -80,7 +80,8 @@ export default class ProgramRepository
         new Types.ObjectId(request.createdBy),
       ],
       members: request.members?.map((id) => new Types.ObjectId(id)) || [],
-      weeks: [], // Will be populated after week documents are created
+      weeks: [],
+      isActive: true,
     };
   }
 

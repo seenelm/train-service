@@ -25,9 +25,13 @@ import mongoose from "mongoose";
 import { ClientSession } from "mongoose";
 import { IMealRepository } from "../../infrastructure/database/repositories/programs/MealRepository.js";
 import { Workout } from "../../infrastructure/database/models/programs/weekModel.js";
+import { IUserProgramRepository } from "../../infrastructure/database/repositories/programs/UserProgramRepository.js";
+import Program from "../../infrastructure/database/entity/program/Program.js";
+import { WeekDocument } from "../../infrastructure/database/models/programs/weekModel.js";
 
 export interface IProgramService {
   createProgram(programRequest: ProgramRequest): Promise<ProgramResponse>;
+  deleteProgram(programId: Types.ObjectId): Promise<void>;
   getProgramById(programId: Types.ObjectId): Promise<ProgramResponse>;
   getUserPrograms(userId: Types.ObjectId): Promise<ProgramResponse[]>;
   getWorkoutById(
@@ -71,7 +75,7 @@ export interface IProgramService {
   getWeekMeals(weekId: Types.ObjectId): Promise<MealResponse[]>;
   getWeek(weekId: Types.ObjectId): Promise<WeekResponse>;
   updateWeek(weekId: Types.ObjectId, weekRequest: WeekRequest): Promise<void>;
-  deleteWeek(programId: Types.ObjectId, weekId: Types.ObjectId): Promise<void>;
+  deleteWeek(weekId: Types.ObjectId): Promise<void>;
   createNote(
     weekId: Types.ObjectId,
     noteRequest: NotesRequest
@@ -88,16 +92,19 @@ export default class ProgramService implements IProgramService {
   private programRepository: IProgramRepository;
   private weekRepository: IWeekRepository;
   private mealRepository: IMealRepository;
+  private userProgramRepository: IUserProgramRepository;
   private logger: Logger;
 
   constructor(
     programRepository: IProgramRepository,
     weekRepository: IWeekRepository,
-    mealRepository: IMealRepository
+    mealRepository: IMealRepository,
+    userProgramRepository: IUserProgramRepository
   ) {
     this.programRepository = programRepository;
     this.weekRepository = weekRepository;
     this.mealRepository = mealRepository;
+    this.userProgramRepository = userProgramRepository;
     this.logger = Logger.getInstance();
   }
 
@@ -122,6 +129,22 @@ export default class ProgramService implements IProgramService {
     }
   }
 
+  public async deleteProgram(programId: Types.ObjectId): Promise<void> {
+    try {
+      await this.programRepository.updateOne(
+        { _id: programId },
+        { isActive: false }
+      );
+    } catch (error) {
+      this.logger.error("Error deleting program: ", error);
+      if (error instanceof MongooseError || error instanceof MongoServerError) {
+        throw DatabaseError.handleMongoDBError(error);
+      } else {
+        throw APIError.InternalServerError("Failed to delete program");
+      }
+    }
+  }
+
   public async createProgram(
     programRequest: ProgramRequest
   ): Promise<ProgramResponse> {
@@ -134,6 +157,12 @@ export default class ProgramService implements IProgramService {
       const createdProgram = await this.programRepository.create(
         programDocument,
         { session }
+      );
+
+      await this.upsertUserProgram(
+        createdProgram,
+        new Types.ObjectId(programRequest.createdBy),
+        session
       );
 
       const weekIds = await this.createWeekDocuments(
@@ -181,6 +210,34 @@ export default class ProgramService implements IProgramService {
       if (session) {
         session.endSession();
       }
+    }
+  }
+
+  private async upsertUserProgram(
+    program: Program,
+    userId: Types.ObjectId,
+    session: ClientSession
+  ): Promise<void> {
+    try {
+      const userProgram = await this.userProgramRepository.findOne({ userId });
+      if (!userProgram) {
+        await this.userProgramRepository.create(
+          {
+            userId,
+            programs: [program.getId()],
+          },
+          { session }
+        );
+      } else {
+        await this.userProgramRepository.updateOne(
+          { _id: userProgram.getId() },
+          { $push: { programs: program.getId() } },
+          { session }
+        );
+      }
+    } catch (error) {
+      this.logger.error("Error upserting user program: ", error);
+      throw error;
     }
   }
 
@@ -232,13 +289,14 @@ export default class ProgramService implements IProgramService {
         const weekEndDate = new Date(weekStartDate);
         weekEndDate.setDate(weekEndDate.getDate() + 6); // 6 days after start date (7 days total)
 
-        const weekDocument = {
+        const weekDocument: Partial<WeekDocument> = {
           weekNumber,
           workouts: [],
           meals: [],
           notes: [],
           startDate: weekStartDate,
           endDate: weekEndDate,
+          isActive: true,
         };
 
         const createdWeek = await this.weekRepository.create(weekDocument, {
@@ -762,44 +820,22 @@ export default class ProgramService implements IProgramService {
     }
   }
 
-  public async deleteWeek(
-    programId: Types.ObjectId,
-    weekId: Types.ObjectId
-  ): Promise<void> {
-    const session = await mongoose.startSession();
+  public async deleteWeek(weekId: Types.ObjectId): Promise<void> {
     try {
-      session.startTransaction();
       const week = await this.weekRepository.findById(weekId);
 
       if (!week) {
         throw APIError.NotFound("Week not found");
       }
 
-      await this.weekRepository.findByIdAndDelete(weekId, { session });
-
-      await this.programRepository.updateOne(
-        { _id: programId },
-        { $pull: { weeks: weekId } },
-        { session }
-      );
-
-      // Should it also delete all meals?
-
-      await session.commitTransaction();
+      await this.weekRepository.updateOne({ _id: weekId }, { isActive: false });
     } catch (error) {
       this.logger.error("Error deleting week: ", error);
-      if (session) {
-        await session.abortTransaction();
-      }
 
       if (error instanceof MongooseError || error instanceof MongoServerError) {
         throw DatabaseError.handleMongoDBError(error);
       } else {
         throw APIError.InternalServerError("Failed to delete week");
-      }
-    } finally {
-      if (session) {
-        session.endSession();
       }
     }
   }

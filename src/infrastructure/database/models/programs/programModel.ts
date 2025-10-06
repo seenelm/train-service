@@ -18,6 +18,7 @@ export interface ProgramDocument extends Document {
   createdBy: Types.ObjectId;
   members?: Types.ObjectId[];
   weeks?: Types.ObjectId[];
+  isActive: boolean;
   createdAt?: Date;
   updatedAt?: Date;
 }
@@ -78,6 +79,11 @@ const ProgramSchema: Schema = new Schema(
       type: [Types.ObjectId],
       ref: "Week",
       required: false,
+    },
+    isActive: {
+      type: Boolean,
+      required: true,
+      default: true,
     },
   },
   { timestamps: true }

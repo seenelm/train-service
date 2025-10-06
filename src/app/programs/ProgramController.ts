@@ -46,6 +46,20 @@ export default class ProgramController {
     }
   };
 
+  public deleteProgram = async (
+    req: Request,
+    res: Response,
+    next: NextFunction
+  ) => {
+    try {
+      const programId = new Types.ObjectId(req.params.programId);
+      await this.programService.deleteProgram(programId);
+      return res.status(HttpStatusCode.OK).json({ success: true });
+    } catch (error) {
+      next(error);
+    }
+  };
+
   public getProgramById = async (
     req: Request,
     res: Response,
@@ -375,6 +389,20 @@ export default class ProgramController {
 
       await this.programService.updateWeek(weekId, weekRequest);
 
+      return res.status(HttpStatusCode.OK).json({ success: true });
+    } catch (error) {
+      next(error);
+    }
+  };
+
+  public deleteWeek = async (
+    req: Request,
+    res: Response,
+    next: NextFunction
+  ) => {
+    try {
+      const weekId = new Types.ObjectId(req.params.weekId);
+      await this.programService.deleteWeek(weekId);
       return res.status(HttpStatusCode.OK).json({ success: true });
     } catch (error) {
       next(error);
