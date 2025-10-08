@@ -39,6 +39,7 @@ const userProfileController = new UserProfileController(
  * /user-profile:
  *   put:
  *     summary: Update a user profile
+ *     description: Updates the user profile information for the authenticated user. All fields except userId, username, name, and accountType are optional.
  *     tags: [UserProfiles]
  *     security:
  *       - bearerAuth: []
@@ -47,42 +48,202 @@ const userProfileController = new UserProfileController(
  *       content:
  *         application/json:
  *           schema:
- *             $ref: '#/components/schemas/UserProfile'
+ *             type: object
+ *             required:
+ *               - userId
+ *               - username
+ *               - name
+ *               - accountType
+ *             properties:
+ *               userId:
+ *                 type: string
+ *                 description: User ID
+ *                 example: "507f1f77bcf86cd799439011"
+ *               username:
+ *                 type: string
+ *                 description: Username
+ *                 example: "johndoe"
+ *               name:
+ *                 type: string
+ *                 description: Full name
+ *                 example: "John Doe"
+ *               phoneNumber:
+ *                 type: string
+ *                 description: Phone number
+ *                 example: "+1234567890"
+ *               birthday:
+ *                 type: string
+ *                 format: date-time
+ *                 description: Date of birth
+ *                 example: "1990-01-15T00:00:00.000Z"
+ *               bio:
+ *                 type: string
+ *                 description: User biography
+ *                 example: "Fitness enthusiast and personal trainer"
+ *               accountType:
+ *                 type: number
+ *                 enum: [1, 2]
+ *                 description: Account type (1=Public, 2=Private)
+ *                 example: 1
+ *               role:
+ *                 type: string
+ *                 description: User role or profession
+ *                 example: "Personal Trainer"
+ *               location:
+ *                 type: string
+ *                 description: User location
+ *                 example: "New York, NY"
+ *               socialLinks:
+ *                 type: array
+ *                 description: Social media links
+ *                 items:
+ *                   type: object
+ *                   required:
+ *                     - platform
+ *                     - url
+ *                   properties:
+ *                     platform:
+ *                       type: string
+ *                       enum: ["instagram", "facebook", "twitter", "linkedin", "youtube", "tiktok", "website"]
+ *                       description: Social media platform
+ *                       example: "instagram"
+ *                     url:
+ *                       type: string
+ *                       description: URL to social media profile
+ *                       example: "https://instagram.com/johndoe"
+ *               certifications:
+ *                 type: array
+ *                 description: Professional certifications
+ *                 items:
+ *                   type: object
+ *                   required:
+ *                     - certification
+ *                     - specializations
+ *                     - receivedDate
+ *                   properties:
+ *                     certification:
+ *                       type: string
+ *                       description: Certification name
+ *                       example: "NASM-CPT"
+ *                     specializations:
+ *                       type: array
+ *                       items:
+ *                         type: string
+ *                       description: Areas of specialization
+ *                       example: ["Strength Training", "Weight Loss"]
+ *                     receivedDate:
+ *                       type: string
+ *                       description: Date certification was received
+ *                       example: "2020-06-15"
+ *               customSections:
+ *                 type: array
+ *                 description: Custom profile sections
+ *                 items:
+ *                   type: object
+ *                   required:
+ *                     - title
+ *                     - details
+ *                   properties:
+ *                     title:
+ *                       type: string
+ *                       enum: ["achievements", "stats", "other"]
+ *                       description: Section type
+ *                       example: "achievements"
+ *                     details:
+ *                       type: array
+ *                       items:
+ *                         type: string
+ *                       description: Section details
+ *                       example: ["Completed 100 workouts", "Lost 20 lbs"]
  *     responses:
  *       200:
  *         description: User profile updated successfully
  *         content:
  *           application/json:
  *             schema:
- *               $ref: '#/components/schemas/UserProfile'
+ *               type: object
+ *               properties:
+ *                 userId:
+ *                   type: string
+ *                   example: "507f1f77bcf86cd799439011"
+ *                 username:
+ *                   type: string
+ *                   example: "johndoe"
+ *                 name:
+ *                   type: string
+ *                   example: "John Doe"
+ *                 phoneNumber:
+ *                   type: string
+ *                   example: "+1234567890"
+ *                 birthday:
+ *                   type: string
+ *                   format: date-time
+ *                   example: "1990-01-15T00:00:00.000Z"
+ *                 bio:
+ *                   type: string
+ *                   example: "Fitness enthusiast and personal trainer"
+ *                 accountType:
+ *                   type: number
+ *                   example: 1
+ *                 role:
+ *                   type: string
+ *                   example: "Personal Trainer"
+ *                 location:
+ *                   type: string
+ *                   example: "New York, NY"
+ *                 socialLinks:
+ *                   type: array
+ *                   items:
+ *                     type: object
+ *                     properties:
+ *                       platform:
+ *                         type: string
+ *                         example: "instagram"
+ *                       url:
+ *                         type: string
+ *                         example: "https://instagram.com/johndoe"
+ *                 certifications:
+ *                   type: array
+ *                   items:
+ *                     type: object
+ *                     properties:
+ *                       certification:
+ *                         type: string
+ *                         example: "NASM-CPT"
+ *                       specializations:
+ *                         type: array
+ *                         items:
+ *                           type: string
+ *                         example: ["Strength Training", "Weight Loss"]
+ *                       receivedDate:
+ *                         type: string
+ *                         example: "2020-06-15"
+ *                 customSections:
+ *                   type: array
+ *                   items:
+ *                     type: object
+ *                     properties:
+ *                       title:
+ *                         type: string
+ *                         example: "achievements"
+ *                       details:
+ *                         type: array
+ *                         items:
+ *                           type: string
+ *                         example: ["Completed 100 workouts", "Lost 20 lbs"]
  *       400:
  *         description: Invalid input data
- *         content:
- *           application/json:
- *             schema:
- *               $ref: '#/components/schemas/Error'
  *       401:
  *         description: Unauthorized
- *         content:
- *           application/json:
- *             schema:
- *               $ref: '#/components/schemas/Error'
  *       404:
  *         description: User profile not found
- *         content:
- *           application/json:
- *             schema:
- *               $ref: '#/components/schemas/Error'
  *       500:
  *         description: Server error
- *         content:
- *           application/json:
- *             schema:
- *               $ref: '#/components/schemas/Error'
  */
 router.put(
   "/",
   authMiddleware.authenticateToken,
+  UserProfileMiddleware.validateUserProfileRequest,
   userProfileController.updateUserProfile
 );
 

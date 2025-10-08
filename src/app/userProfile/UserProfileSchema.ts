@@ -1,6 +1,11 @@
 import { z } from "zod";
 import { Types } from "mongoose";
 import { ValidationErrorMessage } from "../../common/enums.js";
+import {
+  ProfileAccess,
+  SocialPlatform,
+  CustomSectionType,
+} from "@seenelm/train-core";
 
 // Follow User Schema - using params only since userId comes from auth middleware
 export const followUserSchema = z.object({
@@ -108,16 +113,38 @@ export const searchWithCursorSchema = z.object({
     .max(100, "Search term must be at most 100 characters"),
 });
 
-// Type exports
-export type FollowUserRequest = z.infer<typeof followUserSchema>;
-export type RequestToFollowUserRequest = z.infer<
-  typeof requestToFollowUserSchema
->;
-export type AcceptFollowRequestRequest = z.infer<
-  typeof acceptFollowRequestSchema
->;
-export type RejectFollowRequestRequest = z.infer<
-  typeof rejectFollowRequestSchema
->;
-export type UnfollowUserRequest = z.infer<typeof unfollowUserSchema>;
-export type RemoveFollowerRequest = z.infer<typeof removeFollowerSchema>;
+const socialLinkSchema = z.object({
+  platform: z.enum(Object.values(SocialPlatform) as [string, ...string[]]),
+  url: z.string(),
+});
+
+const certificationSchema = z.object({
+  certification: z.string(),
+  specializations: z.array(z.string()),
+  receivedDate: z.string(),
+});
+
+const customSectionSchema = z.object({
+  title: z.enum(Object.values(CustomSectionType) as [string, ...string[]]),
+  details: z.array(z.string()),
+});
+
+export const userProfileRequestSchema = z.object({
+  userId: z.string(),
+  username: z.string(),
+  name: z.string(),
+  phoneNumber: z.string().optional(),
+  birthday: z
+    .union([z.date(), z.string().transform((val) => new Date(val))])
+    .optional(),
+  bio: z.string().optional(),
+  accountType: z.union([
+    z.literal(ProfileAccess.Public),
+    z.literal(ProfileAccess.Private),
+  ]),
+  role: z.string().optional(),
+  location: z.string().optional(),
+  socialLinks: z.array(socialLinkSchema).optional(),
+  certifications: z.array(certificationSchema).optional(),
+  customSections: z.array(customSectionSchema).optional(),
+});

@@ -11,6 +11,8 @@ export default class UserProfile {
   private userId: Types.ObjectId;
   private username: string;
   private name: string;
+  private phoneNumber?: string;
+  private birthday?: Date;
   private bio?: string;
   private accountType: ProfileAccess;
   private role?: string;
@@ -26,6 +28,8 @@ export default class UserProfile {
     this.userId = builder.userId;
     this.username = builder.username;
     this.name = builder.name;
+    this.phoneNumber = builder.phoneNumber;
+    this.birthday = builder.birthday;
     this.bio = builder.bio;
     this.accountType = builder.accountType;
     this.role = builder.role;
@@ -55,6 +59,14 @@ export default class UserProfile {
 
   public getName(): string {
     return this.name;
+  }
+
+  public getPhoneNumber(): string | undefined {
+    return this.phoneNumber;
+  }
+
+  public getBirthday(): Date | undefined {
+    return this.birthday;
   }
 
   public getBio(): string | undefined {
@@ -123,6 +135,8 @@ export class UserProfileBuilder {
   userId: Types.ObjectId = new Types.ObjectId();
   username: string = "";
   name: string = "";
+  phoneNumber?: string;
+  birthday?: Date;
   bio?: string;
   accountType: ProfileAccess = ProfileAccess.Public;
   role?: string;
@@ -150,6 +164,16 @@ export class UserProfileBuilder {
 
   public setName(name: string): this {
     this.name = name;
+    return this;
+  }
+
+  public setPhoneNumber(phoneNumber?: string): this {
+    this.phoneNumber = phoneNumber;
+    return this;
+  }
+
+  public setBirthday(birthday?: Date): this {
+    this.birthday = birthday;
     return this;
   }
 
