@@ -380,7 +380,7 @@ export default class ProgramService implements IProgramService {
           "workouts._id": workoutId,
         },
         {
-          $set: { workouts: updatedWorkoutDocument },
+          $set: { "workouts.$": updatedWorkoutDocument },
         }
       );
     } catch (error) {
