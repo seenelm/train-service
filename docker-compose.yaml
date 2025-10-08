@@ -33,6 +33,7 @@ services:
             - ACCESS_TOKEN_EXPIRY=${ACCESS_TOKEN_EXPIRY}
         ports:
             - 3000:3000
+        restart: always
 
     train-test:
         container_name: train-test
