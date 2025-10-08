@@ -6,6 +6,7 @@ import {
   UserProfileRequest,
   SocialPlatform,
   UserProfileResponse,
+  ProfileAccess,
 } from "@seenelm/train-core";
 
 export interface IUserProfileRepository
@@ -31,6 +32,8 @@ export default class UserProfileRepository
       .setUserId(doc.userId as Types.ObjectId)
       .setUsername(doc.username)
       .setName(doc.name)
+      .setPhoneNumber(doc.phoneNumber)
+      .setBirthday(doc.birthday)
       .setBio(doc.bio ?? "")
       .setAccountType(doc.accountType)
       .setLocation(doc.location)
@@ -46,8 +49,10 @@ export default class UserProfileRepository
       userId: new Types.ObjectId(request.userId),
       username: request.username,
       name: request.name,
+      phoneNumber: request.phoneNumber,
+      birthday: request.birthday,
       bio: request.bio,
-      accountType: request.accountType,
+      accountType: ProfileAccess.Public,
       role: request.role,
       location: request.location,
       socialLinks: request.socialLinks,
@@ -65,12 +70,14 @@ export default class UserProfileRepository
       userId: profile.getUserId().toString(),
       username: profile.getUsername(),
       name: profile.getName(),
+      phoneNumber: profile.getPhoneNumber(),
+      birthday: profile.getBirthday(),
       bio: profile.getBio(),
       accountType: profile.getAccountType(),
       role: profile.getRole(),
       location: profile.getLocation(),
       socialLinks: profile.getSocialLinks(),
-      certifications: [], // TODO: FIX
+      certifications: [],
       customSections: profile.getCustomSections(),
     };
   }

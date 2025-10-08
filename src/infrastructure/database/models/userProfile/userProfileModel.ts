@@ -27,6 +27,8 @@ export interface UserProfileDocument extends Document {
   userId: Types.ObjectId;
   username: string;
   name: string;
+  phoneNumber?: string;
+  birthday?: Date;
   bio?: string;
   accountType: ProfileAccess;
   role?: string;
@@ -104,6 +106,14 @@ const userProfileSchema = new Schema(
     bio: {
       type: String,
       trim: true,
+    },
+    phoneNumber: {
+      type: String,
+      required: false,
+    },
+    birthday: {
+      type: Date,
+      required: false,
     },
     accountType: {
       type: Number,

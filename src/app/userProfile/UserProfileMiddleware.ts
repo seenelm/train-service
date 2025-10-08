@@ -17,12 +17,38 @@ import {
   removeFollowerSchema,
   cursorPaginationSchema,
   searchWithCursorSchema,
+  userProfileRequestSchema,
 } from "./UserProfileSchema.js";
 import { ValidationErrorResponse } from "../../common/errors/ValidationErrorResponse.js";
 import { z } from "zod";
+import { StatusCodes as HttpStatusCode } from "http-status-codes";
 
 export default class UserProfileMiddleware {
   private static logger = Logger.getInstance();
+
+  static validateUserProfileRequest = (
+    req: Request,
+    res: Response,
+    next: NextFunction
+  ) => {
+    try {
+      const result = userProfileRequestSchema.safeParse(req.body);
+      if (!result.success) {
+        const validationErrors = ValidationErrorResponse.fromZodError(
+          result.error
+        );
+        return res.status(HttpStatusCode.BAD_REQUEST).json({
+          message: "User profile request validation failed",
+          errors: validationErrors.map((error) => error.toJSON()),
+        });
+      }
+
+      req.body = result.data;
+      next();
+    } catch (error) {
+      next(error);
+    }
+  };
 
   public static validateBasicProfileUpdate = (
     req: Request<{ userId: string }, {}, BasicUserProfileInfoRequest>,
