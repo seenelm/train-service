@@ -5,6 +5,7 @@ import { ProfileAccess } from "@seenelm/train-core";
 export default class Program {
   private id: Types.ObjectId;
   private name: string;
+  private description?: string;
   private types?: string[];
   private numWeeks: number;
   private hasNutritionProgram?: boolean;
@@ -20,6 +21,7 @@ export default class Program {
   constructor(builder: ProgramBuilder) {
     this.id = builder.id;
     this.name = builder.name;
+    this.description = builder.description;
     this.types = builder.types;
     this.numWeeks = builder.numWeeks;
     this.hasNutritionProgram = builder.hasNutritionProgram;
@@ -39,6 +41,9 @@ export default class Program {
 
   public getId(): Types.ObjectId {
     return this.id;
+  }
+  public getDescription(): string | undefined {
+    return this.description;
   }
   public getName(): string {
     return this.name;
@@ -81,6 +86,7 @@ export default class Program {
 class ProgramBuilder {
   id: Types.ObjectId = new Types.ObjectId();
   name: string = "";
+  description?: string;
   types?: string[];
   numWeeks: number = 0;
   hasNutritionProgram?: boolean;
@@ -95,6 +101,10 @@ class ProgramBuilder {
 
   public setId(id: Types.ObjectId): this {
     this.id = id;
+    return this;
+  }
+  public setDescription(description?: string): this {
+    this.description = description;
     return this;
   }
   public setName(name: string): this {

@@ -9,6 +9,7 @@ export interface Phase {
 
 export interface ProgramDocument extends Document {
   name: string;
+  description?: string;
   types?: string[];
   numWeeks: number;
   hasNutritionProgram?: boolean;
@@ -37,6 +38,10 @@ const ProgramSchema: Schema = new Schema(
     name: {
       type: String,
       required: true,
+    },
+    description: {
+      type: String,
+      required: false,
     },
     types: {
       type: [String],

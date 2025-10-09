@@ -14,6 +14,7 @@ import { Logger } from "../../../../common/logger.js";
 export interface ProgramWithWeeks {
   _id: Types.ObjectId;
   name: string;
+  description?: string;
   types?: string[];
   numWeeks: number;
   hasNutritionProgram?: boolean;
@@ -53,6 +54,7 @@ export default class ProgramRepository
     return Program.builder()
       .setId(doc._id as Types.ObjectId)
       .setName(doc.name)
+      .setDescription(doc.description)
       .setTypes(doc.types)
       .setNumWeeks(doc.numWeeks)
       .setHasNutritionProgram(doc.hasNutritionProgram)
@@ -70,6 +72,7 @@ export default class ProgramRepository
   toDocument(request: ProgramRequest): Partial<ProgramDocument> {
     return {
       name: request.name,
+      description: request.description,
       types: request.types,
       numWeeks: request.numWeeks,
       hasNutritionProgram: request.hasNutritionProgram,
@@ -89,6 +92,7 @@ export default class ProgramRepository
     return {
       id: program.getId().toString(),
       name: program.getName(),
+      description: program.getDescription(),
       types: program.getTypes(),
       numWeeks: program.getNumWeeks(),
       hasNutritionProgram: program.getHasNutritionProgram(),
@@ -105,6 +109,7 @@ export default class ProgramRepository
     return {
       id: program._id.toString(),
       name: program.name,
+      description: program.description,
       types: program.types,
       numWeeks: program.numWeeks,
       hasNutritionProgram: program.hasNutritionProgram,
@@ -147,6 +152,7 @@ export default class ProgramRepository
           $project: {
             _id: 1,
             name: 1,
+            description: 1,
             types: 1,
             numWeeks: 1,
             hasNutritionProgram: 1,
@@ -221,6 +227,7 @@ export default class ProgramRepository
           $project: {
             _id: 1,
             name: 1,
+            description: 1,
             types: 1,
             numWeeks: 1,
             hasNutritionProgram: 1,
