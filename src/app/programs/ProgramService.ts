@@ -380,7 +380,19 @@ export default class ProgramService implements IProgramService {
           "workouts._id": workoutId,
         },
         {
-          $set: { "workouts.$": updatedWorkoutDocument },
+          $set: {
+            "workouts.$.name": updatedWorkoutDocument.name,
+            "workouts.$.description": updatedWorkoutDocument.description,
+            "workouts.$.category": updatedWorkoutDocument.category,
+            "workouts.$.difficulty": updatedWorkoutDocument.difficulty,
+            "workouts.$.duration": updatedWorkoutDocument.duration,
+            "workouts.$.blocks": updatedWorkoutDocument.blocks,
+            "workouts.$.accessType": updatedWorkoutDocument.accessType,
+            "workouts.$.createdBy": updatedWorkoutDocument.createdBy,
+            "workouts.$.startDate": updatedWorkoutDocument.startDate,
+            "workouts.$.endDate": updatedWorkoutDocument.endDate,
+            "workouts.$.versionId": updatedWorkoutDocument.versionId,
+          },
         }
       );
     } catch (error) {
