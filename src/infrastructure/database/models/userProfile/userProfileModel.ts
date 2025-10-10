@@ -31,7 +31,7 @@ export interface UserProfileDocument extends Document {
   birthday?: Date;
   bio?: string;
   accountType: ProfileAccess;
-  role?: string;
+  role?: string[];
   location?: string;
   socialLinks?: SocialLink[];
   certifications?: Certification[];
@@ -122,7 +122,7 @@ const userProfileSchema = new Schema(
       default: ProfileAccess.Public,
     },
     role: {
-      type: String,
+      type: [String],
     },
     location: {
       type: String,

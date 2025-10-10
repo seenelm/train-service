@@ -2,7 +2,9 @@ import { describe, it, expect, beforeEach, vi, afterEach } from "vitest";
 import UserProfileService from "../../../../src/app/userProfile/UserProfileService.js";
 import {
   mockUserProfileRepository,
+  mockUserRepository,
   mockFollowRepository,
+  mockUserGroupsRepository,
 } from "../../../mocks/userMocks.js";
 import UserProfileServiceDataProvider from "./dataProviders/UserProfileServiceDataProvider.js";
 import { Types } from "mongoose";
@@ -13,7 +15,6 @@ import UserProfileTestFixture from "../../../fixtures/UserProfileTestFixture.js"
 import { DatabaseError } from "../../../../src/common/errors/DatabaseError.js";
 import { CustomSectionType } from "@seenelm/train-core";
 import { ErrorMessage } from "../../../../src/common/enums.js";
-import { mockUserGroupsRepository } from "../../../mocks/userMocks.js";
 
 describe("UserProfileService", () => {
   let userProfileService: UserProfileService;
@@ -21,6 +22,7 @@ describe("UserProfileService", () => {
   beforeEach(() => {
     userProfileService = new UserProfileService(
       mockUserProfileRepository,
+      mockUserRepository,
       mockFollowRepository,
       mockUserGroupsRepository
     );

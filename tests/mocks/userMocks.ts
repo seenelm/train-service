@@ -41,6 +41,7 @@ export const mockUserProfileRepository: IUserProfileRepository = {
   deleteOne: vi.fn(),
   countDocuments: vi.fn(),
   toDocument: vi.fn(),
+  toResponseWithEmail: vi.fn(),
   toResponse: vi.fn(),
 };
 

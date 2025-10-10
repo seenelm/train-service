@@ -29,7 +29,7 @@ export default class UserProfileTestFixture {
   public static BIO: string = "testBio";
   public static ACCOUNT_TYPE: ProfileAccess = ProfileAccess.Public;
   public static PROFILE_PICTURE: string = "testProfilePicture";
-  public static ROLE: string = "Coach";
+  public static ROLE: string[] = ["Coach", "Personal Trainer"];
   public static LOCATION: string = "testLocation";
 
   public static CERTIFICATIONS: Certification[] = [
@@ -83,7 +83,7 @@ export default class UserProfileTestFixture {
       bio: this.BIO,
       accountType: this.ACCOUNT_TYPE,
       profilePicture: this.PROFILE_PICTURE,
-      role: this.ROLE,
+      role: this.ROLE[0], // Use first role for BasicUserProfileInfoRequest (which expects string)
       location: this.LOCATION,
       ...updatedData,
     };

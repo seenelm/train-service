@@ -29,6 +29,7 @@ const userProfileRepository = new UserProfileRepository(UserProfileModel);
 const userProfileController = new UserProfileController(
   new UserProfileService(
     userProfileRepository,
+    new UserRepository(UserModel),
     new FollowRepository(FollowModel),
     new UserGroupsRepository(UserGroupsModel)
   )

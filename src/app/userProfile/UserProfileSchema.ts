@@ -142,7 +142,7 @@ export const userProfileRequestSchema = z.object({
     z.literal(ProfileAccess.Public),
     z.literal(ProfileAccess.Private),
   ]),
-  role: z.string().optional(),
+  role: z.array(z.string()).optional(),
   location: z.string().optional(),
   socialLinks: z.array(socialLinkSchema).optional(),
   certifications: z.array(certificationSchema).optional(),

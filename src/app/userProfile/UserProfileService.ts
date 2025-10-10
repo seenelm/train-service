@@ -30,6 +30,7 @@ import {
   FollowSearchRequest,
   FollowSearchResponse,
 } from "./followDto.js";
+import { IUserRepository } from "../../infrastructure/database/repositories/user/UserRepository.js";
 
 export interface IUserProfileService {
   getUserProfile(userId: Types.ObjectId): Promise<UserProfileResponse>;
@@ -101,16 +102,19 @@ export interface IUserProfileService {
 
 export default class UserProfileService implements IUserProfileService {
   private userProfileRepository: IUserProfileRepository;
+  private userRepository: IUserRepository;
   private followRepository: IFollowRepository;
   private userGroupsRepository: IUserGroupsRepository;
   private logger: Logger;
 
   constructor(
     userProfileRepository: IUserProfileRepository,
+    userRepository: IUserRepository,
     followRepository: IFollowRepository,
     userGroupsRepository: IUserGroupsRepository
   ) {
     this.userProfileRepository = userProfileRepository;
+    this.userRepository = userRepository;
     this.followRepository = followRepository;
     this.userGroupsRepository = userGroupsRepository;
     this.logger = Logger.getInstance();
@@ -120,6 +124,15 @@ export default class UserProfileService implements IUserProfileService {
     userId: Types.ObjectId
   ): Promise<UserProfileResponse> {
     try {
+      const user = await this.userRepository.findById(userId);
+
+      if (!user) {
+        this.logger.warn("User not found", {
+          userId: userId.toString(),
+        });
+        throw APIError.NotFound("User not found");
+      }
+
       const userProfile = await this.userProfileRepository.findOne({
         userId,
       });
@@ -136,7 +149,10 @@ export default class UserProfileService implements IUserProfileService {
         username: userProfile.getUsername(),
       });
 
-      return this.userProfileRepository.toResponse(userProfile);
+      return this.userProfileRepository.toResponseWithEmail(
+        userProfile,
+        user.getEmail()
+      );
     } catch (error) {
       this.logger.error("Failed to get user profile", {
         error: error instanceof Error ? error.message : "Unknown error",

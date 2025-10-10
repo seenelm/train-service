@@ -12,6 +12,7 @@ import {
 export interface IUserProfileRepository
   extends IBaseRepository<UserProfile, UserProfileDocument> {
   toDocument(request: UserProfileRequest): Partial<UserProfileDocument>;
+  toResponseWithEmail(profile: UserProfile, email: string): UserProfileResponse;
   toResponse(profile: UserProfile): UserProfileResponse;
 }
 
@@ -65,8 +66,31 @@ export default class UserProfileRepository
     };
   }
 
+  toResponseWithEmail(
+    profile: UserProfile,
+    email: string
+  ): UserProfileResponse {
+    return {
+      id: profile.getId().toString(),
+      email,
+      userId: profile.getUserId().toString(),
+      username: profile.getUsername(),
+      name: profile.getName(),
+      phoneNumber: profile.getPhoneNumber(),
+      birthday: profile.getBirthday(),
+      bio: profile.getBio(),
+      accountType: profile.getAccountType(),
+      role: profile.getRole(),
+      location: profile.getLocation(),
+      socialLinks: profile.getSocialLinks(),
+      certifications: [],
+      customSections: profile.getCustomSections(),
+    };
+  }
+
   toResponse(profile: UserProfile): UserProfileResponse {
     return {
+      id: profile.getId().toString(),
       userId: profile.getUserId().toString(),
       username: profile.getUsername(),
       name: profile.getName(),

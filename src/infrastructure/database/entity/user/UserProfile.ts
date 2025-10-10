@@ -15,7 +15,7 @@ export default class UserProfile {
   private birthday?: Date;
   private bio?: string;
   private accountType: ProfileAccess;
-  private role?: string;
+  private role?: string[];
   private location?: string;
   private socialLinks?: SocialLink[];
   private certifications?: Certification[];
@@ -77,7 +77,7 @@ export default class UserProfile {
     return this.accountType;
   }
 
-  public getRole(): string | undefined {
+  public getRole(): string[] | undefined {
     return this.role;
   }
 
@@ -139,7 +139,7 @@ export class UserProfileBuilder {
   birthday?: Date;
   bio?: string;
   accountType: ProfileAccess = ProfileAccess.Public;
-  role?: string;
+  role?: string[];
   location?: string;
   socialLinks?: SocialLink[];
   certifications?: Certification[];
@@ -187,7 +187,7 @@ export class UserProfileBuilder {
     return this;
   }
 
-  public setRole(role?: string): this {
+  public setRole(role?: string[]): this {
     this.role = role;
     return this;
   }
