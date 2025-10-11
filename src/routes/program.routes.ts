@@ -2139,20 +2139,20 @@ router.post(
 
 // TODO: DO YOU NEED TO BE A MEMBER OR ADMIN TO UPDATE A WORKOUT LOG?
 router.put(
-  "/:programId/week/:weekId/workout/log/:workoutLogId",
+  "/:programId/week/:weekId/workout/:workoutId/log/:workoutLogId",
   authMiddleware.authenticateToken,
   ProgramMiddleware.validateWorkoutLogRequest,
   programController.updateWorkoutLog
 );
 
 router.delete(
-  "/:programId/week/:weekId/workout/log/:workoutLogId",
+  "/:programId/week/:weekId/workout/:workoutId/log/:workoutLogId",
   authMiddleware.authenticateToken,
   programController.deleteWorkoutLog
 );
 
 router.get(
-  "/:programId/week/:weekId/workout/log/:workoutLogId",
+  "/:programId/week/:weekId/workout/:workoutId/log/:workoutLogId",
   authMiddleware.authenticateToken,
   programController.getWorkoutLogById
 );
