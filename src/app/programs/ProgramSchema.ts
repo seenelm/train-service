@@ -58,6 +58,7 @@ export const blockLogSchema = z.object({
 
 export const programRequestSchema = z.object({
   name: z.string().transform((val) => val.trim()),
+  description: z.string().optional(),
   types: z
     .array(z.string())
     .optional()

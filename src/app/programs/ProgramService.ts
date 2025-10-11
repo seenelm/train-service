@@ -30,6 +30,10 @@ import Program from "../../infrastructure/database/entity/program/Program.js";
 import { WeekDocument } from "../../infrastructure/database/models/programs/weekModel.js";
 
 export interface IProgramService {
+  updateProgram(
+    programId: Types.ObjectId,
+    programRequest: ProgramRequest
+  ): Promise<void>;
   createProgram(programRequest: ProgramRequest): Promise<ProgramResponse>;
   deleteProgram(programId: Types.ObjectId): Promise<void>;
   getProgramById(programId: Types.ObjectId): Promise<ProgramResponse>;
@@ -67,6 +71,22 @@ export interface IProgramService {
     weekId: Types.ObjectId,
     workoutLogRequest: WorkoutLogRequest
   ): Promise<WorkoutLogResponse>;
+  updateWorkoutLog(
+    weekId: Types.ObjectId,
+    workoutId: Types.ObjectId,
+    workoutLogId: Types.ObjectId,
+    workoutLogRequest: WorkoutLogRequest
+  ): Promise<void>;
+  deleteWorkoutLog(
+    weekId: Types.ObjectId,
+    workoutId: Types.ObjectId,
+    workoutLogId: Types.ObjectId
+  ): Promise<void>;
+  getWorkoutLogById(
+    weekId: Types.ObjectId,
+    workoutId: Types.ObjectId,
+    workoutLogId: Types.ObjectId
+  ): Promise<WorkoutLogResponse>;
   addBlockLog(
     weekId: Types.ObjectId,
     workoutLogId: Types.ObjectId,
@@ -81,7 +101,7 @@ export interface IProgramService {
   getWeekMeals(weekId: Types.ObjectId): Promise<MealResponse[]>;
   getWeek(weekId: Types.ObjectId): Promise<WeekResponse>;
   updateWeek(weekId: Types.ObjectId, weekRequest: WeekRequest): Promise<void>;
-  deleteWeek(weekId: Types.ObjectId): Promise<void>;
+  deleteWeek(program: Program, weekId: Types.ObjectId): Promise<void>;
   createNote(
     weekId: Types.ObjectId,
     noteRequest: NotesRequest
@@ -131,6 +151,26 @@ export default class ProgramService implements IProgramService {
         throw DatabaseError.handleMongoDBError(error);
       } else {
         throw APIError.InternalServerError("Failed to get program by id");
+      }
+    }
+  }
+
+  public async updateProgram(
+    programId: Types.ObjectId,
+    programRequest: ProgramRequest
+  ): Promise<void> {
+    try {
+      const programDocument = this.programRepository.toDocument(programRequest);
+      await this.programRepository.findByIdAndUpdate(
+        programId,
+        programDocument
+      );
+    } catch (error) {
+      this.logger.error("Error updating program: ", error);
+      if (error instanceof MongooseError || error instanceof MongoServerError) {
+        throw DatabaseError.handleMongoDBError(error);
+      } else {
+        throw APIError.InternalServerError("Failed to update program");
       }
     }
   }
@@ -435,6 +475,131 @@ export default class ProgramService implements IProgramService {
         throw DatabaseError.handleMongoDBError(error);
       } else {
         throw APIError.InternalServerError("Failed to delete workout");
+      }
+    }
+  }
+
+  public async updateWorkoutLog(
+    weekId: Types.ObjectId,
+    workoutId: Types.ObjectId,
+    workoutLogId: Types.ObjectId,
+    workoutLogRequest: WorkoutLogRequest
+  ): Promise<void> {
+    try {
+      const week = await this.weekRepository.findById(weekId);
+
+      if (!week) {
+        throw APIError.NotFound("Week not found");
+      }
+
+      const workout = week.getWorkouts().find((w) => w._id === workoutId);
+
+      if (!workout) {
+        throw APIError.NotFound("Workout not found");
+      }
+
+      const workoutLog = workout.workoutLogs?.find(
+        (w) => w._id === workoutLogId
+      );
+
+      if (!workoutLog) {
+        throw APIError.NotFound("Workout log not found");
+      }
+
+      const updatedWorkoutLog =
+        this.weekRepository.toWorkoutLog(workoutLogRequest);
+
+      await this.weekRepository.updateWorkoutLog(
+        weekId,
+        workoutLogId,
+        updatedWorkoutLog
+      );
+    } catch (error) {
+      this.logger.error("Error updating workout log: ", error);
+
+      if (error instanceof MongooseError || error instanceof MongoServerError) {
+        throw DatabaseError.handleMongoDBError(error);
+      } else {
+        throw APIError.InternalServerError("Failed to update workout log");
+      }
+    }
+  }
+
+  public async getWorkoutLogById(
+    weekId: Types.ObjectId,
+    workoutId: Types.ObjectId,
+    workoutLogId: Types.ObjectId
+  ): Promise<WorkoutLogResponse> {
+    try {
+      const week = await this.weekRepository.findById(weekId);
+
+      if (!week) {
+        throw APIError.NotFound("Week not found");
+      }
+
+      const workout = week.getWorkouts().find((w) => w._id === workoutId);
+
+      if (!workout) {
+        throw APIError.NotFound("Workout not found");
+      }
+
+      const workoutLog = workout.workoutLogs?.find(
+        (w) => w._id === workoutLogId
+      );
+
+      if (!workoutLog) {
+        throw APIError.NotFound("Workout log not found");
+      }
+
+      return this.weekRepository.toWorkoutLogResponse(workoutLog);
+    } catch (error) {
+      this.logger.error("Error getting workout log by id: ", error);
+
+      if (error instanceof MongooseError || error instanceof MongoServerError) {
+        throw DatabaseError.handleMongoDBError(error);
+      } else {
+        throw APIError.InternalServerError("Failed to get workout log");
+      }
+    }
+  }
+
+  public async deleteWorkoutLog(
+    weekId: Types.ObjectId,
+    workoutId: Types.ObjectId,
+    workoutLogId: Types.ObjectId
+  ): Promise<void> {
+    try {
+      const week = await this.weekRepository.findById(weekId);
+
+      if (!week) {
+        throw APIError.NotFound("Week not found");
+      }
+
+      const workout = week.getWorkouts().find((w) => w._id === workoutId);
+
+      if (!workout) {
+        throw APIError.NotFound("Workout not found");
+      }
+
+      const workoutLog = workout.workoutLogs?.find(
+        (w) => w._id === workoutLogId
+      );
+
+      if (!workoutLog) {
+        throw APIError.NotFound("Workout log not found");
+      }
+
+      await this.weekRepository.updateOne(
+        { _id: weekId },
+        { $pull: { "workouts.$.workoutLogs": { _id: workoutLogId } } }
+      );
+    } catch (error) {
+      this.logger.error("Error deleting workout log: ", error);
+
+      if (error instanceof MongooseError || error instanceof MongoServerError) {
+        throw DatabaseError.handleMongoDBError(error);
+      } else {
+        throw APIError.InternalServerError("Failed to delete workout log");
       }
     }
   }
@@ -844,7 +1009,6 @@ export default class ProgramService implements IProgramService {
         })
       );
 
-      // Filter out any null results (meals that might have been deleted)
       return meals.filter((meal): meal is MealResponse => meal !== null);
     } catch (error) {
       this.logger.error("Error getting week meals: ", error);
@@ -904,22 +1068,48 @@ export default class ProgramService implements IProgramService {
     }
   }
 
-  public async deleteWeek(weekId: Types.ObjectId): Promise<void> {
+  public async deleteWeek(
+    program: Program,
+    weekId: Types.ObjectId
+  ): Promise<void> {
+    const session = await mongoose.startSession();
     try {
+      session.startTransaction();
+
       const week = await this.weekRepository.findById(weekId);
 
       if (!week) {
         throw APIError.NotFound("Week not found");
       }
 
-      await this.weekRepository.updateOne({ _id: weekId }, { isActive: false });
+      await this.weekRepository.updateOne(
+        { _id: weekId },
+        { isActive: false },
+        { session }
+      );
+
+      await this.programRepository.updateOne(
+        { _id: program.getId() },
+        { $set: { numWeeks: program.getNumWeeks() - 1 } },
+        { session }
+      );
+
+      await session.commitTransaction();
     } catch (error) {
       this.logger.error("Error deleting week: ", error);
+
+      if (session) {
+        await session.abortTransaction();
+      }
 
       if (error instanceof MongooseError || error instanceof MongoServerError) {
         throw DatabaseError.handleMongoDBError(error);
       } else {
         throw APIError.InternalServerError("Failed to delete week");
+      }
+    } finally {
+      if (session) {
+        session.endSession();
       }
     }
   }

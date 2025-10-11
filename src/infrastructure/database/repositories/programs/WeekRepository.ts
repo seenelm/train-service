@@ -60,6 +60,11 @@ export interface IWeekRepository extends IBaseRepository<Week, WeekDocument> {
     workoutLog: WorkoutLog,
     workoutIndex: number
   ): Promise<WorkoutLog | null>;
+  updateWorkoutLog(
+    weekId: Types.ObjectId,
+    workoutLogId: Types.ObjectId,
+    workoutLog: WorkoutLog
+  ): Promise<void>;
   findWeek(weekId: Types.ObjectId): Promise<AggregatedWeek | null>;
   createNote(note: Notes, weekId: Types.ObjectId): Promise<Notes | null>;
 }
@@ -319,6 +324,37 @@ export default class WeekRepository
       return lastWorkoutLog;
     } catch (error) {
       this.logger.error("Error creating workout log: ", error);
+      throw error;
+    }
+  }
+
+  async updateWorkoutLog(
+    weekId: Types.ObjectId,
+    workoutLogId: Types.ObjectId,
+    workoutLog: WorkoutLog
+  ): Promise<void> {
+    try {
+      await this.weekModel.updateOne(
+        { _id: weekId, "workouts.workoutLogs._id": workoutLogId },
+        {
+          $set: {
+            "workouts.$.workoutLogs.$.userId": workoutLog.userId,
+            "workouts.$.workoutLogs.$.workoutId": workoutLog.workoutId,
+            "workouts.$.workoutLogs.$.versionId": workoutLog.versionId,
+            "workouts.$.workoutLogs.$.workoutSnapshot":
+              workoutLog.workoutSnapshot,
+            "workouts.$.workoutLogs.$.blockLogs": workoutLog.blockLogs,
+            "workouts.$.workoutLogs.$.actualDuration":
+              workoutLog.actualDuration,
+            "workouts.$.workoutLogs.$.actualStartDate":
+              workoutLog.actualStartDate,
+            "workouts.$.workoutLogs.$.actualEndDate": workoutLog.actualEndDate,
+            "workouts.$.workoutLogs.$.isCompleted": workoutLog.isCompleted,
+          },
+        }
+      );
+    } catch (error) {
+      this.logger.error("Error updating workout log: ", error);
       throw error;
     }
   }

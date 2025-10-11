@@ -19,6 +19,7 @@ import {
 import { StatusCodes as HttpStatusCode } from "http-status-codes";
 import { Logger } from "../../common/logger.js";
 import { Types } from "mongoose";
+import { APIError } from "../../common/errors/APIError.js";
 
 export default class ProgramController {
   private programService: IProgramService;
@@ -41,6 +42,21 @@ export default class ProgramController {
         await this.programService.createProgram(programRequest);
 
       return res.status(HttpStatusCode.CREATED).json(programResponse);
+    } catch (error) {
+      next(error);
+    }
+  };
+
+  public updateProgram = async (
+    req: Request,
+    res: Response,
+    next: NextFunction
+  ) => {
+    try {
+      const programId = new Types.ObjectId(req.params.programId);
+      const programRequest: ProgramRequest = req.body;
+      await this.programService.updateProgram(programId, programRequest);
+      return res.status(HttpStatusCode.OK).json({ success: true });
     } catch (error) {
       next(error);
     }
@@ -301,6 +317,73 @@ export default class ProgramController {
     }
   };
 
+  public updateWorkoutLog = async (
+    req: Request,
+    res: Response,
+    next: NextFunction
+  ) => {
+    try {
+      const weekId = new Types.ObjectId(req.params.weekId);
+      const workoutId = new Types.ObjectId(req.params.workoutId);
+      const workoutLogId = new Types.ObjectId(req.params.workoutLogId);
+      const workoutLogRequest: WorkoutLogRequest = req.body;
+
+      await this.programService.updateWorkoutLog(
+        weekId,
+        workoutId,
+        workoutLogId,
+        workoutLogRequest
+      );
+      return res.status(HttpStatusCode.OK).json({ success: true });
+    } catch (error) {
+      next(error);
+    }
+  };
+
+  public getWorkoutLogById = async (
+    req: Request,
+    res: Response,
+    next: NextFunction
+  ) => {
+    try {
+      const weekId = new Types.ObjectId(req.params.weekId);
+      const workoutId = new Types.ObjectId(req.params.workoutId);
+      const workoutLogId = new Types.ObjectId(req.params.workoutLogId);
+
+      const workoutLogResponse: WorkoutLogResponse =
+        await this.programService.getWorkoutLogById(
+          weekId,
+          workoutId,
+          workoutLogId
+        );
+
+      return res.status(HttpStatusCode.OK).json(workoutLogResponse);
+    } catch (error) {
+      next(error);
+    }
+  };
+
+  public deleteWorkoutLog = async (
+    req: Request,
+    res: Response,
+    next: NextFunction
+  ) => {
+    try {
+      const weekId = new Types.ObjectId(req.params.weekId);
+      const workoutId = new Types.ObjectId(req.params.workoutId);
+      const workoutLogId = new Types.ObjectId(req.params.workoutLogId);
+
+      await this.programService.deleteWorkoutLog(
+        weekId,
+        workoutId,
+        workoutLogId
+      );
+      return res.status(HttpStatusCode.OK).json({ success: true });
+    } catch (error) {
+      next(error);
+    }
+  };
+
   public addBlockLog = async (
     req: Request,
     res: Response,
@@ -411,7 +494,12 @@ export default class ProgramController {
   ) => {
     try {
       const weekId = new Types.ObjectId(req.params.weekId);
-      await this.programService.deleteWeek(weekId);
+      const program = req.program;
+
+      if (!program) {
+        throw APIError.NotFound("Program not found");
+      }
+      await this.programService.deleteWeek(program, weekId);
       return res.status(HttpStatusCode.OK).json({ success: true });
     } catch (error) {
       next(error);

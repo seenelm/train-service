@@ -151,6 +151,14 @@ const programMiddleware = new ProgramMiddleware(
  */
 router.get("/:programId", programController.getProgramById);
 
+router.put(
+  "/:programId",
+  authMiddleware.authenticateToken,
+  programMiddleware.checkAdminAuthorization,
+  ProgramMiddleware.validateProgramRequest,
+  programController.updateProgram
+);
+
 /**
  * @swagger
  * /program:
@@ -290,7 +298,7 @@ router.get("/:programId", programController.getProgramById);
 router.post(
   "/",
   authMiddleware.authenticateToken,
-  ProgramMiddleware.validateCreateProgram,
+  ProgramMiddleware.validateProgramRequest,
   programController.createProgram
 );
 
@@ -2125,9 +2133,28 @@ router.delete(
 router.post(
   "/:programId/week/:weekId/workout/log",
   authMiddleware.authenticateToken,
-  // programMiddleware.checkMemberOrAdminAuthorization,
   ProgramMiddleware.validateWorkoutLogRequest,
   programController.createWorkoutLog
+);
+
+// TODO: DO YOU NEED TO BE A MEMBER OR ADMIN TO UPDATE A WORKOUT LOG?
+router.put(
+  "/:programId/week/:weekId/workout/log/:workoutLogId",
+  authMiddleware.authenticateToken,
+  ProgramMiddleware.validateWorkoutLogRequest,
+  programController.updateWorkoutLog
+);
+
+router.delete(
+  "/:programId/week/:weekId/workout/log/:workoutLogId",
+  authMiddleware.authenticateToken,
+  programController.deleteWorkoutLog
+);
+
+router.get(
+  "/:programId/week/:weekId/workout/log/:workoutLogId",
+  authMiddleware.authenticateToken,
+  programController.getWorkoutLogById
 );
 
 /**
@@ -2273,7 +2300,6 @@ router.post(
 router.post(
   "/:programId/week/:weekId/workout/log/:workoutLogId/block",
   authMiddleware.authenticateToken,
-  // programMiddleware.checkMemberOrAdminAuthorization,
   ProgramMiddleware.validateBlockLogRequest,
   programController.addBlockLog
 );
@@ -2543,7 +2569,6 @@ router.post(
 router.post(
   "/:programId/week/:weekId/meal/log",
   authMiddleware.authenticateToken,
-  // programMiddleware.checkMemberOrAdminAuthorization,
   ProgramMiddleware.validateMealLogRequest,
   programController.addMealLog
 );
@@ -2660,7 +2685,6 @@ router.post(
 router.get(
   "/:programId/week/:weekId/workouts",
   authMiddleware.authenticateToken,
-  // programMiddleware.checkMemberOrAdminAuthorization,
   programController.getWeekWorkouts
 );
 
@@ -2759,7 +2783,6 @@ router.get(
 router.get(
   "/:programId/week/:weekId/meals",
   authMiddleware.authenticateToken,
-  // programMiddleware.checkMemberOrAdminAuthorization,
   programController.getWeekMeals
 );
 
@@ -2845,7 +2868,6 @@ router.get(
 router.get(
   "/:programId/week/:weekId",
   authMiddleware.authenticateToken,
-  // programMiddleware.checkMemberOrAdminAuthorization,
   programController.getWeek
 );
 

@@ -25,7 +25,7 @@ export default class ProgramMiddleware {
     this.programRepository = programRepository;
   }
 
-  static validateCreateProgram = (
+  static validateProgramRequest = (
     req: Request,
     res: Response,
     next: NextFunction
