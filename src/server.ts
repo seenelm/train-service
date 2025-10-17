@@ -1,0 +1,79 @@
+import TrainService from "./app.js";
+import { Application } from "express";
+import { Logger } from "./common/logger.js";
+import "dotenv/config";
+
+let server: any = null;
+const port = process.env.PORT || 3000;
+const trainService = TrainService.getInstance();
+const app: Application = trainService.getApp();
+const logger = Logger.getInstance();
+
+async function startServer() {
+  try {
+    // Initialize the application
+    await trainService.initializeDB();
+    // Start the Express server
+    server = app.listen(port, () => {
+      logger.info(`Server is running on port ${port}`);
+    });
+
+    // Handle shutdown signals
+    setupGracefulShutdown();
+  } catch (error) {
+    logger.error("Failed to start server", error);
+    process.exit(1);
+  }
+}
+
+/**
+ * Setup graceful shutdown handlers
+ */
+function setupGracefulShutdown() {
+  // Handle uncaught exceptions
+  process.on("uncaughtException", (error) => {
+    logger.error("Uncaught Exception", error);
+  });
+
+  // Handle unhandled promise rejections
+  process.on("unhandledRejection", (reason) => {
+    logger.error("Unhandled Rejection", new Error(String(reason)));
+  });
+
+  // Handle termination signals
+  process.on("SIGTERM", () => {
+    logger.info("Received SIGTERM, shutting down gracefully");
+    gracefulShutdown();
+  });
+}
+
+/**
+ * Perform graceful shutdown
+ */
+async function gracefulShutdown() {
+  try {
+    if (server) {
+      await new Promise<void>((resolve) => {
+        server.close(() => {
+          logger.info("HTTP server closed");
+          resolve();
+        });
+      });
+    }
+
+    // Close database connection
+    if (trainService.db) {
+      await trainService.db.close();
+      logger.info("Database connection closed");
+    }
+
+    logger.info("Graceful shutdown completed");
+  } catch (error) {
+    logger.error("Error during graceful shutdown", error);
+  }
+}
+
+// Start the server
+startServer();
+
+export { server };
