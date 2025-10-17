@@ -1,10 +1,20 @@
-import { UserProfileDocument } from "../../models/user/userProfileModel.js";
+import { UserProfileDocument } from "../../models/userProfile/userProfileModel.js";
 import UserProfile from "../../entity/user/UserProfile.js";
 import { IBaseRepository, BaseRepository } from "../BaseRepository.js";
 import { Model, Types } from "mongoose";
+import {
+  UserProfileRequest,
+  SocialPlatform,
+  UserProfileResponse,
+  ProfileAccess,
+} from "@seenelm/train-core";
 
 export interface IUserProfileRepository
-  extends IBaseRepository<UserProfile, UserProfileDocument> {}
+  extends IBaseRepository<UserProfile, UserProfileDocument> {
+  toDocument(request: UserProfileRequest): Partial<UserProfileDocument>;
+  toResponseWithEmail(profile: UserProfile, email: string): UserProfileResponse;
+  toResponse(profile: UserProfile): UserProfileResponse;
+}
 
 export default class UserProfileRepository
   extends BaseRepository<UserProfile, UserProfileDocument>
@@ -23,10 +33,76 @@ export default class UserProfileRepository
       .setUserId(doc.userId as Types.ObjectId)
       .setUsername(doc.username)
       .setName(doc.name)
-      .setBio(doc.bio)
+      .setPhoneNumber(doc.phoneNumber)
+      .setBirthday(doc.birthday)
+      .setBio(doc.bio ?? "")
       .setAccountType(doc.accountType)
-      .setCreatedAt(doc.createdAt)
-      .setUpdatedAt(doc.updatedAt)
+      .setLocation(doc.location)
+      .setRole(doc.role)
+      .setSocialLinks(doc.socialLinks)
+      .setCertifications(doc.certifications)
+      .setCustomSections(doc.customSections)
       .build();
+  }
+
+  toDocument(request: UserProfileRequest): Partial<UserProfileDocument> {
+    return {
+      userId: new Types.ObjectId(request.userId),
+      username: request.username,
+      name: request.name,
+      phoneNumber: request.phoneNumber,
+      birthday: request.birthday,
+      bio: request.bio,
+      accountType: ProfileAccess.Public,
+      role: request.role,
+      location: request.location,
+      socialLinks: request.socialLinks,
+      certifications: request.certifications?.map((certification) => ({
+        certification: new Types.ObjectId(certification.certification),
+        specializations: certification.specializations,
+        receivedDate: certification.receivedDate,
+      })),
+      customSections: request.customSections,
+    };
+  }
+
+  toResponseWithEmail(
+    profile: UserProfile,
+    email: string
+  ): UserProfileResponse {
+    return {
+      id: profile.getId().toString(),
+      email,
+      userId: profile.getUserId().toString(),
+      username: profile.getUsername(),
+      name: profile.getName(),
+      phoneNumber: profile.getPhoneNumber(),
+      birthday: profile.getBirthday(),
+      bio: profile.getBio(),
+      accountType: profile.getAccountType(),
+      role: profile.getRole(),
+      location: profile.getLocation(),
+      socialLinks: profile.getSocialLinks(),
+      certifications: [],
+      customSections: profile.getCustomSections(),
+    };
+  }
+
+  toResponse(profile: UserProfile): UserProfileResponse {
+    return {
+      id: profile.getId().toString(),
+      userId: profile.getUserId().toString(),
+      username: profile.getUsername(),
+      name: profile.getName(),
+      phoneNumber: profile.getPhoneNumber(),
+      birthday: profile.getBirthday(),
+      bio: profile.getBio(),
+      accountType: profile.getAccountType(),
+      role: profile.getRole(),
+      location: profile.getLocation(),
+      socialLinks: profile.getSocialLinks(),
+      certifications: [],
+      customSections: profile.getCustomSections(),
+    };
   }
 }

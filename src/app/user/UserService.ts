@@ -8,17 +8,17 @@ import { MongooseError, Types } from "mongoose";
 import User from "../../infrastructure/database/entity/user/User.js";
 
 import {
-  UserLoginRequest,
-  UserResponse,
   UserRequest,
+  UserResponse,
   updateUserRequest,
   GoogleAuthRequest,
-  RefreshTokenResponse,
   RefreshTokenRequest,
-  LogoutRequest,
+  RefreshTokenResponse,
   RequestPasswordResetRequest,
   ResetPasswordWithCodeRequest,
-} from "./userDto.js";
+  LogoutRequest,
+  UserLoginRequest,
+} from "@seenelm/train-core";
 
 import mongoose from "mongoose";
 import { APIError } from "../../common/errors/APIError.js";
@@ -57,7 +57,10 @@ export interface IUserService {
   ): Promise<RefreshTokenResponse>;
   requestPasswordReset(request: RequestPasswordResetRequest): Promise<void>;
   resetPasswordWithCode(request: ResetPasswordWithCodeRequest): Promise<void>;
-  logoutUser(logoutRequest: LogoutRequest): Promise<void>;
+  logoutUser(
+    userId: Types.ObjectId,
+    logoutRequest: LogoutRequest
+  ): Promise<void>;
   expireRefreshToken(refreshTokenRequest: RefreshTokenRequest): Promise<void>;
   getResetCode(userId: string): Promise<string | null>;
 }
@@ -123,7 +126,19 @@ export default class UserService implements IUserService {
         refreshToken
       );
 
-      return this.createUser(userDocument, name);
+      const newUser = await this.createUser(userDocument, name);
+
+      const accessToken = await this.generateAccessToken(
+        newUser.getUsername(),
+        newUser.getId()
+      );
+
+      return this.userRepository.toResponse(
+        newUser,
+        accessToken,
+        name,
+        refreshToken.token
+      );
     } catch (error) {
       this.logger.error("User registration error", {
         error,
@@ -174,8 +189,6 @@ export default class UserService implements IUserService {
         throw AuthError.InvalidPassword(LoginUserAPIError.InvalidPassword);
       }
 
-      const refreshToken = await this.generateRefreshToken(user, deviceId);
-
       const userProfile = await this.userProfileRepository.findOne({
         userId: user.getId(),
       });
@@ -188,6 +201,23 @@ export default class UserService implements IUserService {
         throw APIError.NotFound(LoginUserAPIError.UserProfileNotFound);
       }
 
+      let refreshTokenDoc = user
+        .getRefreshTokens()
+        .find((token) => token.deviceId === deviceId);
+      if (refreshTokenDoc) {
+        refreshTokenDoc = await this.rotateRefreshToken(
+          user.getId(),
+          refreshTokenDoc.token,
+          deviceId
+        );
+      } else {
+        refreshTokenDoc = this.createRefreshToken(deviceId);
+        await this.userRepository.updateOne(
+          { _id: user.getId() },
+          { $push: { refreshTokens: refreshTokenDoc } }
+        );
+      }
+
       const accessToken = await this.generateAccessToken(
         user.getUsername(),
         user.getId()
@@ -197,7 +227,7 @@ export default class UserService implements IUserService {
         user,
         accessToken,
         userProfile.getName(),
-        refreshToken
+        refreshTokenDoc.token
       );
     } catch (error) {
       this.logger.error("User login error", {
@@ -267,6 +297,7 @@ export default class UserService implements IUserService {
         isActive: true,
         email,
         authProvider: "google",
+        agreeToTerms: googleAuthRequest.agreeToTerms,
       } as UserRequest;
 
       const refreshToken = this.createRefreshToken(deviceId);
@@ -277,7 +308,18 @@ export default class UserService implements IUserService {
         googleId
       );
 
-      return this.createUser(userDocument, name);
+      const newUser = await this.createUser(userDocument, name);
+      const accessToken = await this.generateAccessToken(
+        newUser.getUsername(),
+        newUser.getId()
+      );
+
+      return this.userRepository.toResponse(
+        newUser,
+        accessToken,
+        name,
+        refreshToken.token
+      );
     } catch (error) {
       this.logger.error("User login error", {
         error,
@@ -329,11 +371,14 @@ export default class UserService implements IUserService {
         !refreshTokenDocument ||
         refreshTokenDocument.expiresAt < new Date()
       ) {
-        await this.userRepository.findByIdAndUpdate(user.getId(), {
-          $pull: {
-            refreshTokens: { token: refreshToken, deviceId: deviceId },
-          },
-        });
+        await this.userRepository.updateOne(
+          { _id: user.getId() },
+          {
+            $pull: {
+              refreshTokens: { token: refreshToken, deviceId },
+            },
+          }
+        );
 
         this.logger.warn(AuthErrorType.RefreshTokenExpired, {
           deviceId,
@@ -344,18 +389,10 @@ export default class UserService implements IUserService {
         throw AuthError.Forbidden(AuthErrorType.InvalidRefreshToken);
       }
 
-      // Generate new refresh token
-      const newRefreshToken = this.createRefreshToken(deviceId);
-      this.logger.info("New refresh token: ", newRefreshToken);
-      await this.userRepository.updateOne(
-        {
-          _id: user.getId(),
-          "refreshTokens.token": refreshToken,
-          "refreshTokens.deviceId": deviceId,
-        },
-        {
-          $set: { refreshTokens: newRefreshToken },
-        }
+      const newRefreshToken = await this.rotateRefreshToken(
+        user.getId(),
+        refreshToken,
+        deviceId
       );
 
       const newAccessToken = await this.generateAccessToken(
@@ -506,40 +543,41 @@ export default class UserService implements IUserService {
     }
   }
 
-  public async logoutUser(logoutRequest: LogoutRequest): Promise<void> {
+  public async logoutUser(
+    userId: Types.ObjectId,
+    logoutRequest: LogoutRequest
+  ): Promise<void> {
     const { refreshToken, deviceId } = logoutRequest;
 
     try {
-      const user = await this.userRepository.findOneAndUpdate(
+      const result = await this.userRepository.findOneAndUpdate(
         {
+          _id: userId,
           "refreshTokens.token": refreshToken,
           "refreshTokens.deviceId": deviceId,
         },
         {
           $pull: {
-            refreshTokens: { token: refreshToken, deviceId: deviceId },
+            refreshTokens: { token: refreshToken, deviceId },
           },
         }
       );
 
-      if (!user) {
+      if (!result) {
         this.logger.warn(
-          "Logout: Refresh token/device ID not found or already removed.",
+          "Logout attempt with invalid or expired refresh token",
           {
             deviceId,
           }
         );
 
-        throw APIError.NotFound(APIErrorType.UserNotFound);
+        return;
       }
 
-      this.logger.info(
-        "User logged out successfully by removing refresh token",
-        {
-          userId: user.getId().toString(),
-          deviceId,
-        }
-      );
+      this.logger.info("User logged out successfully", {
+        userId: result.getId().toString(),
+        deviceId,
+      });
     } catch (error) {
       this.logger.error("Logout error", {
         error,
@@ -547,7 +585,8 @@ export default class UserService implements IUserService {
       });
       if (error instanceof MongooseError || error instanceof MongoServerError) {
         throw DatabaseError.handleMongoDBError(error);
-      } else if (error instanceof APIError || error instanceof AuthError) {
+      }
+      if (error instanceof APIError || error instanceof AuthError) {
         throw error;
       }
       throw APIError.InternalServerError("An error occurred during logout.");
@@ -567,10 +606,25 @@ export default class UserService implements IUserService {
         throw APIError.NotFound(APIErrorType.UserProfileNotFound);
       }
 
-      const refreshToken = await this.generateRefreshToken(user, deviceId);
+      let refreshTokenDoc = user
+        .getRefreshTokens()
+        .find((token) => token.deviceId === deviceId);
+      if (refreshTokenDoc) {
+        refreshTokenDoc = await this.rotateRefreshToken(
+          user.getId(),
+          refreshTokenDoc.token,
+          deviceId
+        );
+      } else {
+        refreshTokenDoc = this.createRefreshToken(deviceId);
+        await this.userRepository.updateOne(
+          { _id: user.getId() },
+          { $push: { refreshTokens: refreshTokenDoc } }
+        );
+      }
 
-      const token = await this.generateAccessToken(
-        userProfile.getName(),
+      const accessToken = await this.generateAccessToken(
+        user.getUsername(),
         user.getId()
       );
 
@@ -582,9 +636,9 @@ export default class UserService implements IUserService {
 
       return this.userRepository.toResponse(
         user,
-        token,
+        accessToken,
         userProfile.getName(),
-        refreshToken
+        refreshTokenDoc.token
       );
     } catch (error) {
       throw error;
@@ -594,7 +648,7 @@ export default class UserService implements IUserService {
   private async createUser(
     userDocument: Partial<UserDocument>,
     name: string
-  ): Promise<UserResponse> {
+  ): Promise<User> {
     const session = await mongoose.startSession();
 
     try {
@@ -630,9 +684,12 @@ export default class UserService implements IUserService {
 
       await session.commitTransaction();
 
-      // Generate JWT token
-      const accessToken = await this.generateAccessToken(name, newUser.getId());
-      const refreshToken = newUser.getRefreshTokens()[0].token;
+      // // Generate JWT token
+      // const accessToken = await this.generateAccessToken(
+      //   newUser.getUsername(),
+      //   newUser.getId()
+      // );
+      // const refreshToken = newUser.getRefreshTokens()[0].token;
 
       this.logger.info("New user created", {
         username: newUser.getUsername(),
@@ -640,12 +697,13 @@ export default class UserService implements IUserService {
         authProvider: newUser.getAuthProvider(),
       });
 
-      return this.userRepository.toResponse(
-        newUser,
-        accessToken,
-        name,
-        refreshToken
-      );
+      // return this.userRepository.toResponse(
+      //   newUser,
+      //   accessToken,
+      //   name,
+      //   refreshToken
+      // );
+      return newUser;
     } catch (error) {
       this.logger.error("Error creating user", {
         error,
@@ -680,7 +738,7 @@ export default class UserService implements IUserService {
       );
     }
     try {
-      const expiresAt = process.env.ACCESS_TOKEN_EXPIRY;
+      const expiresAt = process.env.ACCESS_TOKEN_EXPIRY || "15m";
       return await JWTUtil.sign(payload, secretKey, expiresAt);
     } catch (error) {
       // TODO: throw internal server error if not JWT error
@@ -688,40 +746,10 @@ export default class UserService implements IUserService {
     }
   }
 
-  private async generateRefreshToken(
-    user: User,
-    deviceId: string
-  ): Promise<string> {
-    const refreshToken: string = uuidv4();
-    const expiresAtNum = process.env.REFRESH_TOKEN_EXPIRY as unknown as number;
-    const expiresAt = new Date(Date.now() + expiresAtNum * 24 * 60 * 60 * 1000); // 30 days
-
-    const refreshTokenDocument: IRefreshToken = {
-      token: refreshToken,
-      deviceId,
-      expiresAt,
-    };
-
-    const updatedUserDocument = this.userRepository.toDocumentFromEntity(
-      user,
-      refreshTokenDocument
-    );
-
-    try {
-      await this.userRepository.findByIdAndUpdate(
-        user.getId(),
-        updatedUserDocument
-      );
-      return refreshToken;
-    } catch (error) {
-      throw error;
-    }
-  }
-
   private createRefreshToken(deviceId: string): IRefreshToken {
     const refreshToken: string = uuidv4();
-    const expiresAtNum = process.env.REFRESH_TOKEN_EXPIRY as unknown as number;
-    const expiresAt = new Date(Date.now() + expiresAtNum * 24 * 60 * 60 * 1000); // 30 days
+    const days = parseInt(process.env.REFRESH_TOKEN_EXPIRY || "30", 10);
+    const expiresAt = new Date(Date.now() + days * 24 * 60 * 60 * 1000); // 30 days
 
     const refreshTokenDocument: IRefreshToken = {
       token: refreshToken,
@@ -730,6 +758,40 @@ export default class UserService implements IUserService {
     };
 
     return refreshTokenDocument;
+  }
+
+  private async rotateRefreshToken(
+    userId: Types.ObjectId,
+    oldToken: string,
+    deviceId: string
+  ): Promise<IRefreshToken> {
+    try {
+      const newRefreshToken = this.createRefreshToken(deviceId);
+
+      await this.userRepository.updateOne(
+        { _id: userId },
+        {
+          $pull: { refreshTokens: { token: oldToken, deviceId } },
+        }
+      );
+
+      await this.userRepository.updateOne(
+        { _id: userId },
+        {
+          $push: { refreshTokens: newRefreshToken },
+        }
+      );
+
+      return newRefreshToken;
+    } catch (error) {
+      this.logger.error("Error rotating refresh token", {
+        error,
+        userId,
+        oldToken,
+        deviceId,
+      });
+      throw error;
+    }
   }
 
   private async generatePasswordResetCode(user: User): Promise<string> {

@@ -19,30 +19,38 @@ class MongoDB {
   /**
    * Connect to MongoDB database.
    */
-  async connect(): Promise<void> {
-    const db = mongoose.connection;
-
-    db.on("error", (err) => {
-      this.logger.error("Error connecting to Database: ", err);
-    });
-
-    db.once("open", () => {
-      this.logger.info("Database connected successfully!!");
-    });
-
+  async connect(retries = 5, delay = 1000): Promise<void> {
     try {
-      this.logger.info("Mongodb connection URI: ", this.dbUri);
       await mongoose.connect(this.dbUri);
+
+      mongoose.connection.on("error", (err) => {
+        this.logger.error("MongoDB connection error:", err);
+      });
+
+      mongoose.connection.on("disconnected", () => {
+        this.logger.warn("MongoDB disconnected. Attempting to reconnect...");
+        setTimeout(() => this.connect(), 1000); // reconnect automatically
+      });
+
+      mongoose.connection.once("open", () => {
+        this.logger.info("MongoDB connected successfully");
+      });
     } catch (error) {
-      this.logger.error("Error on initial connection: ", error);
-      throw error;
+      this.logger.error("Error connecting to MongoDB:", error);
+      if (retries > 0) {
+        this.logger.info(`Retrying DB connection in ${delay}ms...`);
+        await new Promise((res) => setTimeout(res, delay));
+        await this.connect(retries - 1, delay * 2); // exponential backoff
+      } else {
+        throw error;
+      }
     }
   }
 
   // Close connection to MongoDB database.
   async close(): Promise<void> {
     await mongoose.connection.close().catch((error) => {
-      console.error(error);
+      this.logger.error("Error closing MongoDB connection: ", error);
     });
   }
 }

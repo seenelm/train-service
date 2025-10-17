@@ -5,7 +5,7 @@ import {
   GoogleAuthRequest,
   RequestPasswordResetRequest,
   ResetPasswordWithCodeRequest,
-} from "./userDto.js";
+} from "@seenelm/train-core";
 import { StatusCodes as HttpStatusCode } from "http-status-codes";
 import { CreateValidator } from "../../common/utils/requestValidation.js";
 import UserRequestRules from "./UserRequestRules.js";

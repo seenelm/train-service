@@ -5,6 +5,7 @@ import { Logger } from "./common/logger.js";
 import { errorHandler } from "./common/middleware/errorHandler.js";
 import cors from "cors";
 import "dotenv/config";
+import { setupSwagger } from "./swagger/swagger.js";
 
 export default class TrainService {
   private static instance: TrainService;
@@ -47,10 +48,15 @@ export default class TrainService {
     this.app.use(cors());
     this.app.use(express.json());
     this.app.use(express.urlencoded({ extended: true }));
+
+    // Setup Swagger
+    setupSwagger(this.app);
   }
 
   private configureRoutes(): void {
-    this.app.get("/health", (req, res) => res.send("OK"));
+    this.app.get("/health", (req, res) =>
+      res.status(200).json({ status: "ok" })
+    );
     this.app.use("/api", routes);
   }
 

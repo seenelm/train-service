@@ -14,16 +14,17 @@ export interface UserDocument extends Document {
   googleId?: string;
   email: string;
   authProvider: string;
+  agreeToTerms: boolean;
   refreshTokens: IRefreshToken[];
   createdAt: Date;
   updatedAt: Date;
 }
 
 const refreshTokenSchema: Schema = new Schema({
-  token: { type: String, required: true },
-  deviceId: { type: String, required: true },
+  token: { type: String, unique: true, required: true },
+  deviceId: { type: String, unique: true, required: true },
   createdAt: { type: Date, default: Date.now },
-  expiresAt: { type: Date, required: true },
+  expiresAt: { type: Date, required: true, index: { expires: 0 } },
 });
 
 const userSchema: Schema = new Schema(
@@ -60,6 +61,10 @@ const userSchema: Schema = new Schema(
       required: true,
     },
     isActive: {
+      type: Boolean,
+      required: true,
+    },
+    agreeToTerms: {
       type: Boolean,
       required: true,
     },

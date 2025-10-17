@@ -22,6 +22,8 @@ export const mockUserRepository: IUserRepository = {
   updateMany: vi.fn(),
   findByIdAndDelete: vi.fn(),
   deleteMany: vi.fn(),
+  deleteOne: vi.fn(),
+  countDocuments: vi.fn(),
 };
 
 export const mockUserProfileRepository: IUserProfileRepository = {
@@ -36,6 +38,11 @@ export const mockUserProfileRepository: IUserProfileRepository = {
   updateMany: vi.fn(),
   findByIdAndDelete: vi.fn(),
   deleteMany: vi.fn(),
+  deleteOne: vi.fn(),
+  countDocuments: vi.fn(),
+  toDocument: vi.fn(),
+  toResponseWithEmail: vi.fn(),
+  toResponse: vi.fn(),
 };
 
 export const mockUserGroupsRepository: IUserGroupsRepository = {
@@ -50,6 +57,9 @@ export const mockUserGroupsRepository: IUserGroupsRepository = {
   updateMany: vi.fn(),
   findByIdAndDelete: vi.fn(),
   deleteMany: vi.fn(),
+  deleteOne: vi.fn(),
+  countDocuments: vi.fn(),
+  getUserGroupsWithDetails: vi.fn(),
 };
 
 export const mockFollowRepository: IFollowRepository = {
@@ -64,6 +74,14 @@ export const mockFollowRepository: IFollowRepository = {
   updateMany: vi.fn(),
   findByIdAndDelete: vi.fn(),
   deleteMany: vi.fn(),
+  deleteOne: vi.fn(),
+  countDocuments: vi.fn(),
+  getFollowersCount: vi.fn(),
+  getFollowingCount: vi.fn(),
+  getFollowersPaginated: vi.fn(),
+  getFollowingPaginated: vi.fn(),
+  searchFollowers: vi.fn(),
+  searchFollowing: vi.fn(),
 };
 
 export const mockPasswordResetRepository: IPasswordResetRepository = {
@@ -78,6 +96,8 @@ export const mockPasswordResetRepository: IPasswordResetRepository = {
   updateMany: vi.fn(),
   findByIdAndDelete: vi.fn(),
   deleteMany: vi.fn(),
+  deleteOne: vi.fn(),
+  countDocuments: vi.fn(),
 };
 
 export const mockEmailService: IEmailService = {

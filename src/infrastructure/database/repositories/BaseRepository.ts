@@ -36,7 +36,12 @@ export interface IBaseRepository<T, TDocument> {
     options?: object
   ): Promise<UpdateQuery<T>>;
   findByIdAndDelete(id: Types.ObjectId, options?: object): Promise<void>;
+  deleteOne(query: FilterQuery<TDocument>, options?: object): Promise<void>;
   deleteMany(query: FilterQuery<TDocument>, options?: object): Promise<void>;
+  countDocuments(
+    query: FilterQuery<TDocument>,
+    options?: object
+  ): Promise<number>;
 }
 
 export abstract class BaseRepository<T, TDocument extends Document>
@@ -70,7 +75,25 @@ export abstract class BaseRepository<T, TDocument extends Document>
     query: FilterQuery<TDocument>,
     options?: object
   ): Promise<T[]> {
-    const docs = await this.model.find(query, options).exec();
+    // Extract pagination and sorting options to avoid projection conflicts
+    const { skip, limit, sort, ...otherOptions } = options || ({} as any);
+
+    let queryBuilder = this.model.find(query, otherOptions);
+
+    // Apply sorting if provided
+    if (sort) {
+      queryBuilder = queryBuilder.sort(sort);
+    }
+
+    // Apply pagination if provided
+    if (skip !== undefined) {
+      queryBuilder = queryBuilder.skip(skip);
+    }
+    if (limit !== undefined) {
+      queryBuilder = queryBuilder.limit(limit);
+    }
+
+    const docs = await queryBuilder.exec();
     return docs.map((doc) => this.toEntity(doc));
   }
 
@@ -141,5 +164,19 @@ export abstract class BaseRepository<T, TDocument extends Document>
     options?: object
   ): Promise<void> {
     await this.model.deleteMany(query, options).exec();
+  }
+
+  public async deleteOne(
+    query: FilterQuery<TDocument>,
+    options?: object
+  ): Promise<void> {
+    await this.model.deleteOne(query, options).exec();
+  }
+
+  public async countDocuments(
+    query: FilterQuery<TDocument>,
+    options?: object
+  ): Promise<number> {
+    return await this.model.countDocuments(query, options).exec();
   }
 }

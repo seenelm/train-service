@@ -30,34 +30,29 @@ async function startServer() {
  * Setup graceful shutdown handlers
  */
 function setupGracefulShutdown() {
-  // Handle unhandled promise rejections
-  process.on("unhandledRejection", (reason, promise) => {
-    logger.error("Unhandled Rejection", new Error(String(reason)));
-  });
-
   // Handle uncaught exceptions
   process.on("uncaughtException", (error) => {
     logger.error("Uncaught Exception", error);
-    gracefulShutdown(1);
+  });
+
+  // Handle unhandled promise rejections
+  process.on("unhandledRejection", (reason) => {
+    logger.error("Unhandled Rejection", new Error(String(reason)));
   });
 
   // Handle termination signals
-  const signals = ["SIGINT", "SIGTERM", "SIGQUIT"];
-  signals.forEach((signal) => {
-    process.on(signal, () => {
-      logger.info(`Received ${signal}, shutting down gracefully`);
-      gracefulShutdown(0);
-    });
+  process.on("SIGTERM", () => {
+    logger.info("Received SIGTERM, shutting down gracefully");
+    gracefulShutdown();
   });
 }
 
 /**
  * Perform graceful shutdown
  */
-async function gracefulShutdown(exitCode: number) {
+async function gracefulShutdown() {
   try {
     if (server) {
-      // Close HTTP server
       await new Promise<void>((resolve) => {
         server.close(() => {
           logger.info("HTTP server closed");
@@ -67,14 +62,14 @@ async function gracefulShutdown(exitCode: number) {
     }
 
     // Close database connection
-    await trainService.db.close();
-    logger.info("Database connection closed");
+    if (trainService.db) {
+      await trainService.db.close();
+      logger.info("Database connection closed");
+    }
 
-    // Exit process
-    process.exit(exitCode);
+    logger.info("Graceful shutdown completed");
   } catch (error) {
     logger.error("Error during graceful shutdown", error);
-    process.exit(1);
   }
 }
 

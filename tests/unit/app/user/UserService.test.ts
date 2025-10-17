@@ -14,30 +14,30 @@ import {
   mockFollowRepository,
   mockPasswordResetRepository,
   mockEmailService,
-} from "../../mocks/userMocks.js";
-import UserService from "../../../src/app/user/UserService.js";
+} from "../../../mocks/userMocks.js";
+import UserService from "../../../../src/app/user/UserService.js";
 import { ClientSession } from "mongoose";
 import mongoose from "mongoose";
-import UserTestFixture from "../../fixtures/UserTestFixture.js";
-import { UserRequest } from "../../../src/app/user/userDto.js";
-import User from "../../../src/infrastructure/database/entity/user/User.js";
-import BcryptUtil from "../../../src/common/utils/BcryptUtil.js";
-import JWTUtil from "../../../src/common/utils/JWTUtil.js";
-import { APIError } from "../../../src/common/errors/APIError.js";
-import { AuthError } from "../../../src/common/errors/AuthError.js";
+import UserTestFixture from "../../../fixtures/UserTestFixture.js";
+import { UserRequest } from "@seenelm/train-core";
+import User from "../../../../src/infrastructure/database/entity/user/User.js";
+import BcryptUtil from "../../../../src/common/utils/BcryptUtil.js";
+import JWTUtil from "../../../../src/common/utils/JWTUtil.js";
+import { APIError } from "../../../../src/common/errors/APIError.js";
+import { AuthError } from "../../../../src/common/errors/AuthError.js";
 import { JsonWebTokenError } from "jsonwebtoken";
 import { Error as MongooseError } from "mongoose";
-import { DatabaseError } from "../../../src/common/errors/DatabaseError.js";
-import { IRefreshToken } from "../../../src/infrastructure/database/models/user/userModel.js";
+import { DatabaseError } from "../../../../src/common/errors/DatabaseError.js";
+import { IRefreshToken } from "../../../../src/infrastructure/database/models/user/userModel.js";
 import {
   RegisterUserAPIError,
   LoginUserAPIError,
   GoogleAuthAPIError,
   AuthErrorType,
   APIErrorType,
-} from "../../../src/common/enums.js";
+} from "../../../../src/common/enums.js";
 import { MongoServerError } from "mongodb";
-import PasswordReset from "../../../src/infrastructure/database/entity/user/PasswordReset.js";
+import PasswordReset from "../../../../src/infrastructure/database/entity/user/PasswordReset.js";
 import { Types } from "mongoose";
 
 describe("UserService", () => {
@@ -648,7 +648,7 @@ describe("UserService", () => {
       vi.spyOn(mockUserRepository, "findOneAndUpdate").mockResolvedValue(user);
 
       // Act
-      await userService.logoutUser(logoutRequest);
+      await userService.logoutUser(user.getId(), logoutRequest);
 
       // Assert
       expect(mockUserRepository.findOneAndUpdate).toHaveBeenCalledWith(
@@ -670,17 +670,19 @@ describe("UserService", () => {
     it("should throw 404 error if user is not found", async () => {
       // Arrange
       const logoutRequest = UserTestFixture.createLogoutRequest();
+      const user = UserTestFixture.createUserEntity();
       vi.spyOn(mockUserRepository, "findOneAndUpdate").mockResolvedValue(null);
 
       // Act & Assert
-      await expect(userService.logoutUser(logoutRequest)).rejects.toThrowError(
-        APIError.NotFound(APIErrorType.UserNotFound)
-      );
+      await expect(
+        userService.logoutUser(user.getId(), logoutRequest)
+      ).rejects.toThrowError(APIError.NotFound(APIErrorType.UserNotFound));
     });
 
     it("should handle database errors", async () => {
       // Arrange
       const logoutRequest = UserTestFixture.createLogoutRequest();
+      const user = UserTestFixture.createUserEntity();
       const dbError = new MongooseError.DocumentNotFoundError("User not found");
 
       vi.spyOn(mockUserRepository, "findOneAndUpdate").mockRejectedValueOnce(
@@ -688,9 +690,9 @@ describe("UserService", () => {
       );
 
       // Act & Assert
-      await expect(userService.logoutUser(logoutRequest)).rejects.toThrowError(
-        DatabaseError.handleMongoDBError(dbError)
-      );
+      await expect(
+        userService.logoutUser(user.getId(), logoutRequest)
+      ).rejects.toThrowError(DatabaseError.handleMongoDBError(dbError));
     });
   });
 

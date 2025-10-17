@@ -9,7 +9,7 @@ import {
   LogoutRequest,
   RequestPasswordResetRequest,
   ResetPasswordWithCodeRequest,
-} from "./userDto.js";
+} from "@seenelm/train-core";
 import { StatusCodes as HttpStatusCode } from "http-status-codes";
 import { Logger } from "../../common/logger.js";
 
@@ -25,7 +25,6 @@ export default class UserController {
   public register = async (req: Request, res: Response, next: NextFunction) => {
     try {
       const userRegisterRequest: UserRequest = req.body;
-      this.logger.info("User registration request: ", userRegisterRequest);
 
       const userResponse: UserResponse = await this.userService.registerUser(
         userRegisterRequest
@@ -116,7 +115,6 @@ export default class UserController {
   ) => {
     try {
       const refreshTokensRequest = req.body as RefreshTokenRequest;
-      this.logger.info("Refresh tokens request: ", refreshTokensRequest);
 
       const userResponse = await this.userService.refreshTokens(
         refreshTokensRequest
@@ -131,12 +129,11 @@ export default class UserController {
   public logout = async (req: Request, res: Response, next: NextFunction) => {
     try {
       const logoutRequest = req.body as LogoutRequest;
+      const userId = req.user.getId();
 
-      await this.userService.logoutUser(logoutRequest);
+      await this.userService.logoutUser(userId, logoutRequest);
 
-      return res.status(HttpStatusCode.OK).json({
-        message: "User logged out successfully",
-      });
+      return res.status(HttpStatusCode.OK).json({ success: true });
     } catch (error) {
       next(error);
     }
